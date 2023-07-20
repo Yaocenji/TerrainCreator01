@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/TerrainShaders">
+        <file>TerrainFrag.frag</file>
+        <file>TerrainVert.vert</file>
+    </qresource>
+    <qresource prefix="/SwapScreenShaders">
+        <file>ScreenFrag.frag</file>
+        <file>ScreenVert.vert</file>
+    </qresource>
+    <qresource prefix="/ComputeShaders">
+        <file>PerlinNoise.comp</file>
+    </qresource>
+</RCC>

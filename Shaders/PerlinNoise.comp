@@ -1,0 +1,86 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32) in;
+
+layout (binding = 0, rgba32f) uniform image2D data;
+
+// 地形最大高度
+uniform float TerrainHeight;
+// 缩放倍率
+uniform vec2 Scale;
+// 平移
+uniform vec2 Transform;
+// 细节层数
+uniform int Detail;
+
+vec2 grad(vec2 pos) {
+   vec2 ans;
+   ans.x = pos.x * 127.1 + pos.y * 311.7;
+   ans.y = pos.x * 269.5 + pos.y * 183.3;
+
+   float sin0 = sin(ans.x) * 43758.5453123;
+   float sin1 = sin(ans.y) * 43758.5453123;
+   ans.x = (sin0 - floor(sin0)) * 2.0 - 1.0;
+   ans.y = (sin1 - floor(sin1)) * 2.0 - 1.0;
+    // 归一化，尽量消除正方形的方向性偏差
+   ans = normalize(ans);
+   return ans;
+}
+
+float perlin(vec2 pos) {
+   vec2 pos0 = floor(pos);
+   vec2 pos1 = pos0 + vec2(0, 1);
+   vec2 pos2 = pos0 + vec2(1, 1);
+   vec2 pos3 = pos0 + vec2(1, 0);
+
+   vec2 grad0 = grad(pos0);
+   vec2 grad1 = grad(pos1);
+   vec2 grad2 = grad(pos2);
+   vec2 grad3 = grad(pos3);
+
+   vec2 v0 = pos - pos0;
+   vec2 v1 = pos - pos1;
+   vec2 v2 = pos - pos2;
+   vec2 v3 = pos - pos3;
+
+   float product0 = dot(grad0, v0);
+   float product1 = dot(grad1, v1);
+   float product2 = dot(grad2, v2);
+   float product3 = dot(grad3, v3);
+
+   // P1和P2的插值
+   float d0 = pos.x - pos0.x;
+   float t0 = 6.0 * pow(d0, 5.0) - 15.0 * pow(d0, 4.0) + 10.0 * pow(d0, 3.0);
+   float n0 = product1 * (1.0 - t0) + product2 * t0;
+
+   // P0和P3的插值
+   float n1 = product0 * (1.0 - t0) + product3 * t0;
+
+   // P点的插值
+   float d1 = pos.y - pos0.y;
+   float t1 = 6.0 * pow(d1, 5.0) - 15.0 * pow(d1, 4.0) + 10.0 * pow(d1, 3.0);
+   return n1 * (1.0 - t1) + n0 * t1;
+}
+
+void main(){
+   vec2 texCoord = vec2(gl_GlobalInvocationID.xy);
+   // texCoord = vec2(Scale.x * texCoord.x, Scale.y * texCoord.y);
+   // texCoord += Transform;
+   float ans;
+   ans = 0;
+   for(int i = 0; i < 5; i++){
+      ans += perlin(texCoord / pow(2.0, 9 - i)) / pow(2.0, 1 + i);
+   }
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 256.0) / 4.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 128.0) / 8.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 64.0) / 16.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 32.0) / 32.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 16.0) / 64.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 8.0) / 128.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 4.0) / 256.0;
+   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 2.0) / 512.0;
+   ans = ans * 0.5 + 0.5;
+   ans = gl_GlobalInvocationID.x * gl_GlobalInvocationID.y / 1024.0 / 8.0;
+   //ans = 128;
+   imageStore(data, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans,ans, ans));
+}
