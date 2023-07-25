@@ -15,6 +15,8 @@ public:
     void InitGL(QOpenGLFunctions_4_5_Core &f) override;
     void RunNode(QOpenGLFunctions_4_5_Core &f) override;
     void Choose(QOpenGLFunctions_4_5_Core &f) override;
+    void Release(QOpenGLFunctions_4_5_Core &f) override;
+    unsigned int static test(QOpenGLFunctions_4_5_Core &f);
 
 public:
     Kernel_PerlinNoise_Node(QObject *parent = nullptr);

@@ -97,26 +97,7 @@ void Renderer::initializeGL() {
     // 摄像机准备
     setCameraInfo();
 
-    // TEST
-
-    glGenTextures(1, &test);
-    glBindTexture(GL_TEXTURE_2D, test);
-    glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, 1024, 1024);
-    ts = new QOpenGLShader(QOpenGLShader::Compute);
-    ts->compileSourceFile(":/ComputeShaders/PerlinNoise.comp");
-    tsp = new QOpenGLShaderProgram();
-    tsp->create();
-    tsp->addShader(ts);
-    tsp->link();
-
-    tsp->bind();
-    glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    tsp->setUniformValue("TerrainHeight", 256);
-    tsp->setUniformValue("Detail", (int)5);
-    tsp->setUniformValue("Scale", 1.0f, 1.0f);
-    tsp->setUniformValue("Transform", 0.0f, 0.0f);
-    glDispatchCompute(32, 32, 1);
-    globalinfo::useHeightFieldBuffer = true;
+    ChosenHeightFieldBuffer = 0;
 
     qDebug() << glGetError();
 }
@@ -129,8 +110,9 @@ void Renderer::paintGL() {
     PreRenderTerrainGround(swapFrameBuffer);
 
     terrainShaderProgram->bind();
-    glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    qDebug() << "test" << test;
+    glBindImageTexture(0, ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
+                       GL_READ_WRITE, GL_RGBA32F);
+    qDebug() << "test" << ChosenHeightFieldBuffer;
     terrainShaderProgram->setUniformValue("model", model);
     terrainShaderProgram->setUniformValue("view", view);
     terrainShaderProgram->setUniformValue("proj", proj);
@@ -142,7 +124,6 @@ void Renderer::paintGL() {
                                           globalinfo::TerrainGrid);
     terrainShaderProgram->setUniformValue("useHeightFieldBuffer",
                                           globalinfo::useHeightFieldBuffer);
-    terrainShaderProgram->setUniformValue("TerrainData", 0);
 
     terrainVAO->bind();
     glDrawElements(GL_TRIANGLES, indicesCount(), GL_UNSIGNED_INT, 0);

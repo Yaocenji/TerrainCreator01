@@ -21,14 +21,8 @@ void MainWindow::test() {
     pn->RunNode(*renderWidget->getFunctionAndContext());
     pn->Choose(*renderWidget->getFunctionAndContext());
     qDebug() << "成功创建";
-    // delete pn;
-    //    unsigned int data = pn->OutputPorts[0]->GetBufferData();
-    //    QOpenGLFunctions_4_5_Core f;
-    //    f.initializeOpenGLFunctions();
-    //    f.glBindImageTexture(0, data, 8, GL_FALSE, 0, GL_READ_WRITE,
-    //    GL_RGBA32F);
     globalinfo::useHeightFieldBuffer = true;
-    renderWidget->test = pn->OutputPorts[0]->GetBufferData();
+    renderWidget->ChosenHeightFieldBuffer = pn->OutputPorts[0]->GetBufferData();
     renderWidget->update();
 }
 

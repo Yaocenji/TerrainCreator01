@@ -9,8 +9,6 @@ layout (binding = 0, rgba32f) uniform image2D data;
 out vec4 worldPos;
 out vec2 texCoord;
 
-out vec3 col;
-
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -33,15 +31,12 @@ void main(){
         float HeightFieldData = imageLoad(data, itexCoord).r;
         //HeightFieldData = texture(TerrainData, texCoord).x;
         modelPos = vec4(pos.x, HeightFieldData, pos.y, 1.0);
-
-        if (HeightFieldData != 0) col = vec3(1, 0, 0);
     }
     else{
         float dist = length(rtexCoord);
         dist *= 3;
         float HeightData = 2 * TerrainHeight * 1.0 / sqrt(2.0 * PI) * exp(- dist * dist / 2.0);
         modelPos = vec4(pos.x, HeightData, pos.y, 1.0);
-        col = vec3(HeightData / TerrainHeight, 0, 0);
     }
     // 乘以mvp矩阵
     worldPos = model * modelPos;

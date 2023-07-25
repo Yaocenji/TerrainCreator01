@@ -10,8 +10,19 @@
 
 #include "kernel_port.h"
 
+/// 从文件创建计算着色器
+#define CreateComputeShaderFromPath(shader, shaderProgram, shaderFile) \
+    {                                                                  \
+        shader = new QOpenGLShader(QOpenGLShader::Compute);            \
+        shader->compileSourceFile(shaderFile);                         \
+        shaderProgram = new QOpenGLShaderProgram();                    \
+        shaderProgram->create();                                       \
+        shaderProgram->addShader(shader);                              \
+        shaderProgram->link();                                         \
+    }
+
 namespace kernel {
-/// 前置声明：父类
+/// 前置声明
 class NodeGraph;
 
 /// 节点————后端抽象计算层
@@ -44,12 +55,14 @@ public:
     void AddParamPort(PortDataType dt, QString n);
 
 public:
-    /// 初始化GL
+    /// 初始化GL（分配内存）
     virtual void InitGL(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 运行函数
     virtual void RunNode(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 选择该节点
     virtual void Choose(QOpenGLFunctions_4_5_Core &f) = 0;
+    /// 释放内存
+    virtual void Release(QOpenGLFunctions_4_5_Core &f) = 0;
 
 public:
     explicit Node(QObject *parent = nullptr, NodeGraph *pNM = nullptr);

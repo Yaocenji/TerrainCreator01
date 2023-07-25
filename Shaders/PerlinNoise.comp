@@ -64,23 +64,14 @@ float perlin(vec2 pos) {
 
 void main(){
    vec2 texCoord = vec2(gl_GlobalInvocationID.xy);
-   // texCoord = vec2(Scale.x * texCoord.x, Scale.y * texCoord.y);
-   // texCoord += Transform;
+   texCoord = vec2(Scale.x * texCoord.x, Scale.y * texCoord.y);
+   texCoord += Transform;
    float ans;
    ans = 0;
-   for(int i = 0; i < 5; i++){
+   for(int i = 0; i < 15; i++){
       ans += perlin(texCoord / pow(2.0, 9 - i)) / pow(2.0, 1 + i);
    }
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 256.0) / 4.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 128.0) / 8.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 64.0) / 16.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 32.0) / 32.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 16.0) / 64.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 8.0) / 128.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 4.0) / 256.0;
-   // ans += perlin(vec2(gl_GlobalInvocationID.xy) / 2.0) / 512.0;
    ans = ans * 0.5 + 0.5;
-   ans = gl_GlobalInvocationID.x * gl_GlobalInvocationID.y / 1024.0 / 8.0;
-   //ans = 128;
+   ans *= TerrainHeight;
    imageStore(data, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans,ans, ans));
 }

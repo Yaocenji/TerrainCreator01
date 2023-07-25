@@ -33,9 +33,8 @@ private:
     QOpenGLVertexArrayObject *screenVAO;
 
 public:
-    GLuint test;
-    QOpenGLShader *ts;
-    QOpenGLShaderProgram *tsp;
+    /// 当前选择的高度场
+    GLuint ChosenHeightFieldBuffer;
 
 protected:
     /// 地形平面顶点数据组
