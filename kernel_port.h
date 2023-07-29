@@ -58,7 +58,7 @@ protected:
     /// 一个字符串名字
     QString name;
 
-public:
+protected:
     /// 连接的buffer（高度场、图像、点云），是GL缓存指针
     unsigned int ConBuffer;
     /// 连接的单个浮点数的值（并非地址，因为无必要）
@@ -71,8 +71,10 @@ public:
     bool isAvailable;
     /// 是否创建了显存缓存
     bool isAllocated;
-    /// 创建显存缓存
+    /// 创建显存缓存（高度场与贴图）
     void AllocateBuffer(QOpenGLFunctions_4_5_Core &f);
+    /// 创建显存缓存（点云）
+    void AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size);
     /// 删除显存缓存
     void DeleteBuffer(QOpenGLFunctions_4_5_Core &f);
 

@@ -18,8 +18,8 @@ Kernel_PerlinNoise_Node::Kernel_PerlinNoise_Node(QObject *parent)
 }
 
 void Kernel_PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
-    //    f.initializeOpenGLFunctions();
-
+    // 清空shader数组，重新准备
+    shaderPrograms.clear();
     // 准备第一个shader：柏林噪声生成器
     QOpenGLShader *shader1; // = new QOpenGLShader(QOpenGLShader::Compute);
     // shader1->compileSourceFile(":/ComputeShaders/PerlinNoise.comp");
@@ -32,7 +32,9 @@ void Kernel_PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
                                 ":/ComputeShaders/PerlinNoise.comp");
 
     this->shaderPrograms.push_back(shaderProgram1);
+}
 
+void Kernel_PerlinNoise_Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
     // 准备缓存
     for (auto &i : OutputPorts) {
         i->AllocateBuffer(f);

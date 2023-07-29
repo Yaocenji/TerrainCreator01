@@ -21,6 +21,7 @@ SOURCES += \
     kernel_nodegraph.cpp \
     kernel_perlinnoise_node.cpp \
     kernel_port.cpp \
+    kernel_wire.cpp \
     main.cpp \
     mainwindow.cpp \
     renderer.cpp
@@ -31,6 +32,7 @@ HEADERS += \
     kernel_nodegraph.h \
     kernel_perlinnoise_node.h \
     kernel_port.h \
+    kernel_wire.h \
     mainwindow.h \
     renderer.h
 

@@ -55,8 +55,10 @@ public:
     void AddParamPort(PortDataType dt, QString n);
 
 public:
-    /// 初始化GL（分配内存）
+    /// 初始化GL
     virtual void InitGL(QOpenGLFunctions_4_5_Core &f) = 0;
+    /// 分配显存
+    virtual void Allocate(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 运行函数
     virtual void RunNode(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 选择该节点

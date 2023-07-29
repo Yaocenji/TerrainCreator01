@@ -1,4 +1,37 @@
 #include "kernel_port.h"
+
+#define glCreateHeightField(glContext, data)                   \
+    {                                                          \
+        glContext.glGenTextures(1, &data);                     \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);          \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, \
+                                 globalinfo::TerrainGrid,      \
+                                 globalinfo::TerrainGrid);     \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);             \
+    }
+
+#define glCreateTexture(glContext, data)                                 \
+    {                                                                    \
+        glContext.glGenTextures(1, &data);                               \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                    \
+        glContext.glTexImage2D(                                          \
+            GL_TEXTURE_2D, 0, GL_RGB, globalinfo::TerrainGrid,           \
+            globalinfo::TerrainGrid, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL); \
+        glContext.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  \
+                                  GL_LINEAR);                            \
+        glContext.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,  \
+                                  GL_LINEAR);                            \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
+    }
+
+#define glCreatePointCloud(glContext, data, size)                        \
+    {                                                                    \
+        glContext.glGenTextures(1, &data);                               \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                    \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, size, 1); \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
+    }
+
 namespace kernel {
 
 Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n)
@@ -23,26 +56,46 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
     }
     //    QOpenGLFunctions_4_5_Core f;
     //    f.initializeOpenGLFunctions();
-    // 如果是二维高度场、二维点云、三维点云的话
-    if (this->dataType != PortDataType::RGBA2D &&
-        this->dataType != PortDataType::Float) {
-        f.glGenTextures(1, &ConBuffer);
-        f.glBindTexture(GL_TEXTURE_2D, ConBuffer);
-        f.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, globalinfo::TerrainGrid,
-                         globalinfo::TerrainGrid);
+    // 如果是二维高度场的话
+    if (this->dataType == PortDataType::Float2D) {
+        glCreateHeightField(f, ConBuffer);
     } else if (this->dataType == PortDataType::RGBA2D) {
-        f.glGenTextures(1, &ConBuffer);
-        f.glBindTexture(GL_TEXTURE_2D, ConBuffer);
-        f.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, globalinfo::TerrainGrid,
-                       globalinfo::TerrainGrid, 0, GL_RGB, GL_UNSIGNED_BYTE,
-                       NULL);
-        f.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        f.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        f.glBindTexture(GL_TEXTURE_2D, 0);
+        glCreateTexture(f, ConBuffer);
     } else if (this->dataType == PortDataType::Float) {
         ConBuffer = 0;
         ConFloat = 0;
     }
+    // 如果创建点云的话
+    else {
+        qDebug() << "ERROR: You should give an argument more to descibe the "
+                    "number of pointers in the point cloud!";
+        return;
+    }
+
+    isAllocated = true;
+}
+
+void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size) {
+    if (isAllocated) {
+        qDebug() << "ERROR: Buffer has been allocated, it is cannot be "
+                    "allocated again!";
+        return;
+    }
+    // 如果是二维点云的话
+    if (this->dataType == PortDataType::PointCloud2D) {
+        glCreatePointCloud(f, ConBuffer, size);
+    }
+    // 如果是三维点云的话
+    else if (this->dataType == PortDataType::PointCloud3D) {
+        glCreatePointCloud(f, ConBuffer, size);
+    }
+    // 如果创建非点云的话
+    else {
+        qDebug() << "ERROR: Create a non-point-cloud buffer should use no "
+                    "argument to describe size!";
+        return;
+    }
+
     isAllocated = true;
 }
 
@@ -51,8 +104,6 @@ void Port::DeleteBuffer(QOpenGLFunctions_4_5_Core &f) {
         qDebug() << "ERROR: Try deleting buffer before the buffer created!";
         return;
     }
-    //    QOpenGLFunctions_4_5_Core f;
-    //    f.initializeOpenGLFunctions();
     // 如果是二维高度场、二维点云、三维点云的话
     if (this->dataType != PortDataType::Float) {
         f.glDeleteTextures(1, &ConBuffer);

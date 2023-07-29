@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 void MainWindow::test() {
     pn = new kernel::Kernel_PerlinNoise_Node(this);
     pn->InitGL(*renderWidget->getFunctionAndContext());
+    pn->Allocate(*renderWidget->getFunctionAndContext());
     pn->RunNode(*renderWidget->getFunctionAndContext());
     pn->Choose(*renderWidget->getFunctionAndContext());
     qDebug() << "成功创建";
