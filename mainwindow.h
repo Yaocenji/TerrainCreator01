@@ -17,7 +17,7 @@ public:
 
 protected:
     Renderer *renderWidget;
-    kernel::Kernel_PerlinNoise_Node *pn;
+    kernel::PerlinNoise_Node *pn;
     QPushButton *pb1;
 public slots:
     void test();

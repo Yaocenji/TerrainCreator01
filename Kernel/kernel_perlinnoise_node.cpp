@@ -1,8 +1,7 @@
 #include "kernel_perlinnoise_node.h"
 namespace kernel {
 
-Kernel_PerlinNoise_Node::Kernel_PerlinNoise_Node(QObject *parent)
-    : Node(parent) {
+PerlinNoise_Node::PerlinNoise_Node(QObject *parent) : Node(parent) {
     // 添加输出：一个二维高度场柏林噪声
     AddOutputPort(PortDataType::Float2D, "高度场输出");
     // 添加参数：种子
@@ -17,7 +16,7 @@ Kernel_PerlinNoise_Node::Kernel_PerlinNoise_Node(QObject *parent)
     AddParamPort(PortDataType::Float, "Y轴偏移");
 }
 
-void Kernel_PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
+void PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
     // 清空shader数组，重新准备
     shaderPrograms.clear();
     // 准备第一个shader：柏林噪声生成器
@@ -34,7 +33,7 @@ void Kernel_PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
     this->shaderPrograms.push_back(shaderProgram1);
 }
 
-void Kernel_PerlinNoise_Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
+void PerlinNoise_Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
     // 准备缓存
     for (auto &i : OutputPorts) {
         i->AllocateBuffer(f);
@@ -44,7 +43,7 @@ void Kernel_PerlinNoise_Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
     }
 }
 
-void Kernel_PerlinNoise_Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
+void PerlinNoise_Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
     //    f.initializeOpenGLFunctions();
     qDebug() << f.glGetError();
 
@@ -66,14 +65,14 @@ void Kernel_PerlinNoise_Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
     qDebug() << f.glGetError();
 }
 
-void Kernel_PerlinNoise_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
+void PerlinNoise_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
     unsigned int data = OutputPorts[0]->GetBufferData();
     //    f.initializeOpenGLFunctions();
     f.glBindImageTexture(0, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     globalinfo::useHeightFieldBuffer = true;
 }
 
-void Kernel_PerlinNoise_Node::Release(QOpenGLFunctions_4_5_Core &f) {
+void PerlinNoise_Node::Release(QOpenGLFunctions_4_5_Core &f) {
     // 释放所有缓存
     for (auto &i : OutputPorts) {
         i->DeleteBuffer(f);
@@ -83,7 +82,7 @@ void Kernel_PerlinNoise_Node::Release(QOpenGLFunctions_4_5_Core &f) {
     }
 }
 
-unsigned int Kernel_PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
+unsigned int PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
     QOpenGLShader *ts;
     QOpenGLShaderProgram *tsp;
     unsigned int test;
