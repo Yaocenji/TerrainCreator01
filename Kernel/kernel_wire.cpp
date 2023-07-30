@@ -1,9 +1,10 @@
 #include "kernel_wire.h"
 
+#include "kernel_port.h"
+
 namespace kernel {
 
-Kernel_Wire::Kernel_Wire(QObject *parent, Port *ip, Port *op)
-    : QObject(parent) {
+Wire::Wire(QObject *parent, Port *ip, Port *op) : QObject(parent) {
     inputPort = nullptr;
     outputPort = nullptr;
     /// 检验接口类型
@@ -15,6 +16,13 @@ Kernel_Wire::Kernel_Wire(QObject *parent, Port *ip, Port *op)
     } else {
         qDebug() << "ERROR: port type is wrong in creating kernel wire!";
     }
+}
+
+Port *Wire::GetInput() {
+    return inputPort;
+}
+Port *Wire::GetOutput() {
+    return outputPort;
 }
 
 } // namespace kernel

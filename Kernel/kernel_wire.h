@@ -1,14 +1,14 @@
 #ifndef KERNEL_WIRE_H
 #define KERNEL_WIRE_H
 
+#include <QDebug>
 #include <QObject>
-
-#include "kernel_port.h"
 
 namespace kernel {
 
+class Port;
 /// 连线
-class Kernel_Wire : public QObject {
+class Wire : public QObject {
     Q_OBJECT
 private:
     /// 输入的节点
@@ -17,9 +17,12 @@ private:
     Port *outputPort;
 
 public:
+    Port *GetInput();
+    Port *GetOutput();
+
 public:
-    explicit Kernel_Wire(QObject *parent = nullptr, Port *ip = nullptr,
-                         Port *op = nullptr);
+    explicit Wire(QObject *parent = nullptr, Port *ip = nullptr,
+                  Port *op = nullptr);
 
 signals:
 };

@@ -8,11 +8,17 @@
 #include <QString>
 #include <QVector>
 
-#include "globalinfo.h"
+#include "Global/globalinfo.h"
 
 namespace kernel {
 
-// 前置声明nodeback
+// 前置声明wire
+class Wire;
+
+// 前置声明nodegraph
+class NodeGraph;
+
+// 前置声明node
 class Node;
 
 /// 枚举接口的种类：输入、参数配置输入、输出
@@ -85,6 +91,9 @@ public:
     void SetPortDataType(PortDataType t);
     /// 获取接口数据类型
     PortDataType GetPortDataType();
+
+    /// 是否连接了某个接口
+    bool isLinkedWith(Port *tar);
     /// 获得连接的数据
     void GetData(unsigned int &buffer, float &value);
     /// 获得连接的buffer
@@ -96,8 +105,10 @@ public:
     void SetData(float value);
     /// 判断是否连接
     bool isLinked();
-    /// 连接函数，返回值表示连接是否成功
+    /// (弃用)连接函数，返回值表示连接是否成功
     bool Link(Port *targetPort);
+    /// 根据传入数组更新Link信息
+    void UpdateLinkInfo(QVector<Wire *> &wires);
 
 public:
     explicit Port(QObject *parent = nullptr, Node *pN = nullptr,

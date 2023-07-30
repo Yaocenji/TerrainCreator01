@@ -2,10 +2,13 @@
 #define KERNEL_NODEGRAPH_H
 
 #include <QObject>
+#include <QVector>
 
-#include "kernel_node.h"
-#include "kernel_perlinnoise_node.h"
 namespace kernel {
+
+class Node;
+class PerlinNoise_Node;
+class Wire;
 
 /// 节点图的计算抽象层，是nodelayout的后端，和宏节点能交叉递归
 class NodeGraph : public QObject {
@@ -15,6 +18,12 @@ protected:
     bool isSubgraph;
     /// 如果是子图，那么所属的节点
     Node *ownerNode;
+
+protected:
+    /// 节点表
+    QVector<Node *> nodes;
+    /// 连线表
+    QVector<Wire *> wires;
 
 public:
     /**

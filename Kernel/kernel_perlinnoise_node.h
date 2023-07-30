@@ -7,8 +7,9 @@
 #include "kernel_node.h"
 
 namespace kernel {
+
 /// 柏林噪声节点————抽象层
-class Kernel_PerlinNoise_Node : public Node {
+class PerlinNoise_Node : public Node {
     Q_OBJECT
 protected:
 public:
@@ -25,7 +26,7 @@ public:
     unsigned int static test(QOpenGLFunctions_4_5_Core &f);
 
 public:
-    Kernel_PerlinNoise_Node(QObject *parent = nullptr);
+    PerlinNoise_Node(QObject *parent = nullptr);
 };
 } // namespace kernel
 #endif // KERNEL_PERLINNOISE_NODE_H

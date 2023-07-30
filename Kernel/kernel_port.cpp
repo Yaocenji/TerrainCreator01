@@ -1,5 +1,7 @@
 #include "kernel_port.h"
 
+#include "kernel_wire.h"
+
 #define glCreateHeightField(glContext, data)                   \
     {                                                          \
         glContext.glGenTextures(1, &data);                     \
@@ -131,6 +133,13 @@ PortDataType Port::GetPortDataType() {
     return this->dataType;
 }
 
+bool Port::isLinkedWith(Port *tar) {
+    for (int i = 0; i < LinkedPorts.length(); i++) {
+        if (LinkedPorts[i] == tar) return true;
+    }
+    return false;
+}
+
 unsigned int Port::GetBufferData() {
     if (dataType == PortDataType::Float) {
         qDebug() << "It is wrong to try getting wrong type data.";
@@ -249,6 +258,26 @@ bool Port::Link(Port *targetPort) {
         qDebug() << "ERROR: The port types are not corresponding, so "
                     "they cannot be linked.";
         return false;
+    }
+}
+
+void Port::UpdateLinkInfo(QVector<Wire *> &wires) {
+    this->LinkedPorts.clear();
+    // 如果是输入节点
+    if (this->type == PortType::Input || this->type == PortType::Param) {
+        for (int i = 0; i < wires.length(); i++) {
+            if (wires[i]->GetOutput() == this) {
+                this->LinkedPorts.push_back(wires[i]->GetInput());
+            }
+        }
+    }
+    // 如果是输出节点
+    else {
+        for (int i = 0; i < wires.length(); i++) {
+            if (wires[i]->GetOutput() == this) {
+                this->LinkedPorts.push_back(wires[i]->GetInput());
+            }
+        }
     }
 }
 

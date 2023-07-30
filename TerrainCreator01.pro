@@ -16,23 +16,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    globalinfo.cpp \
-    kernel_node.cpp \
-    kernel_nodegraph.cpp \
-    kernel_perlinnoise_node.cpp \
-    kernel_port.cpp \
-    kernel_wire.cpp \
+    Global/globalinfo.cpp \
+    Kernel/kernel_node.cpp \
+    Kernel/kernel_nodegraph.cpp \
+    Kernel/kernel_perlinnoise_node.cpp \
+    Kernel/kernel_port.cpp \
+    Kernel/kernel_wire.cpp \
     main.cpp \
     mainwindow.cpp \
     renderer.cpp
 
 HEADERS += \
-    globalinfo.h \
-    kernel_node.h \
-    kernel_nodegraph.h \
-    kernel_perlinnoise_node.h \
-    kernel_port.h \
-    kernel_wire.h \
+    Global/globalinfo.h \
+    Kernel/kernel_node.h \
+    Kernel/kernel_nodegraph.h \
+    Kernel/kernel_perlinnoise_node.h \
+    Kernel/kernel_port.h \
+    Kernel/kernel_wire.h \
     mainwindow.h \
     renderer.h
 

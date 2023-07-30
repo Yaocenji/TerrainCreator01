@@ -13,8 +13,8 @@
 #include <QOpenGLWidget>
 #include <iostream>
 
-#include "globalinfo.h"
-#include "kernel_perlinnoise_node.h"
+#include "Global/globalinfo.h"
+#include "Kernel/kernel_perlinnoise_node.h"
 
 /// 程序的渲染窗口
 class Renderer : public QOpenGLWidget, QOpenGLFunctions_4_5_Core {
