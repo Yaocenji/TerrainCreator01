@@ -3,6 +3,7 @@
 
 #include <QDebug>
 #include <QMatrix4x4>
+#include <QMouseEvent>
 #include <QOpenGLBuffer>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_4_5_Core>
@@ -11,6 +12,9 @@
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
+#include <QPoint>
+#include <QPointF>
+#include <QtMath>
 #include <iostream>
 
 #include "Global/globalinfo.h"
@@ -33,9 +37,6 @@ private:
     QOpenGLVertexArrayObject *screenVAO;
 
 public:
-    /// 当前选择的高度场
-    GLuint ChosenHeightFieldBuffer;
-
 protected:
     /// 地形平面顶点数据组
     float *panelVertices;
@@ -65,6 +66,8 @@ private:
     GLuint swapColorBuffer, swapDepthBuffer;
 
 private:
+    /// 摄像机位置
+    QVector3D camPos;
     /// 摄像机mvp矩阵内容
     QMatrix4x4 model, view, proj;
 
@@ -100,7 +103,20 @@ protected:
     void setRenderShaders();
 
 protected:
+    /// 设置摄像机
     void setCameraInfo();
+    /// 鼠标函数
+
+    bool isControlling;
+    QPoint mouseOldPos;
+    float altitude;
+    float azimuth;
+    float distance;
+    float scaleSensitive, rotateSensitive;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
 public:
     /// 获取自身的上下文指针

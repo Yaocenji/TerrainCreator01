@@ -17,6 +17,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     Global/globalinfo.cpp \
+    Kernel/kernel_clamp_node.cpp \
+    Kernel/kernel_input_node.cpp \
     Kernel/kernel_node.cpp \
     Kernel/kernel_nodegraph.cpp \
     Kernel/kernel_perlinnoise_node.cpp \
@@ -28,6 +30,8 @@ SOURCES += \
 
 HEADERS += \
     Global/globalinfo.h \
+    Kernel/kernel_clamp_node.h \
+    Kernel/kernel_input_node.h \
     Kernel/kernel_node.h \
     Kernel/kernel_nodegraph.h \
     Kernel/kernel_perlinnoise_node.h \

@@ -16,17 +16,17 @@ public:
     /// 初始化GL，分配显存
     void InitGL(QOpenGLFunctions_4_5_Core &f) override;
     /// 分配显存
-    void Allocate(QOpenGLFunctions_4_5_Core &f) override;
+    //    void Allocate(QOpenGLFunctions_4_5_Core &f) override;
     /// 运行节点
-    void RunNode(QOpenGLFunctions_4_5_Core &f) override;
+    void CalculateNode(QOpenGLFunctions_4_5_Core &f) override;
     /// 选择并显示节点
     void Choose(QOpenGLFunctions_4_5_Core &f) override;
     /// 释放
-    void Release(QOpenGLFunctions_4_5_Core &f) override;
+    //    void Release(QOpenGLFunctions_4_5_Core &f) override;
     unsigned int static test(QOpenGLFunctions_4_5_Core &f);
 
 public:
-    PerlinNoise_Node(QObject *parent = nullptr);
+    PerlinNoise_Node(QObject *parent = nullptr, NodeGraph *pNG = nullptr);
 };
 } // namespace kernel
 #endif // KERNEL_PERLINNOISE_NODE_H

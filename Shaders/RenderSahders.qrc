@@ -9,5 +9,6 @@
     </qresource>
     <qresource prefix="/ComputeShaders">
         <file>PerlinNoise.comp</file>
+        <file>Clamp.comp</file>
     </qresource>
 </RCC>

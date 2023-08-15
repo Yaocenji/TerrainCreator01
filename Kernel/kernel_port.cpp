@@ -36,8 +36,9 @@
 
 namespace kernel {
 
-Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n)
-    : QObject(parent), type(t), dataType(dt), name(n) {
+Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
+           bool hD)
+    : QObject(parent), type(t), dataType(dt), name(n), hasDefaultValue(hD) {
     parentNode = pN;
     ConBuffer = 0;
     ConFloat = 0;
@@ -51,6 +52,27 @@ Node *Port::GetParentNode() {
 }
 
 void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
+    // 如果是输入/参数节点，那么将数据和相连的输出节点匹配或使用默认值
+    if (type != PortType::Output) {
+        if (!isLinked() && hasDefaultValue)
+            return;
+
+        else if (!isLinked() && !hasDefaultValue) {
+            qDebug()
+                << "ERROR: This node " + name +
+                       " does not have default value and is not connected.";
+            return;
+        } else {
+            this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
+            this->ConBuffer = this->LinkedPorts[0]->ForceGetBufferData();
+
+            isAllocated = true;
+
+            return;
+        }
+        //        qDebug() << "ERROR: input or param port need not allocate
+        //        buffer!";
+    }
     if (isAllocated) {
         qDebug() << "ERROR: Buffer has been allocated, it is cannot be "
                     "allocated again!";
@@ -78,6 +100,27 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
 }
 
 void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size) {
+    // 如果是输入/参数节点，那么将数据和相连的输出节点匹配或使用默认值
+    if (type != PortType::Output) {
+        if (!isLinked() && hasDefaultValue)
+            return;
+
+        else if (!isLinked() && !hasDefaultValue) {
+            qDebug()
+                << "ERROR: This node " + name +
+                       " does not have default value and is not connected.";
+            return;
+        } else {
+            this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
+            this->ConBuffer = this->LinkedPorts[0]->ForceGetBufferData();
+
+            isAllocated = true;
+
+            return;
+        }
+        //        qDebug() << "ERROR: input or param port need not allocate
+        //        buffer!";
+    }
     if (isAllocated) {
         qDebug() << "ERROR: Buffer has been allocated, it is cannot be "
                     "allocated again!";
@@ -116,6 +159,14 @@ void Port::DeleteBuffer(QOpenGLFunctions_4_5_Core &f) {
     isAllocated = false;
 }
 
+void Port::CopyFrom(QOpenGLFunctions_4_5_Core &f, Port *tar) {
+    if (isAllocated) DeleteBuffer(f);
+    this->type = tar->GetType();
+    this->dataType = tar->GetDataType();
+    this->ConBuffer = tar->ForceGetBufferData();
+    this->ConFloat = tar->ForceGetFloatData();
+}
+
 PortType Port::GetType() {
     return type;
 }
@@ -129,7 +180,7 @@ void Port::SetPortDataType(PortDataType t) {
     }
 }
 
-PortDataType Port::GetPortDataType() {
+PortDataType Port::GetDataType() {
     return this->dataType;
 }
 
@@ -138,6 +189,30 @@ bool Port::isLinkedWith(Port *tar) {
         if (LinkedPorts[i] == tar) return true;
     }
     return false;
+}
+
+bool Port::TryGetDataFromWire() {
+    if (this->type == PortType::Output) {
+        qDebug() << "This port need not to be tried getting data from wire "
+                    "because it is an output port.";
+        return false;
+    } else {
+        if (!isLinked()) {
+            return false;
+        } else {
+            this->ConBuffer = LinkedPorts[0]->GetBufferData();
+            this->ConFloat = LinkedPorts[0]->GetFloatData();
+            return true;
+        }
+    }
+}
+
+unsigned int Port::ForceGetBufferData() {
+    return ConBuffer;
+}
+
+float Port::ForceGetFloatData() {
+    return ConFloat;
 }
 
 unsigned int Port::GetBufferData() {
@@ -278,6 +353,19 @@ void Port::UpdateLinkInfo(QVector<Wire *> &wires) {
                 this->LinkedPorts.push_back(wires[i]->GetInput());
             }
         }
+    }
+}
+
+void Port::UpdateAvailableState() {
+    if (type == PortType::Input || type == PortType::Param) {
+        if (isLinked()) {
+            this->isAvailable = LinkedPorts[0]->isAvailable;
+        } else {
+            this->isAvailable = this->hasDefaultValue;
+        }
+    } else {
+        qDebug() << "Warning: Output port " + name +
+                        " should not update its available state.";
     }
 }
 

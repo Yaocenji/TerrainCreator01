@@ -64,6 +64,10 @@ protected:
     /// 一个字符串名字
     QString name;
 
+public:
+    /// 是否有默认值(是否不一定需要输入)
+    const bool hasDefaultValue;
+
 protected:
     /// 连接的buffer（高度场、图像、点云），是GL缓存指针
     unsigned int ConBuffer;
@@ -85,23 +89,33 @@ public:
     void DeleteBuffer(QOpenGLFunctions_4_5_Core &f);
 
 public:
+    /// 从其他接口中复制信息
+    void CopyFrom(QOpenGLFunctions_4_5_Core &f, Port *tar);
+
     /// 获取接口类型
     PortType GetType();
     /// 设置/切换接口数据类型
     void SetPortDataType(PortDataType t);
     /// 获取接口数据类型
-    PortDataType GetPortDataType();
+    PortDataType GetDataType();
 
     /// 是否连接了某个接口
     bool isLinkedWith(Port *tar);
+    /// 试图从连线获取连接的数据（如果是输入或参数节点），返回值表示是否成功
+    bool TryGetDataFromWire();
     /// 获得连接的数据
     void GetData(unsigned int &buffer, float &value);
     /// 获得连接的buffer
     unsigned int GetBufferData();
     /// 获得链接的float
     float GetFloatData();
+    /// 获得连接的buffer
+    unsigned int ForceGetBufferData();
+    /// 获得链接的float
+    float ForceGetFloatData();
     /// 设置数据
     void SetData(unsigned int buffer);
+    /// 设置数据
     void SetData(float value);
     /// 判断是否连接
     bool isLinked();
@@ -109,12 +123,14 @@ public:
     bool Link(Port *targetPort);
     /// 根据传入数组更新Link信息
     void UpdateLinkInfo(QVector<Wire *> &wires);
+    /// 更新是否可用信息
+    void UpdateAvailableState();
 
 public:
     explicit Port(QObject *parent = nullptr, Node *pN = nullptr,
                   PortType t = PortType::Input,
-                  PortDataType dt = PortDataType::Float2D,
-                  QString n = "未命名");
+                  PortDataType dt = PortDataType::Float2D, QString n = "未命名",
+                  bool hD = false);
 
 signals:
 };

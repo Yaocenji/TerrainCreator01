@@ -49,6 +49,12 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     model = QMatrix4x4();
     view = QMatrix4x4();
     proj = QMatrix4x4();
+    isControlling = false;
+    azimuth = 0;
+    altitude = M_PI / 2.0;
+    distance = sqrt(2.0);
+    rotateSensitive = 0.005f;
+    scaleSensitive = 0.001f;
 }
 
 void Renderer::initializeGL() {
@@ -95,9 +101,9 @@ void Renderer::initializeGL() {
     prepareSwapChain();
 
     // 摄像机准备
+    camPos = QVector3D(0.0, 1.0, -1.0);
+    mouseOldPos = QPoint();
     setCameraInfo();
-
-    ChosenHeightFieldBuffer = 0;
 
     qDebug() << glGetError();
 }
@@ -110,9 +116,8 @@ void Renderer::paintGL() {
     PreRenderTerrainGround(swapFrameBuffer);
 
     terrainShaderProgram->bind();
-    glBindImageTexture(0, ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
+    glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
                        GL_READ_WRITE, GL_RGBA32F);
-    qDebug() << "test" << ChosenHeightFieldBuffer;
     terrainShaderProgram->setUniformValue("model", model);
     terrainShaderProgram->setUniformValue("view", view);
     terrainShaderProgram->setUniformValue("proj", proj);
@@ -128,7 +133,7 @@ void Renderer::paintGL() {
     terrainVAO->bind();
     glDrawElements(GL_TRIANGLES, indicesCount(), GL_UNSIGNED_INT, 0);
 
-    qDebug() << "场景渲染后" << glGetError();
+    //    qDebug() << "场景渲染后" << glGetError();
 
     PreSwapFrameBufferToScreen(swapColorBuffer, swapDepthBuffer);
 
@@ -137,7 +142,7 @@ void Renderer::paintGL() {
     swapShaderProgram->setUniformValue("depthBuffer", 1);
     screenVAO->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    qDebug() << "交换渲染后" << glGetError();
+    //    qDebug() << "交换渲染后" << glGetError();
 }
 
 void Renderer::setTerrainInfo() {
@@ -322,13 +327,42 @@ void Renderer::setRenderShaders() {
 }
 
 void Renderer::setCameraInfo() {
+    camPos = QVector3D(distance * sinf(altitude) * cosf(azimuth),
+                       distance * cosf(altitude),
+                       distance * sinf(altitude) * sinf(azimuth));
+
     model = QMatrix4x4();
     model.scale(0.001f);
     view = QMatrix4x4();
-    view.lookAt(QVector3D(0.0, 1.0, -1.0), QVector3D(0, 0, 0),
-                QVector3D(0, 1, 0));
+    view.lookAt(camPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
     proj = QMatrix4x4();
-    proj.perspective(45, ((float)width()) / height(), 0.01, 15.0);
+    proj.perspective(45, ((float)width()) / ((float)height()), 0.01, 15.0);
+}
+
+void Renderer::mousePressEvent(QMouseEvent *event) {
+    isControlling = true;
+    mouseOldPos = event->pos();
+}
+
+void Renderer::mouseMoveEvent(QMouseEvent *event) {
+    QPoint deltaP = event->pos() - mouseOldPos;
+    azimuth += deltaP.x() * rotateSensitive;
+    altitude -= deltaP.y() * rotateSensitive;
+    setCameraInfo();
+    mouseOldPos = event->pos();
+    update();
+}
+
+void Renderer::mouseReleaseEvent(QMouseEvent *event) {
+    mouseMoveEvent(event);
+    isControlling = false;
+}
+
+void Renderer::wheelEvent(QWheelEvent *event) {
+    distance *= exp(-(event->angleDelta().x() + event->angleDelta().y()) *
+                    scaleSensitive);
+    setCameraInfo();
+    update();
 }
 
 QOpenGLFunctions_4_5_Core *Renderer::getFunctionAndContext() {

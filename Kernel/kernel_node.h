@@ -10,17 +10,6 @@
 
 #include "kernel_port.h"
 
-/// 从文件创建计算着色器
-#define CreateComputeShaderFromPath(shader, shaderProgram, shaderFile) \
-    {                                                                  \
-        shader = new QOpenGLShader(QOpenGLShader::Compute);            \
-        shader->compileSourceFile(shaderFile);                         \
-        shaderProgram = new QOpenGLShaderProgram();                    \
-        shaderProgram->create();                                       \
-        shaderProgram->addShader(shader);                              \
-        shaderProgram->link();                                         \
-    }
-
 namespace kernel {
 /// 前置声明
 class NodeGraph;
@@ -30,11 +19,15 @@ class Node : public QObject {
     Q_OBJECT
 protected:
     /// 所属的节点图层，在任何情况下都不应该为null
-    NodeGraph *parentNodeManager;
+    NodeGraph *parentNodeGraph;
 
 public:
     /// 获取所属的节点图层
     NodeGraph *GetParentNodeManager();
+
+public:
+    /// 是否计算完成
+    bool isFinished;
 
 public:
     /// 输入节点数组
@@ -43,28 +36,36 @@ public:
     QVector<Port *> OutputPorts;
     /// 参数节点数组
     QVector<Port *> ParamPorts;
-    /// 计算着色器数组
+    /// 着色器存储
+    QVector<QOpenGLShader *> shaders;
+    /// 计算着色器程序数组
     QVector<QOpenGLShaderProgram *> shaderPrograms;
 
 public:
     /// 添加输入节点
-    void AddInputPort(PortDataType dt, QString n);
+    void AddInputPort(PortDataType dt, QString n, bool hasDefault);
     /// 添加输出节点
     void AddOutputPort(PortDataType dt, QString n);
     /// 添加参数节点
-    void AddParamPort(PortDataType dt, QString n);
+    void AddParamPort(PortDataType dt, QString n, bool hasDefault);
+    /// 添加着色器
+    void AddComputeShaderFromPath(QString path);
+    /// 清空着色器
+    void ClearShaders();
 
 public:
     /// 初始化GL
     virtual void InitGL(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 分配显存
-    virtual void Allocate(QOpenGLFunctions_4_5_Core &f) = 0;
+    virtual void Allocate(QOpenGLFunctions_4_5_Core &f);
     /// 运行函数
-    virtual void RunNode(QOpenGLFunctions_4_5_Core &f) = 0;
+    bool RunNode(QOpenGLFunctions_4_5_Core &f);
+    /// 计算函数
+    virtual void CalculateNode(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 选择该节点
     virtual void Choose(QOpenGLFunctions_4_5_Core &f) = 0;
     /// 释放内存
-    virtual void Release(QOpenGLFunctions_4_5_Core &f) = 0;
+    virtual void Release(QOpenGLFunctions_4_5_Core &f);
 
 public:
     explicit Node(QObject *parent = nullptr, NodeGraph *pNM = nullptr);
