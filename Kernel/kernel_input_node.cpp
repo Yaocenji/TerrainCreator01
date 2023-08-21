@@ -1,7 +1,7 @@
 #include "kernel_input_node.h"
 
 #include "kernel_nodegraph.h"
-namespace kernel {
+namespace Kernel {
 
 Input_Node::Input_Node(QObject *parent) : Node(parent) {
 }

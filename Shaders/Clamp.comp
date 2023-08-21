@@ -11,7 +11,14 @@ uniform float Low;
 // 输入2：最高高度
 uniform float High;
 
+float MyClamp(float min, float max, float x){
+   if (x > max) return max;
+   else if (x < min) return min;
+   else return x;
+}
+
 void main(){
-   float ans = clamp(imageLoad(sourse, ivec2(gl_GlobalInvocationID.xy)).r, Low, High);
+   float ans = imageLoad(sourse, ivec2(gl_GlobalInvocationID.xy)).r;
+   ans = clamp(ans, Low, High);
    imageStore(data, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans,ans, ans));
 }

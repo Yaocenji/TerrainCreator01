@@ -2,12 +2,13 @@
 
 #define PI 3.14159265
 
-in vec2 pos;
+layout(location = 0)in vec2 pos;
 
 layout (binding = 0, rgba32f) uniform image2D data;
 
 out vec4 worldPos;
 out vec2 texCoord;
+out vec4 clipPos;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -40,6 +41,6 @@ void main(){
     }
     // 乘以mvp矩阵
     worldPos = model * modelPos;
-    vec4 clipPos = proj * view * worldPos;
+    clipPos = proj * view * worldPos;
     gl_Position = clipPos;
 }

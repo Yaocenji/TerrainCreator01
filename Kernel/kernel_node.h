@@ -1,6 +1,7 @@
 #ifndef KERNEL_NODE_H
 #define KERNEL_NODE_H
 
+#include <QColor>
 #include <QObject>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFunctions_4_5_Core>
@@ -10,7 +11,7 @@
 
 #include "kernel_port.h"
 
-namespace kernel {
+namespace Kernel {
 /// 前置声明
 class NodeGraph;
 
@@ -40,6 +41,10 @@ public:
     QVector<QOpenGLShader *> shaders;
     /// 计算着色器程序数组
     QVector<QOpenGLShaderProgram *> shaderPrograms;
+
+public:
+    /// 显示颜色
+    QColor color;
 
 public:
     /// 添加输入节点
@@ -73,6 +78,6 @@ public:
 signals:
 };
 
-} // namespace kernel
+} // namespace Kernel
 
 #endif // KERNEL_NODE_H

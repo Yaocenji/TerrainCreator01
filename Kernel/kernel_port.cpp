@@ -34,7 +34,7 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
     }
 
-namespace kernel {
+namespace Kernel {
 
 Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
            bool hD)

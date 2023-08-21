@@ -5,7 +5,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QVector>
 
-namespace kernel {
+namespace Kernel {
 
 class Port;
 class Node;

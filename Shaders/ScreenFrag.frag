@@ -10,5 +10,6 @@ out vec4 FragColor;
 void main()
 {
     FragColor = vec4(texCoord.xy, 1.0, 1.0);
-    FragColor = vec4(texture(colorBuffer, texCoord).rgb, 1);
+    vec3 ans = texture(colorBuffer, texCoord).rgb;
+    FragColor = vec4(ans.xyz, 1);
 }

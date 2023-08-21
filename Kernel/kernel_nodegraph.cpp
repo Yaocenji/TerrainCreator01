@@ -5,7 +5,7 @@
 #include "kernel_perlinnoise_node.h"
 #include "kernel_wire.h"
 
-namespace kernel {
+namespace Kernel {
 
 NodeGraph::NodeGraph(QObject *parent, bool iSg, Node *oN)
     : QObject(parent), isSubgraph(iSg), parentNode(oN) {

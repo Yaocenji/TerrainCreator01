@@ -1,10 +1,8 @@
-
 #include "kernel_clamp_node.h"
-
-#include "Global/globalinfo.h"
-
-namespace kernel {
+namespace Kernel {
 Clamp_Node::Clamp_Node(QObject *parent, NodeGraph *pNG) : Node(parent, pNG) {
+    color = QColor(Qt::GlobalColor::gray);
+
     AddInputPort(PortDataType::Float2D, "输入高度场", false);
 
     AddParamPort(PortDataType::Float, "下界", true);
@@ -24,14 +22,16 @@ void Clamp_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     shaderPrograms[0]->setUniformValue("High", 200.0f);
     qDebug() << f.glGetError();
 
-    unsigned int sourse = InputPorts[0]->GetBufferData();
+    unsigned int src = InputPorts[0]->GetBufferData();
     unsigned int data = OutputPorts[0]->GetBufferData();
-    f.glBindImageTexture(0, sourse, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    f.glBindImageTexture(0, src, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     f.glBindImageTexture(1, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     qDebug() << f.glGetError();
 
     f.glDispatchCompute(globalinfo::TerrainGrid / 32,
                         globalinfo::TerrainGrid / 32, 1);
+
+    qDebug() << f.glGetError();
 }
 
 void Clamp_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
@@ -39,4 +39,4 @@ void Clamp_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
     globalinfo::ChosenHeightFieldBuffer = data;
 }
 
-} // namespace kernel
+} // namespace Kernel

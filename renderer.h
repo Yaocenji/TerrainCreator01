@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <QApplication>
 #include <QDebug>
 #include <QMatrix4x4>
 #include <QMouseEvent>
@@ -85,6 +86,7 @@ protected:
 public:
     /// 地形全局设置改变函数
     void setTerrainInfo();
+    void setCameraInfo(int w, int h);
 
 protected:
     /// 网格：顶点数据与三角形索引数据生成函数

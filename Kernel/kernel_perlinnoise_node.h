@@ -6,7 +6,7 @@
 
 #include "kernel_node.h"
 
-namespace kernel {
+namespace Kernel {
 
 /// 柏林噪声节点————抽象层
 class PerlinNoise_Node : public Node {
@@ -28,5 +28,5 @@ public:
 public:
     PerlinNoise_Node(QObject *parent = nullptr, NodeGraph *pNG = nullptr);
 };
-} // namespace kernel
+} // namespace Kernel
 #endif // KERNEL_PERLINNOISE_NODE_H

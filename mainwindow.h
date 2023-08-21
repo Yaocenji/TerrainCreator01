@@ -4,9 +4,12 @@
 #include <QMainWindow>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QPushButton>
+#include <QSplitter>
 
 #include "Global/globalinfo.h"
 #include "Kernel/kernel_nodegraph.h"
+#include "UserInterface/userinterface_nodeeditorterminal.h"
+#include "UserInterface/userinterface_nodegraph.h"
 #include "renderer.h"
 
 class MainWindow : public QMainWindow {
@@ -16,8 +19,10 @@ public:
     int height = 1080;
 
 protected:
+    QSplitter *splt;
     Renderer *renderWidget;
-    kernel::PerlinNoise_Node *pn;
+    UserInterface::NodeEditorTerminal *uiNodeEditor;
+    Kernel::PerlinNoise_Node *pn;
     QPushButton *pb1;
 public slots:
     void test();

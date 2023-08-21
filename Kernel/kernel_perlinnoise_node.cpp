@@ -1,8 +1,9 @@
 #include "kernel_perlinnoise_node.h"
-namespace kernel {
+namespace Kernel {
 
 PerlinNoise_Node::PerlinNoise_Node(QObject *parent, NodeGraph *pNG)
     : Node(parent, pNG) {
+    color = QColor(124, 198, 255);
     // 添加输出：一个二维高度场柏林噪声
     AddOutputPort(PortDataType::Float2D, "高度场输出");
     // 添加参数：种子
@@ -31,8 +32,6 @@ void PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
 // }
 
 void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
-    qDebug() << f.glGetError();
-
     shaderPrograms[0]->bind();
     shaderPrograms[0]->setUniformValue("TerrainHeight",
                                        globalinfo::TerrainHeight);
@@ -87,4 +86,4 @@ unsigned int PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
     return test;
 }
 
-} // namespace kernel
+} // namespace Kernel

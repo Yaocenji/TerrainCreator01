@@ -10,7 +10,7 @@
 
 #include "Global/globalinfo.h"
 
-namespace kernel {
+namespace Kernel {
 
 // 前置声明wire
 class Wire;

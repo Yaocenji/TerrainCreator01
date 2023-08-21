@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QObject>
 
-namespace kernel {
+namespace Kernel {
 
 class Port;
 /// 连线

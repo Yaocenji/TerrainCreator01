@@ -1,5 +1,5 @@
 #include "kernel_node.h"
-namespace kernel {
+namespace Kernel {
 
 Node::Node(QObject *parent, NodeGraph *pNM)
     : QObject(parent), parentNodeGraph(pNM) {

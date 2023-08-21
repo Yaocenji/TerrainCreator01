@@ -2,7 +2,7 @@
 
 #include "kernel_port.h"
 
-namespace kernel {
+namespace Kernel {
 
 Wire::Wire(QObject *parent, Port *ip, Port *op) : QObject(parent) {
     inputPort = nullptr;

@@ -6,7 +6,7 @@
 
 #include "kernel_node.h"
 
-namespace kernel {
+namespace Kernel {
 
 /// 钳制节点————抽象层
 class Clamp_Node : public Node {

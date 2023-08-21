@@ -5,7 +5,7 @@
 
 #include "kernel_node.h"
 
-namespace kernel {
+namespace Kernel {
 
 class Input_Node : public Node {
     Q_OBJECT

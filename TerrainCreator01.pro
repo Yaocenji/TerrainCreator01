@@ -17,6 +17,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     Global/globalinfo.cpp \
+    Global/userinterface_option.cpp \
+    UserInterface/userinterface_nodeeditorterminal.cpp \
+    UserInterface/userinterface_nodegraph.cpp \
+    UserInterface/userinterface_node.cpp \
     Kernel/kernel_clamp_node.cpp \
     Kernel/kernel_input_node.cpp \
     Kernel/kernel_node.cpp \
@@ -24,12 +28,18 @@ SOURCES += \
     Kernel/kernel_perlinnoise_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
+    UserInterface/userinterface_port.cpp \
+    UserInterface/userinterface_wire.cpp \
     main.cpp \
     mainwindow.cpp \
     renderer.cpp
 
 HEADERS += \
     Global/globalinfo.h \
+    Global/userinterface_option.h \
+    UserInterface/userinterface_nodeeditorterminal.h \
+    UserInterface/userinterface_nodegraph.h \
+    UserInterface/userinterface_node.h \
     Kernel/kernel_clamp_node.h \
     Kernel/kernel_input_node.h \
     Kernel/kernel_node.h \
@@ -37,6 +47,8 @@ HEADERS += \
     Kernel/kernel_perlinnoise_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
+    UserInterface/userinterface_port.h \
+    UserInterface/userinterface_wire.h \
     mainwindow.h \
     renderer.h
 
