@@ -6,6 +6,8 @@ namespace UserInterface {
 
 Node::Node(QObject *parent, Kernel::Node *tar, NodeGraph *parentNG, QPointF pos)
     : QObject(parent), targetNode(tar), parentNodeGraph(parentNG) {
+    // 初始化名字
+    name = targetNode->name;
     // 初始化节点尺寸
     rect.setTopLeft(pos);
     CalSetRectSize();
@@ -74,6 +76,10 @@ void Node::Draw(QPainter &p) {
     for (auto &i : ParamPorts) {
         i->Draw(p);
     }
+
+    // 写名字
+    p.setFont(Option::node_name_font);
+    p.drawText(rect.topLeft() + Option::node_name_pos, name);
 }
 
 bool Node::ClickDetect(QPointF &pos, Node *&clickedNode, Port *&clickedPort) {

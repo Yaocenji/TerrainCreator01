@@ -5,13 +5,11 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QVector>
 
+#include "kernel_element_forwarddec.cpp"
+
 namespace Kernel {
 
-class Port;
-class Node;
-class PerlinNoise_Node;
-class Clamp_Node;
-class Wire;
+ForwardDeclarationWithoutGraph;
 
 /// 节点图的计算抽象层，是nodelayout的后端，和宏节点能交叉递归
 class NodeGraph : public QObject {
@@ -66,5 +64,5 @@ public:
 
 signals:
 };
-} // namespace kernel
+} // namespace Kernel
 #endif // KERNEL_NODEGRAPH_H

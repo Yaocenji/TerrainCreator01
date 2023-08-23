@@ -7,6 +7,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShader>
 #include <QOpenGLShaderProgram>
+#include <QString>
 #include <QVector>
 
 #include "kernel_port.h"
@@ -18,6 +19,10 @@ class NodeGraph;
 /// 节点————后端抽象计算层
 class Node : public QObject {
     Q_OBJECT
+public:
+    /// 名字
+    QString name;
+
 protected:
     /// 所属的节点图层，在任何情况下都不应该为null
     NodeGraph *parentNodeGraph;
@@ -48,11 +53,13 @@ public:
 
 public:
     /// 添加输入节点
-    void AddInputPort(PortDataType dt, QString n, bool hasDefault);
+    void AddInputPort(PortDataType dt, QString n, bool hasDefault,
+                      float defaultData = 0);
     /// 添加输出节点
     void AddOutputPort(PortDataType dt, QString n);
     /// 添加参数节点
-    void AddParamPort(PortDataType dt, QString n, bool hasDefault);
+    void AddParamPort(PortDataType dt, QString n, bool hasDefault,
+                      float defaultData = 0);
     /// 添加着色器
     void AddComputeShaderFromPath(QString path);
     /// 清空着色器

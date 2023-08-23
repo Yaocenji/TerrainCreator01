@@ -10,7 +10,7 @@ Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty)
     : QObject(parent), targetPort(tar), parentNode(parentN), type(ty) {
     state = PortChooseState::NoneChosen;
     localPos = QPointF(0, 0);
-    name = "";
+    name = targetPort->name;
 }
 
 Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty,
@@ -58,6 +58,10 @@ void Port::SetName(QString name) {
     this->name = name;
 }
 
+QString &Port::GetName() {
+    return name;
+}
+
 void Port::CalSetNodeLocalPosition(int ordinal) {
     if (type == PortType::Input) {
         localPos = QPointF(0, Option::input_column_found_size[0] +
@@ -71,6 +75,10 @@ void Port::CalSetNodeLocalPosition(int ordinal) {
                                Option::port_interval_size * ordinal,
                            0);
     }
+}
+
+Kernel::Port *Port::GetTargetKernelPort() {
+    return targetPort;
 }
 
 void Port::Draw(QPainter &p) {

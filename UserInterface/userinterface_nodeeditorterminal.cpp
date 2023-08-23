@@ -33,18 +33,18 @@ void NodeEditorTerminal::paintEvent(QPaintEvent *event) {
 
     p.setPen(QColor(0, 0, 0, 0));
     p.setBrush(br);
-    p.drawRect(targetNodeGraph->GetCamPos().x() / 3.0 - 5.0,
-               targetNodeGraph->GetCamPos().y() / 3.0 - 5.0,
-               this->width() * targetNodeGraph->GetCamSize() / 3.0 + 10.0,
-               this->height() * targetNodeGraph->GetCamSize() / 3.0 + 10.0);
+    p.drawRect(targetNodeGraph->GetCamPos().x() / 3.0 - 7.0,
+               targetNodeGraph->GetCamPos().y() / 3.0 - 7.0,
+               this->width() * targetNodeGraph->GetCamSize() / 3.0 + 14.0,
+               this->height() * targetNodeGraph->GetCamSize() / 3.0 + 14.0);
 
     br.setColor(Option::foreground_color);
     br.setStyle(Qt::BrushStyle::Dense7Pattern);
     p.setBrush(br);
-    p.drawRect(targetNodeGraph->GetCamPos().x() / 3.0 - 5.0,
-               targetNodeGraph->GetCamPos().y() / 3.0 - 5.0,
-               this->width() * targetNodeGraph->GetCamSize() / 3.0 + 10.0,
-               this->height() * targetNodeGraph->GetCamSize() / 3.0 + 10.0);
+    p.drawRect(targetNodeGraph->GetCamPos().x() / 3.0 - 7.0,
+               targetNodeGraph->GetCamPos().y() / 3.0 - 7.0,
+               this->width() * targetNodeGraph->GetCamSize() / 3.0 + 14.0,
+               this->height() * targetNodeGraph->GetCamSize() / 3.0 + 14.0);
 
     // 绘制内容
     p.scale(1.0 / 3.0, 1.0 / 3.0);

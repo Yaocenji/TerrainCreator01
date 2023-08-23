@@ -9,17 +9,12 @@
 #include <QVector>
 
 #include "Global/globalinfo.h"
+#include "kernel_element_forwarddec.cpp"
 
 namespace Kernel {
 
-// 前置声明wire
-class Wire;
-
-// 前置声明nodegraph
-class NodeGraph;
-
-// 前置声明node
-class Node;
+// 前置声明
+ForwardDeclarationWithoutPort;
 
 /// 枚举接口的种类：输入、参数配置输入、输出
 enum class PortType {
@@ -61,6 +56,8 @@ protected:
     PortType type;
     /// 该接口传递的数据类型
     PortDataType dataType;
+
+public:
     /// 一个字符串名字
     QString name;
 
@@ -73,6 +70,10 @@ protected:
     unsigned int ConBuffer;
     /// 连接的单个浮点数的值（并非地址，因为无必要）
     float ConFloat;
+    /// 默认值 buffer
+    unsigned int defaultBuffer;
+    /// 默认值 float
+    float defaultFloat;
 
 public:
     /// 连接的接口数组，如果是输入接口，那么该数组只有一个值，否则可能有一系列值
@@ -127,12 +128,14 @@ public:
     void UpdateAvailableState();
 
 public:
-    explicit Port(QObject *parent = nullptr, Node *pN = nullptr,
-                  PortType t = PortType::Input,
-                  PortDataType dt = PortDataType::Float2D, QString n = "未命名",
-                  bool hD = false);
+    //    Port(QObject *parent = nullptr, Node *pN = nullptr,
+    //         PortType t = PortType::Input, PortDataType dt =
+    //         PortDataType::Float2D, QString n = "未命名", bool hD = false);
+    Port(QObject *parent = nullptr, Node *pN = nullptr,
+         PortType t = PortType::Input, PortDataType dt = PortDataType::Float2D,
+         QString n = "未命名", bool hD = false, float defaultData = 0);
 
 signals:
 };
-} // namespace kernel
+} // namespace Kernel
 #endif // KERNEL_PORT_H

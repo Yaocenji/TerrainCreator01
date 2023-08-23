@@ -31,7 +31,7 @@ class Port : public QObject {
     Q_OBJECT
 
 protected:
-    /// 目标核接口
+    /// 目标kernel接口
     Kernel::Port *targetPort;
     /// 父节点
     Node *parentNode;
@@ -49,12 +49,16 @@ protected:
 public:
     /// 设置名称
     void SetName(QString name);
+    /// 获取名字
+    QString &GetName();
     /// 设置相对位置
     void SetLocalPos(QPointF p);
     /// 计算全局坐标
     QPointF GetWorldPos();
     /// 计算并设置相对位置，传入参数：接口的序号
     void CalSetNodeLocalPosition(int ordinal);
+    /// 获取目标抽象节点
+    Kernel::Port *GetTargetKernelPort();
 
 public:
     /// 绘制

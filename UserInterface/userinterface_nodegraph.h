@@ -67,6 +67,9 @@ public:
     template <typename T>
     bool addNode(QPointF pos);
 
+    /// 添加连线
+    bool LinkWire(Port *lp1, Port *lp2);
+
 public:
     explicit NodeGraph(QObject *parent = nullptr,
                        Kernel::NodeGraph *tarKernelGraph = nullptr);

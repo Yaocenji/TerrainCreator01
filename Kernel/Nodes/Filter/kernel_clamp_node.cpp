@@ -1,6 +1,7 @@
 #include "kernel_clamp_node.h"
 namespace Kernel {
 Clamp_Node::Clamp_Node(QObject *parent, NodeGraph *pNG) : Node(parent, pNG) {
+    name = "钳制";
     color = QColor(Qt::GlobalColor::gray);
 
     AddInputPort(PortDataType::Float2D, "输入高度场", false);

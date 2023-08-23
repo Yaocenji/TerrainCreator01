@@ -4,14 +4,22 @@ namespace Kernel {
 Node::Node(QObject *parent, NodeGraph *pNM)
     : QObject(parent), parentNodeGraph(pNM) {
     isFinished = false;
+    name = "";
 }
 
 NodeGraph *Node::GetParentNodeManager() {
     return parentNodeGraph;
 }
 
-void Node::AddInputPort(PortDataType dt, QString n, bool hasDefault) {
-    Port *npb = new Port(this, this, PortType::Input, dt, n, hasDefault);
+void Node::AddInputPort(PortDataType dt, QString n, bool hasDefault,
+                        float defaultData) {
+    Port *npb;
+    if (hasDefault)
+        npb = new Port(this, this, PortType::Input, dt, n, hasDefault);
+    else {
+        npb = new Port(this, this, PortType::Input, dt, n, hasDefault,
+                       defaultData);
+    }
     this->InputPorts.push_back(npb);
 }
 
@@ -20,8 +28,14 @@ void Node::AddOutputPort(PortDataType dt, QString n) {
     this->OutputPorts.push_back(npb);
 }
 
-void Node::AddParamPort(PortDataType dt, QString n, bool hasDefault) {
-    Port *npb = new Port(this, this, PortType::Param, dt, n, hasDefault);
+void Node::AddParamPort(PortDataType dt, QString n, bool hasDefault,
+                        float defaultData) {
+    Port *npb;
+    if (hasDefault)
+        npb = new Port(this, this, PortType::Param, dt, n, hasDefault);
+    else
+        npb = new Port(this, this, PortType::Param, dt, n, hasDefault,
+                       defaultData);
     this->ParamPorts.push_back(npb);
 }
 
@@ -118,4 +132,4 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
     return true;
 }
 
-} // namespace kernel
+} // namespace Kernel

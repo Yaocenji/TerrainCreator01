@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "kernel_node.h"
+#include "../../kernel_node.h"
 
 namespace Kernel {
 
@@ -28,5 +28,5 @@ public:
 signals:
 };
 
-} // namespace kernel
+} // namespace Kernel
 #endif // KERNEL_INPUT_NODE_H

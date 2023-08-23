@@ -36,8 +36,24 @@
 
 namespace Kernel {
 
+// Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
+//            bool hD)
+//     : QObject(parent), type(t), dataType(dt), name(n), hasDefaultValue(hD) {
+//     parentNode = pN;
+//     ConBuffer = 0;
+//     ConFloat = 0;
+//     defaultFloat = 0;
+//     defaultBuffer = 0;
+//     LinkedPorts.resize(0);
+//     isAvailable = false;
+//     isAllocated = false;
+//     if (hD) {
+//         qDebug() << "在有默认值的情况下初始化接口，没有传入默认值";
+//     }
+// }
+
 Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
-           bool hD)
+           bool hD, float defaultData)
     : QObject(parent), type(t), dataType(dt), name(n), hasDefaultValue(hD) {
     parentNode = pN;
     ConBuffer = 0;
@@ -45,6 +61,25 @@ Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
     LinkedPorts.resize(0);
     isAvailable = false;
     isAllocated = false;
+
+    if (!hD && defaultData != 0) {
+        qDebug()
+            << "WARNNING: "
+               "构造接口无需默认值，但是传入了默认值。请检查接口构造函数调用。";
+    } else if (hD && defaultData == 0) {
+        qDebug() << "WARNNING: "
+                    "构造接口需要默认值，但是默认值未传入或传入了0，函数将"
+                    "默认值初始"
+                    "化为0。请检查接口构造函数调用。";
+    }
+
+    if (dt == PortDataType::Float) {
+        defaultFloat = defaultData;
+        defaultBuffer = 0;
+    } else {
+        defaultFloat = 0;
+        defaultBuffer = (unsigned int)defaultData;
+    }
 }
 
 Node *Port::GetParentNode() {
@@ -220,14 +255,20 @@ unsigned int Port::GetBufferData() {
         qDebug() << "It is wrong to try getting wrong type data.";
         return 0;
     }
-    return ConBuffer;
+    if (!isLinked() && hasDefaultValue)
+        return defaultBuffer;
+    else
+        return ConBuffer;
 }
 float Port::GetFloatData() {
     if (dataType != PortDataType::Float) {
         qDebug() << "It is wrong to try getting wrong type data.";
         return 0.0;
     }
-    return ConFloat;
+    if (!isLinked() && hasDefaultValue)
+        return defaultFloat;
+    else
+        return ConFloat;
 }
 
 void Port::GetData(unsigned int &buffer, float &value) {
@@ -369,4 +410,4 @@ void Port::UpdateAvailableState() {
     }
 }
 
-} // namespace kernel
+} // namespace Kernel

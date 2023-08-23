@@ -37,10 +37,12 @@ protected:
 protected:
     /// 显示矩形信息
     QRectF rect;
-
-public:
     /// 颜色信息
     QColor color();
+
+public:
+    // 名字
+    QString name;
 
 public:
     // 接口数组

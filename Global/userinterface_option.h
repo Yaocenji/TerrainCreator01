@@ -2,6 +2,7 @@
 #define USERINTERFACE_OPTION_H
 
 #include <QColor>
+#include <QFont>
 #include <QPointF>
 #include <QVector2D>
 
@@ -23,6 +24,11 @@ public:
     static float node_angle_radius;
     /// 节点轮廓绘制粗细
     static float pen_width;
+
+    /// 节点名字字体
+    static QFont node_name_font;
+    /// 节点名字显示位置（相对）
+    static QPointF node_name_pos;
 
     /// 接口之间的间隔
     static float port_interval_size;

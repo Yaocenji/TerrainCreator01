@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QOpenGLShader>
 
-#include "kernel_node.h"
+#include "../../kernel_node.h"
 
 namespace Kernel {
 

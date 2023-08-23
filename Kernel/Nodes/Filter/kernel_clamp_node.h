@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QOpenGLShader>
 
-#include "kernel_node.h"
+#include "../../kernel_node.h"
 
 namespace Kernel {
 
@@ -24,6 +24,6 @@ public:
     Clamp_Node(QObject *parent = nullptr, NodeGraph *pNG = nullptr);
 };
 
-} // namespace kernel
+} // namespace Kernel
 
 #endif // KERNEL_CLAMP_NODE_H

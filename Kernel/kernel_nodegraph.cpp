@@ -1,9 +1,6 @@
 #include "kernel_nodegraph.h"
 
-#include "kernel_clamp_node.h"
-#include "kernel_node.h"
-#include "kernel_perlinnoise_node.h"
-#include "kernel_wire.h"
+#include "kernel_element_inc.h"
 
 namespace Kernel {
 
@@ -83,4 +80,4 @@ bool NodeGraph::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
     return true;
 }
 
-} // namespace kernel
+} // namespace Kernel

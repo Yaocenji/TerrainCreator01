@@ -1,6 +1,6 @@
 #include "kernel_input_node.h"
 
-#include "kernel_nodegraph.h"
+#include "../../kernel_nodegraph.h"
 namespace Kernel {
 
 Input_Node::Input_Node(QObject *parent) : Node(parent) {
@@ -30,4 +30,4 @@ void Input_Node::Release(QOpenGLFunctions_4_5_Core &f) {
     DoNothing
 }
 
-} // namespace kernel
+} // namespace Kernel
