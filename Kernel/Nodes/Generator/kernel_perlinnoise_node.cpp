@@ -38,8 +38,9 @@ void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
                                        globalinfo::TerrainHeight);
     shaderPrograms[0]->setUniformValue("Detail",
                                        (int)ParamPorts[1]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("Scale", ParamPorts[1]->GetFloatData(),
-                                       10.0f);
+    shaderPrograms[0]->setUniformValue("Scale", ParamPorts[2]->GetFloatData(),
+                                       ParamPorts[2]->GetFloatData());
+    qDebug() << ParamPorts[2]->GetFloatData();
     shaderPrograms[0]->setUniformValue("Transform", 0.0f, 0.0f);
     qDebug() << f.glGetError();
 

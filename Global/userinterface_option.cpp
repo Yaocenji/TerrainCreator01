@@ -5,6 +5,8 @@ namespace UserInterface {
 Option::Option() {
 }
 
+bool Option::real_time_update = false;
+
 float Option::input_column_found_size[2] = {35, 35};
 float Option::output_column_found_size[2] = {35, 35};
 float Option::param_line_found_size[2] = {110, 35};
@@ -18,6 +20,8 @@ QPointF Option::node_name_pos = QPointF(0.0, -4.0);
 float Option::port_interval_size = 30;
 float Option::port_scale = 1.0f;
 float Option::port_radius = 7.0f;
+
+QColor Option::wire_color = QColor(210, 210, 210);
 
 QColor Option::background_color = QColor(41, 43, 49);
 QColor Option::foreground_color = QColor(229, 227, 205, 50);

@@ -111,4 +111,16 @@ void Node::Move(QPointF &delta) {
     rect.moveTo(rect.topLeft() + delta);
 }
 
+void Node::PortSuspensionUpdate(Port *tar) {
+    for (auto &i : InputPorts) {
+        i->PortSuspensionUpdate(tar);
+    }
+    for (auto &i : ParamPorts) {
+        i->PortSuspensionUpdate(tar);
+    }
+    for (auto &i : OutputPorts) {
+        i->PortSuspensionUpdate(tar);
+    }
+}
+
 } // namespace UserInterface

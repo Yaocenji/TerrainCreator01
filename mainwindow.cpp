@@ -18,9 +18,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     uiNodeEditor->SetTargetNodeGraph(uiNG);
 
     uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
-    uiNG->addNode<Kernel::Clamp_Node>(QPointF(300, 170));
-    uiNG->LinkWire(uiNG->GetNodes()[0]->OutputPorts[0],
-                   uiNG->GetNodes()[1]->InputPorts[0]);
+    uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
+    uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
+    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
+    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
+    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
+    //    uiNG->LinkWire(uiNG->GetNodes()[0]->OutputPorts[0],
+    //                   uiNG->GetNodes()[1]->InputPorts[0]);
 
     pb1 = new QPushButton(this);
     pb1->setText("开始计算");

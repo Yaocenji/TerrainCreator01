@@ -45,6 +45,8 @@ protected:
     QString name;
     /// 接口相对父节点位置（父节点以左上角为中心，接口以圆心为中心）
     QPointF localPos;
+    /// 与接口相连的连线数量
+    unsigned int linkedNumber;
 
 public:
     /// 设置名称
@@ -59,12 +61,25 @@ public:
     void CalSetNodeLocalPosition(int ordinal);
     /// 获取目标抽象节点
     Kernel::Port *GetTargetKernelPort();
+    /// 设置接口状态
+    void SetPortChooseState(PortChooseState state);
+    /// 获取接口状态
+    PortChooseState GetPortChooseState();
+    /// 连接
+    void Link();
+    /// 取消链接
+    void Unlink();
+    /// 更新连接状态
+    void PortLinkUpdate();
 
 public:
     /// 绘制
     void Draw(QPainter &p);
     /// 点击检测
     bool ClickDetect(QPointF &pos, Port *&clickedPort);
+
+    /// 节点状态更新1：鼠标悬浮
+    void PortSuspensionUpdate(Port *tar);
 
 public:
     explicit Port(QObject *parent = nullptr, Kernel::Port *tar = nullptr,

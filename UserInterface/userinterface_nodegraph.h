@@ -42,11 +42,13 @@ protected:
 
 public:
     /// 获取摄像机位置
-    QPointF GetCamPos();
+    QPointF &GetCamPos();
     /// 摄像机位置变动
     void CamPosMove(QPointF delta);
     /// 获取摄像机缩放
-    float GetCamSize();
+    float &GetCamSize();
+    /// 获取缩放倍率控制数（自然对数
+    float &GetCamSizeCtrl();
     /// （弃用）读写鼠标状态机
     MouseState &MouseState();
 
@@ -55,15 +57,19 @@ public:
     QVector<Node *> &GetNodes();
     /// 获取当前选取的节点
     Node *&ChosenNode();
+    Port *&ChosenPort();
 
 public:
     /// 绘制
     void Draw(QPainter &p);
     /// 点击检测
     bool ClickDetect(QPointF &pos, Node *&clickedNode, Port *&clickedPort);
+    /// 状态更新1：悬浮
+    void PortSuspensionUpdate(Port *tar);
 
 public:
     /// 增删改查
+    /// 添加函数——方法1
     template <typename T>
     bool addNode(QPointF pos);
 

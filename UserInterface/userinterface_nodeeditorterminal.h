@@ -7,6 +7,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include <QTimer>
 #include <QWidget>
 
 #include "../Global/userinterface_option.h"
@@ -24,12 +25,23 @@ protected:
     NodeGraph *targetNodeGraph;
 
 protected:
+    /// 为了流畅性，使用计时器
+    QTimer *timer;
+    /// 计时器重绘
+    void TimerUpdate();
+
+protected:
+    /// 鼠标是否按下
+    bool isPressing;
     /// 鼠标状态机
     MouseState mState;
-    /// 鼠标最近一次点击的位置
+    /// 鼠标最近一次点击的位置（屏幕空间）
     QPointF oldMousePos;
+    /// 鼠标当前位置（世界空间）
+    QPointF realMousePos;
 
 public:
+    /// 设置目标显示的节点图
     void SetTargetNodeGraph(NodeGraph *tar);
 
 public:
@@ -41,6 +53,8 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     /// 鼠标松开
     void mouseReleaseEvent(QMouseEvent *event) override;
+    /// 滚轮事件
+    void wheelEvent(QWheelEvent *event) override;
 
 public:
     explicit NodeEditorTerminal(QWidget *parent = nullptr);

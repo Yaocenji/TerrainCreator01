@@ -37,6 +37,8 @@ protected:
 protected:
     /// 显示矩形信息
     QRectF rect;
+
+public:
     /// 颜色信息
     QColor color();
 
@@ -63,6 +65,8 @@ public:
     bool ClickDetect(QPointF &pos, Node *&clickedNode, Port *&clickedPort);
     /// 移动至某个位置
     void Move(QPointF &pos);
+    /// 接口状态更新1：悬浮
+    void PortSuspensionUpdate(Port *tar);
 
 public:
     explicit Node(QObject *parent = nullptr, Kernel::Node *tar = nullptr,

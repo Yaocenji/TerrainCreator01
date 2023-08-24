@@ -111,7 +111,6 @@ void Renderer::initializeGL() {
 }
 
 void Renderer::resizeGL(int w, int h) {
-    qDebug() << "改变大小";
     makeCurrent();
     // 参数X，Y指定了视见区域的左下角在窗口中的位置，一般情况下为（0，0），Width和Height指定了视见区域的宽度和高度。
     //    int ratio = QApplication::desktop()->devicePixelRatio();
@@ -120,7 +119,6 @@ void Renderer::resizeGL(int w, int h) {
     //    proj.perspective(45, 1, 0.01, 15.0);
     //    setCameraInfo(w, h);
     update();
-    qDebug() << w << h;
 }
 
 void Renderer::paintGL() {

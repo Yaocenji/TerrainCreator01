@@ -11,6 +11,8 @@ namespace UserInterface {
 /// 全局UI显示信息
 class Option {
 public:
+    /// 是否要随时绘制（性能开销高）
+    static bool real_time_update;
     /// 节点基础绘制信息
     /// 输入节点的前后边距
     static float input_column_found_size[2];
@@ -36,6 +38,9 @@ public:
     static float port_radius;
     /// 接口的大小缩放
     static float port_scale;
+
+    /// 连线颜色
+    static QColor wire_color;
 
     /// 背景色
     static QColor background_color;

@@ -31,7 +31,7 @@ void Node::AddOutputPort(PortDataType dt, QString n) {
 void Node::AddParamPort(PortDataType dt, QString n, bool hasDefault,
                         float defaultData) {
     Port *npb;
-    if (hasDefault)
+    if (!hasDefault)
         npb = new Port(this, this, PortType::Param, dt, n, hasDefault);
     else
         npb = new Port(this, this, PortType::Param, dt, n, hasDefault,

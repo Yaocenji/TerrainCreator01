@@ -23,6 +23,8 @@ protected:
 
 public:
     void Draw(QPainter &p);
+    /// 提供一个绘制类wire曲线的接口供外部对象调用
+    static void DrawWire(QPainter &p, QPointF pos1, QPointF pos2);
 
 public:
     explicit Wire(QObject *parent = nullptr, Kernel::Wire *tar = nullptr,
