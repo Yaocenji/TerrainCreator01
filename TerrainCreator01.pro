@@ -17,12 +17,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     Global/globalinfo.cpp \
-    Global/userinterface_option.cpp \
+    Global/globalrender.cpp \
+    Global/globalui.cpp \
     Kernel/kernel_element_forwarddec.cpp \
     Kernel/kernel_element_inc.cpp \
-    UserInterface/userinterface_nodeeditorterminal.cpp \
-    UserInterface/userinterface_nodegraph.cpp \
-    UserInterface/userinterface_node.cpp \
     Kernel/Nodes/Filter/kernel_clamp_node.cpp \
     Kernel/Nodes/Generator/kernel_input_node.cpp \
     Kernel/kernel_node.cpp \
@@ -30,7 +28,18 @@ SOURCES += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
+    UserInterface/Title/Buttons/userinterface_titlebar_filebutton.cpp \
+    UserInterface/Title/userinterface_titlebar_maximizebutton.cpp \
+    UserInterface/Title/userinterface_titlebar_minimizbutton.cpp \
+    UserInterface/Title/userinterface_titlebar_quitbutton.cpp \
+    UserInterface/Title/userinterface_titlebarbutton.cpp \
+    UserInterface/userinterface_beginresolvebutton.cpp \
+    UserInterface/userinterface_nodeeditorterminal.cpp \
+    UserInterface/userinterface_nodegraph.cpp \
+    UserInterface/userinterface_node.cpp \
+    UserInterface/userinterface_nodeinspector.cpp \
     UserInterface/userinterface_port.cpp \
+    UserInterface/Title/userinterface_titlebar.cpp \
     UserInterface/userinterface_wire.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -38,11 +47,9 @@ SOURCES += \
 
 HEADERS += \
     Global/globalinfo.h \
-    Global/userinterface_option.h \
+    Global/globalrender.h \
+    Global/globalui.h \
     Kernel/kernel_element_inc.h \
-    UserInterface/userinterface_nodeeditorterminal.h \
-    UserInterface/userinterface_nodegraph.h \
-    UserInterface/userinterface_node.h \
     Kernel/Nodes/Filter/kernel_clamp_node.h \
     Kernel/Nodes/Generator/kernel_input_node.h \
     Kernel/kernel_node.h \
@@ -50,7 +57,18 @@ HEADERS += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
+    UserInterface/Title/Buttons/userinterface_titlebar_filebutton.h \
+    UserInterface/Title/userinterface_titlebar_maximizebutton.h \
+    UserInterface/Title/userinterface_titlebar_minimizbutton.h \
+    UserInterface/Title/userinterface_titlebar_quitbutton.h \
+    UserInterface/Title/userinterface_titlebarbutton.h \
+    UserInterface/userinterface_beginresolvebutton.h \
+    UserInterface/userinterface_nodeeditorterminal.h \
+    UserInterface/userinterface_nodegraph.h \
+    UserInterface/userinterface_node.h \
+    UserInterface/userinterface_nodeinspector.h \
     UserInterface/userinterface_port.h \
+    UserInterface/Title/userinterface_titlebar.h \
     UserInterface/userinterface_wire.h \
     mainwindow.h \
     renderer.h

@@ -15,9 +15,11 @@ class Port;
 
 class Wire : public QObject {
     Q_OBJECT
-protected:
+public:
     /// 目标kernel连线
     Kernel::Wire *targetWire;
+
+public:
     /// 相连的接口
     Port *linkedPort[2];
 

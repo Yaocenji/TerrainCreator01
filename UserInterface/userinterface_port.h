@@ -12,6 +12,7 @@ namespace UserInterface {
 
 /// 前置声明
 class Node;
+class Wire;
 
 /// 节点的种类
 enum class PortType { Input, Param, Output };
@@ -71,6 +72,8 @@ public:
     void Unlink();
     /// 更新连接状态
     void PortLinkUpdate();
+    /// 根据列表更新连接状态
+    void PortLinkUpdateByWiresList(QVector<Wire *> &Wires);
 
 public:
     /// 绘制

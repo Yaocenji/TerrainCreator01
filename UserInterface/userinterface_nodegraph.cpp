@@ -7,8 +7,8 @@ namespace UserInterface {
 NodeGraph::NodeGraph(QObject *parent, Kernel::NodeGraph *tarKernelGraph)
     : QObject(parent), targetKernelGraph(tarKernelGraph) {
     CameraUpLeft = QPointF(0.0, 0.0);
-    CameraSizeMagn = 1.0f;
-    CameraSizeControl = 0.0f;
+    CameraSizeControl = 0.5f;
+    CameraSizeMagn = exp(CameraSizeControl);
     mState = UserInterface::MouseState::None;
     chosenNode = nullptr;
     chosenPort = nullptr;
@@ -51,17 +51,57 @@ bool NodeGraph::LinkWire(Port *lp1, Port *lp2) {
     // 试图在抽象节点图中添加连线
     Kernel::Wire *ansWire = targetKernelGraph->LinkWire(
         lp1->GetTargetKernelPort(), lp2->GetTargetKernelPort());
+    qDebug() << targetKernelGraph->wires.size();
     // 判断是否添加成功
     if (ansWire != nullptr) {
-        // TODO 改进：应该在每次连接后检查相关节点的连线是否依然存在
         Wire *newWire = new Wire(this, ansWire, lp1, lp2);
         Wires.push_back(newWire);
         lp1->Link();
         lp2->Link();
+
+        //        改进：应该在每次连接后检查相关节点的连线是否依然存在
+        // 重新从抽象wire中同步
+        //        ClearWire();
+        //        for (auto &i : targetKernelGraph->wires) {
+        //            Wire *newWire = new Wire(this, i,
+        //            i->GetInput()->targetUIPort,
+        //                                     i->GetInput()->targetUIPort);
+        //            Wires.push_back(newWire);
+        //            i->GetInput()->targetUIPort->Link();
+        //            i->GetInput()->targetUIPort->Link();
+        //        }
+
+        for (QVector<Wire *>::iterator it = Wires.begin(); it != Wires.end();) {
+            // 如果对应的抽象指针不复存在
+            if ((*it)->targetWire == nullptr) {
+                Port *lastp1 = (*it)->linkedPort[0];
+                Port *lastp2 = (*it)->linkedPort[1];
+                delete (*it);
+                lastp1->PortLinkUpdateByWiresList(Wires);
+                lastp2->PortLinkUpdateByWiresList(Wires);
+                it = Wires.erase(it);
+                if (it == Wires.end()) break;
+            } else {
+                it++;
+            }
+        }
         return true;
     } else {
         return false;
     }
+}
+
+void NodeGraph::ClearWire() {
+    for (int i = 0; i < Wires.size(); i++) {
+        Wires[i]->linkedPort[0]->Unlink();
+        Wires[i]->linkedPort[1]->Unlink();
+        delete Wires[i];
+    }
+    Wires.clear();
+}
+
+void NodeGraph::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
+    targetKernelGraph->RunNodeGraph(f);
 }
 
 void NodeGraph::Draw(QPainter &p) {

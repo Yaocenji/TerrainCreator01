@@ -4,13 +4,14 @@
 #include <QBrush>
 #include <QMouseEvent>
 #include <QObject>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
 #include <QTimer>
 #include <QWidget>
 
-#include "../Global/userinterface_option.h"
+#include "../Global/globalui.h"
 #include "userinterface_node.h"
 #include "userinterface_nodegraph.h"
 #include "userinterface_port.h"
@@ -27,6 +28,7 @@ protected:
 protected:
     /// 为了流畅性，使用计时器
     QTimer *timer;
+public slots:
     /// 计时器重绘
     void TimerUpdate();
 
@@ -43,6 +45,8 @@ protected:
 public:
     /// 设置目标显示的节点图
     void SetTargetNodeGraph(NodeGraph *tar);
+    /// 运行节点图
+    void RunNodeGraph(QOpenGLFunctions_4_5_Core &f);
 
 public:
     /// 绘制函数

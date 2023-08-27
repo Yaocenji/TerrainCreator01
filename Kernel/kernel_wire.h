@@ -4,6 +4,11 @@
 #include <QDebug>
 #include <QObject>
 
+// 前置声明
+namespace UserInterface {
+class Wire;
+}
+
 namespace Kernel {
 
 class Port;
@@ -17,6 +22,9 @@ private:
     Port *outputPort;
 
 public:
+    UserInterface::Wire *targetUIWire;
+
+public:
     Port *GetInput();
     Port *GetOutput();
 
@@ -27,5 +35,5 @@ public:
 signals:
 };
 
-} // namespace kernel
+} // namespace Kernel
 #endif // KERNEL_WIRE_H

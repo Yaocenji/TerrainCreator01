@@ -36,16 +36,17 @@ QRectF Node::GetRectInfo() {
 
 void Node::CalSetRectSize() {
     float input_column_height =
-        Option::input_column_found_size[0] +
-        Option::input_column_found_size[1] +
-        targetNode->InputPorts.size() * Option::port_interval_size;
+        globalui::input_column_found_size[0] +
+        globalui::input_column_found_size[1] +
+        targetNode->InputPorts.size() * globalui::port_interval_size;
     float output_column_height =
-        Option::output_column_found_size[0] +
-        Option::output_column_found_size[1] +
-        targetNode->OutputPorts.size() * Option::port_interval_size;
+        globalui::output_column_found_size[0] +
+        globalui::output_column_found_size[1] +
+        targetNode->OutputPorts.size() * globalui::port_interval_size;
     float param_line_height =
-        Option::param_line_found_size[0] + Option::param_line_found_size[1] +
-        targetNode->ParamPorts.size() * Option::port_interval_size;
+        globalui::param_line_found_size[0] +
+        globalui::param_line_found_size[1] +
+        targetNode->ParamPorts.size() * globalui::port_interval_size;
     QVector2D size(param_line_height, input_column_height > output_column_height
                                           ? input_column_height
                                           : output_column_height);
@@ -58,13 +59,13 @@ QColor Node::color() {
 
 void Node::Draw(QPainter &p) {
     // 初始化画笔
-    p.setPen(QPen(color(), 3));
+    p.setPen(QPen(color(), globalui::pen_width));
     p.setBrush(QBrush(
         QColor(color().red() / 2, color().green() / 2, color().blue() / 2)));
 
     // 自动绘制圆角矩形
-    p.drawRoundedRect(this->rect, Option::node_angle_radius,
-                      Option::node_angle_radius);
+    p.drawRoundedRect(this->rect, globalui::node_angle_radius,
+                      globalui::node_angle_radius);
 
     // 绘制接口
     for (auto &i : InputPorts) {
@@ -78,29 +79,32 @@ void Node::Draw(QPainter &p) {
     }
 
     // 写名字
-    p.setFont(Option::node_name_font);
-    p.drawText(rect.topLeft() + Option::node_name_pos, name);
+    p.setFont(globalui::node_name_font);
+    p.drawText(rect.topLeft() + globalui::node_name_pos, name);
 }
 
 bool Node::ClickDetect(QPointF &pos, Node *&clickedNode, Port *&clickedPort) {
+    for (auto &i : InputPorts) {
+        if (i->ClickDetect(pos, clickedPort)) {
+            clickedNode = this;
+            return true;
+        }
+    }
+    for (auto &i : OutputPorts) {
+        if (i->ClickDetect(pos, clickedPort)) {
+            clickedNode = this;
+            return true;
+        }
+    }
+    for (auto &i : ParamPorts) {
+        if (i->ClickDetect(pos, clickedPort)) {
+            clickedNode = this;
+            return true;
+        }
+    }
     if (pos.x() <= rect.right() && pos.x() >= rect.left() &&
         pos.y() >= rect.top() && pos.y() <= rect.bottom()) {
         clickedNode = this;
-        for (auto &i : InputPorts) {
-            if (i->ClickDetect(pos, clickedPort)) {
-                return true;
-            }
-        }
-        for (auto &i : OutputPorts) {
-            if (i->ClickDetect(pos, clickedPort)) {
-                return true;
-            }
-        }
-        for (auto &i : ParamPorts) {
-            if (i->ClickDetect(pos, clickedPort)) {
-                return true;
-            }
-        }
         return true;
     } else {
         return false;

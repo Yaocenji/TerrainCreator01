@@ -12,7 +12,7 @@
 #include <QVector>
 #include <QWidget>
 
-#include "../Global/userinterface_option.h"
+#include "../Global/globalui.h"
 #include "../Kernel/kernel_node.h"
 #include "userinterface_port.h"
 

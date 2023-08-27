@@ -20,12 +20,16 @@ void NodeEditorTerminal::TimerUpdate() {
     static unsigned int timerNum = 0;
     if (timerNum < 250)
         timerNum++;
-    else if (Option::real_time_update)
+    else if (globalui::real_time_update)
         update();
 }
 
 void NodeEditorTerminal::SetTargetNodeGraph(NodeGraph *tar) {
     targetNodeGraph = tar;
+}
+
+void NodeEditorTerminal::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
+    targetNodeGraph->RunNodeGraph(f);
 }
 
 void NodeEditorTerminal::paintEvent(QPaintEvent *event) {
@@ -45,7 +49,7 @@ void NodeEditorTerminal::paintEvent(QPaintEvent *event) {
 
     // 设置画笔，绘制背景
     //
-    QBrush br = QBrush(Option::background_color);
+    QBrush br = QBrush(globalui::editor_background_color);
     br.setStyle(Qt::BrushStyle::SolidPattern);
 
     p.setPen(QColor(0, 0, 0, 0));
@@ -55,7 +59,7 @@ void NodeEditorTerminal::paintEvent(QPaintEvent *event) {
                this->width() * targetNodeGraph->GetCamSize() / 3.0 + 14.0,
                this->height() * targetNodeGraph->GetCamSize() / 3.0 + 14.0);
 
-    br.setColor(Option::foreground_color);
+    br.setColor(globalui::editor_foreground_color);
     br.setStyle(Qt::BrushStyle::Dense7Pattern);
     p.setBrush(br);
     p.drawRect(targetNodeGraph->GetCamPos().x() / 3.0 - 7.0,

@@ -1,8 +1,9 @@
 
 #include "userinterface_port.h"
 
-#include "../Global/userinterface_option.h"
+#include "../Global/globalui.h"
 #include "userinterface_node.h"
+#include "userinterface_wire.h"
 
 namespace UserInterface {
 
@@ -12,6 +13,7 @@ Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty)
       parentNode(parentN),
       type(ty),
       linkedNumber(0) {
+    targetPort->targetUIPort = this;
     state = PortChooseState::NoneChosen;
     localPos = QPointF(0, 0);
     name = targetPort->name;
@@ -25,6 +27,7 @@ Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty,
       type(ty),
       name(nam),
       linkedNumber(0) {
+    targetPort->targetUIPort = this;
     state = PortChooseState::NoneChosen;
     localPos = QPointF(0, 0);
 }
@@ -38,6 +41,7 @@ Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty,
       name(nam),
       localPos(locPos),
       linkedNumber(0) {
+    targetPort->targetUIPort = this;
     state = PortChooseState::NoneChosen;
 }
 
@@ -49,6 +53,7 @@ Port::Port(QObject *parent, Kernel::Port *tar, Node *parentN, PortType ty,
       type(ty),
       name(nam),
       linkedNumber(0) {
+    targetPort->targetUIPort = this;
     state = PortChooseState::NoneChosen;
     CalSetNodeLocalPosition(ordinal);
 }
@@ -71,15 +76,15 @@ QString &Port::GetName() {
 
 void Port::CalSetNodeLocalPosition(int ordinal) {
     if (type == PortType::Input) {
-        localPos = QPointF(0, Option::input_column_found_size[0] +
-                                  Option::port_interval_size * ordinal);
+        localPos = QPointF(0, globalui::input_column_found_size[0] +
+                                  globalui::port_interval_size * ordinal);
     } else if (type == PortType::Output) {
         localPos = QPointF(parentNode->GetRectInfo().size().width(),
-                           Option::output_column_found_size[0] +
-                               Option::port_interval_size * ordinal);
+                           globalui::output_column_found_size[0] +
+                               globalui::port_interval_size * ordinal);
     } else {
-        localPos = QPointF(Option::param_line_found_size[0] +
-                               Option::port_interval_size * ordinal,
+        localPos = QPointF(globalui::param_line_found_size[0] +
+                               globalui::port_interval_size * ordinal,
                            0);
     }
 }
@@ -112,7 +117,7 @@ void Port::Draw(QPainter &p) {
     }
     QPointF worldPos = parentNode->GetRectInfo().topLeft() + localPos;
     QPointF topLeft =
-        worldPos + QPointF(-Option::port_radius, -Option::port_radius);
+        worldPos + QPointF(-globalui::port_radius, -globalui::port_radius);
     QBrush br = p.brush();
     if (this->state == PortChooseState::Suspension) {
         p.setBrush(QColor(parentNode->color().red() / 4.0 + 128,
@@ -124,19 +129,19 @@ void Port::Draw(QPainter &p) {
                           parentNode->color().green() / 8.0 + 192,
                           parentNode->color().blue() / 8.0 + 192));
     } else if (this->state == PortChooseState::Linked) {
-        p.setBrush(Option::wire_color);
+        p.setBrush(globalui::wire_color);
     }
-    p.drawEllipse(topLeft.x(), topLeft.y(), Option::port_radius * 2,
-                  Option::port_radius * 2);
+    p.drawEllipse(topLeft.x(), topLeft.y(), globalui::port_radius * 2,
+                  globalui::port_radius * 2);
     p.setBrush(br);
 }
 
 bool Port::ClickDetect(QPointF &pos, Port *&clickedPort) {
     QPointF worldPos = parentNode->GetRectInfo().topLeft() + localPos;
-    if (pos.x() >= worldPos.x() - Option::port_radius * 1.5 &&
-        pos.x() <= worldPos.x() + Option::port_radius * 1.5 &&
-        pos.y() >= worldPos.y() - Option::port_radius * 1.5 &&
-        pos.y() <= worldPos.y() + Option::port_radius * 1.5) {
+    if (pos.x() >= worldPos.x() - globalui::port_radius * 1.5 &&
+        pos.x() <= worldPos.x() + globalui::port_radius * 1.5 &&
+        pos.y() >= worldPos.y() - globalui::port_radius * 1.5 &&
+        pos.y() <= worldPos.y() + globalui::port_radius * 1.5) {
         clickedPort = this;
 
         return true;
@@ -150,6 +155,16 @@ void Port::PortLinkUpdate() {
         state = PortChooseState::Linked;
     if (linkedNumber <= 0 && state == PortChooseState::Linked)
         state = PortChooseState::NoneChosen;
+}
+
+void Port::PortLinkUpdateByWiresList(QVector<Wire *> &Wires) {
+    linkedNumber = 0;
+    for (auto &i : Wires) {
+        if (i->linkedPort[0] == this || i->linkedPort[1] == this) {
+            linkedNumber++;
+        }
+    }
+    PortLinkUpdate();
 }
 
 void Port::PortSuspensionUpdate(Port *tar) {

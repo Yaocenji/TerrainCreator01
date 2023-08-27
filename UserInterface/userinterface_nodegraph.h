@@ -2,6 +2,7 @@
 #define USERINTERFACE_NODEGRAPH_H
 
 #include <QObject>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QWidget>
@@ -75,6 +76,11 @@ public:
 
     /// 添加连线
     bool LinkWire(Port *lp1, Port *lp2);
+    /// 清空全部连线
+    void ClearWire();
+
+    /// 运行
+    void RunNodeGraph(QOpenGLFunctions_4_5_Core &f);
 
 public:
     explicit NodeGraph(QObject *parent = nullptr,

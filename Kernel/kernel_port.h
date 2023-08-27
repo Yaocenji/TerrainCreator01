@@ -11,6 +11,11 @@
 #include "Global/globalinfo.h"
 #include "kernel_element_forwarddec.cpp"
 
+// 前置声明
+namespace UserInterface {
+class Port;
+}
+
 namespace Kernel {
 
 // 前置声明
@@ -46,6 +51,10 @@ class Port : public QObject {
 protected:
     /// 指向该接口所在的节点（父节点），只能使用指针
     Node *parentNode;
+
+public:
+    /// 该节点指向的ui节点
+    UserInterface::Port *targetUIPort;
 
 public:
     /// 获取该接口所在的节点（父节点）

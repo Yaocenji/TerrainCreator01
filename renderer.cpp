@@ -1,5 +1,8 @@
 #include "renderer.h"
 
+#include "Global/globalrender.h"
+// #include "Global/globalui.h"
+
 #define PreRenderTerrainGround(framebuffer)                 \
     {                                                       \
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);     \
@@ -124,7 +127,9 @@ void Renderer::resizeGL(int w, int h) {
 void Renderer::paintGL() {
     //    PreRenderTerrainGround(swapFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-    glClearColor(0.2f, 0.8f, 1, 1);
+    glClearColor(globalrender::backgroundColor.redF(),
+                 globalrender::backgroundColor.greenF(),
+                 globalrender::backgroundColor.blueF(), 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);

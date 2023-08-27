@@ -1,5 +1,6 @@
 #include "kernel_nodegraph.h"
 
+#include "../UserInterface/userinterface_wire.h"
 #include "kernel_element_inc.h"
 
 namespace Kernel {
@@ -40,8 +41,17 @@ Wire *NodeGraph::LinkWire(Port *a, Port *b) {
         // 把所有以out为输出接口的连线全部删除，并且对于涉及到的接口更新一遍信息
         if ((*it)->GetOutput() == out) {
             Port *another = (*it)->GetInput();
+
+            // 释放内存
+            Wire *tar = *it;
+            // 标记为空指针
+            tar->targetUIWire->targetWire = nullptr;
+            delete tar;
+
+            // 清除指针
             it = wires.erase(it);
             another->UpdateLinkInfo(wires);
+            if (it == wires.end()) break;
             // out->UpdateLinkInfo(wires);
         } else {
             it++;
@@ -77,6 +87,10 @@ bool NodeGraph::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
             nodes[i]->Choose(f);
         }
     }
+
+    //    globalinfo::useHeightFieldBuffer = true;
+    //    globalinfo::ChosenHeightFieldBuffer =
+    //        nodes[1]->OutputPorts[0]->GetBufferData();
     return true;
 }
 
