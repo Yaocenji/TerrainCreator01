@@ -1,5 +1,7 @@
 #include "globalui.h"
 
+#include <QDebug>
+
 namespace UserInterface {
 
 globalui::globalui() {
@@ -38,6 +40,12 @@ float globalui::port_radius = 7.0f;
 
 QColor globalui::wire_color = QColor(210, 210, 210);
 
+float globalui::node_menu_button_width = 65;
+float globalui::node_menu_button_height = 65;
+float globalui::node_menu_creator_height = 90;
+QFont globalui::node_menu_title_font = QFont("微软雅黑", 14);
+QFont globalui::node_menu_descrip_font = QFont("微软雅黑", 7);
+
 QColor globalui::editor_background_color = QColor(41, 43, 49);
 QColor globalui::editor_foreground_color_a = QColor(229, 227, 205, 50);
 QColor globalui::editor_foreground_color = QColor(114, 113, 112);
@@ -45,6 +53,27 @@ QColor globalui::editor_foreground_color = QColor(114, 113, 112);
 QColor globalui::AverageColor(QColor a, QColor b) {
     QColor ans((a.red() + b.red()) / 2.0f, (a.green() + b.green()) / 2.0f,
                (a.blue() + b.blue()) / 2.0f, (a.alpha() + b.alpha()) / 2.0f);
+    return ans;
+}
+
+QColor globalui::MultipyColor(QColor a, float f) {
+    QColor ans(a.red() * f, a.green() * f, a.blue() * f, a.alpha());
+    return ans;
+}
+
+QColor globalui::MultipyColor(QColor a, float f, int chan) {
+    QColor ans = a;
+    if (chan == 0) {
+        ans = QColor(a.red() * f, a.green(), a.blue(), a.alpha());
+    } else if (chan == 1) {
+        ans = QColor(a.red(), a.green() * f, a.blue(), a.alpha());
+    } else if (chan == 2) {
+        ans = QColor(a.red(), a.green(), a.blue() * f, a.alpha());
+    } else if (chan == 3) {
+        ans = QColor(a.red(), a.green(), a.blue(), a.alpha() * f);
+    } else {
+        qDebug() << "ERROR：MultipyColor函数，参数错误";
+    }
     return ans;
 }
 

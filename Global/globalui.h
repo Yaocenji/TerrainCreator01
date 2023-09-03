@@ -62,6 +62,17 @@ public:
     /// 连线颜色
     static QColor wire_color;
 
+    /// 节点菜单左侧一级菜单宽度
+    static float node_menu_button_width;
+    /// 节点菜单左侧按钮高度
+    static float node_menu_button_height;
+    /// 节点菜单按钮高度
+    static float node_menu_creator_height;
+    /// 节点菜单字体（标题）
+    static QFont node_menu_title_font;
+    /// 节点菜单字体（描述）
+    static QFont node_menu_descrip_font;
+
     /// 背景色
     static QColor editor_background_color;
     /// 前景色透明度
@@ -70,12 +81,37 @@ public:
     static QColor editor_foreground_color;
 
 public:
+    /// 颜色取平均
     static QColor AverageColor(QColor a, QColor b);
+    /// 颜色乘数
+    static QColor MultipyColor(QColor a, float f);
+    /// 颜色乘数
+    static QColor MultipyColor(QColor a, float f, int chan);
 
 public:
     globalui();
 };
 
 } // namespace UserInterface
+
+// 一些全局函数
+template <typename T>
+T clamp(T l, T r, T x) {
+    T L, R;
+    if (l > r) {
+        L = r;
+        R = l;
+    } else {
+        L = l;
+        R = r;
+    }
+    if (x > R)
+        return R;
+    else if (x < L) {
+        return L;
+    } else {
+        return x;
+    }
+}
 
 #endif // GLOBALUI

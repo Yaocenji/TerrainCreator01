@@ -4,12 +4,17 @@
 #include <QObject>
 
 // 用于统一include节点们
+// 自定义节点
 #include "Nodes/Filter/kernel_clamp_node.h"
 #include "Nodes/Generator/kernel_perlinnoise_node.h"
+// 核心组件
 #include "kernel_node.h"
 #include "kernel_nodegraph.h"
 #include "kernel_port.h"
 #include "kernel_wire.h"
+
+typedef Kernel::Node *(*KernelNodeConstructorPtr)(QObject *,
+                                                  Kernel::NodeGraph *);
 
 namespace kernel {
 

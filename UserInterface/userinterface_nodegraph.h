@@ -7,7 +7,8 @@
 #include <QPainter>
 #include <QWidget>
 
-#include "../Kernel/kernel_nodegraph.h"
+// #include "../Kernel/kernel_nodegraph.h"
+#include "Kernel/kernel_element_inc.h"
 #include "userinterface_node.h"
 #include "userinterface_port.h"
 #include "userinterface_wire.h"
@@ -70,9 +71,18 @@ public:
 
 public:
     /// 增删改查
+
     /// 添加函数——方法1
     template <typename T>
     bool addNode(QPointF pos);
+
+    /**
+     * @brief 添加函数——方法2
+     * @param 参数1：位置
+     * @param 参数2：构造函数指针
+     * @return
+     */
+    bool addNodeByConstructor(QPointF pos, KernelNodeConstructorPtr ptr);
 
     /// 添加连线
     bool LinkWire(Port *lp1, Port *lp2);

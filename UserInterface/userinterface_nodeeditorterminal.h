@@ -2,6 +2,8 @@
 #define USERINTERFACE_NODEEDITORTERMINAL_H
 
 #include <QBrush>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QMouseEvent>
 #include <QObject>
 #include <QOpenGLFunctions_4_5_Core>
@@ -59,6 +61,12 @@ public:
     void mouseReleaseEvent(QMouseEvent *event) override;
     /// 滚轮事件
     void wheelEvent(QWheelEvent *event) override;
+    /// 拖拽进入事件
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    /// 拖拽移动事件
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    /// 拖拽释放事件
+    void dropEvent(QDropEvent *event) override;
 
 public:
     explicit NodeEditorTerminal(QWidget *parent = nullptr);

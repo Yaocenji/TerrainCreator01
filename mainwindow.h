@@ -9,6 +9,7 @@
 #include "Global/globalinfo.h"
 #include "Global/globalui.h"
 #include "Kernel/kernel_element_inc.h"
+#include "UserInterface/NodeMenu/userinterface_nodemenu.h"
 #include "UserInterface/Title/userinterface_titlebar.h"
 #include "UserInterface/userinterface_beginresolvebutton.h"
 #include "UserInterface/userinterface_nodeeditorterminal.h"
@@ -44,6 +45,9 @@ protected:
     /// kernel与ui节点图
     Kernel::NodeGraph *kNG;
     UserInterface::NodeGraph *uiNG;
+    /// 节点创建菜单
+    UserInterface::NodeMenu *nodeMenu;
+
 public slots:
     void test();
 

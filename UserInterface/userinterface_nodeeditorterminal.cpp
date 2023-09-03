@@ -1,10 +1,15 @@
 #include "userinterface_nodeeditorterminal.h"
 
+#include "NodeMenu/userinterface_nodecreator.h"
+
 namespace UserInterface {
 
 NodeEditorTerminal::NodeEditorTerminal(QWidget *parent) : QWidget(parent) {
     isPressing = false;
+    // 鼠标追踪
     setMouseTracking(true);
+    // 拖拽接受
+    setAcceptDrops(true);
     mState = MouseState::None;
     oldMousePos = QPointF(0.0, 0.0);
     // 启动计时器
@@ -258,6 +263,44 @@ void NodeEditorTerminal::wheelEvent(QWheelEvent *event) {
                                                 0.5f;
     // if (CameraSizeMagn <= 0.4f) CameraSizeMagn = 0.4f;
     update();
+}
+
+void NodeEditorTerminal::dragEnterEvent(QDragEnterEvent *event) {
+    if (event->mimeData()->hasFormat("text")) {
+        event->accept();
+        qDebug() << "[recvWidget]: dragEnterEvent accept";
+    } else
+        event->ignore();
+}
+
+void NodeEditorTerminal::dragMoveEvent(QDragMoveEvent *event) {
+    event->accept();
+}
+
+void NodeEditorTerminal::dropEvent(QDropEvent *event) {
+    qDebug() << "[recvWidget]:dropEvent drop";
+
+    if (event->mimeData()->hasFormat("text")) {
+        // 接受数据，并且转换为索引
+        QByteArray byteArray = event->mimeData()->data("text");
+        //        m_label->setText("recv:" + QString(byteArray));
+        int ptrEle = 0;
+        bool isOk = false;
+        ptrEle = QString(byteArray).toInt(&isOk);
+        if (!isOk)
+            qDebug()
+                << "错误：拖动创建节点时，从QMime数据中解包的节点构造函数指针"
+                   "数组索引数据不是int";
+        // 获取节点构造函数指针
+        KernelNodeConstructorPtr targetptr =
+            NodeCreator::nodeConstructors[ptrEle];
+        // 构造节点
+        targetNodeGraph->addNodeByConstructor(event->posF(), targetptr);
+        event->setDropAction(Qt::MoveAction);
+        // 结束
+        event->accept();
+    } else
+        event->ignore();
 }
 
 } // namespace UserInterface

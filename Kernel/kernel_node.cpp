@@ -105,7 +105,10 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
         // 检查所有输入/参数节点是否准备就绪，若不就绪，那么运行前置节点
         if (!(InputPorts[i]->isAvailable)) {
             Node *preNode = InputPorts[i]->LinkedPorts[0]->GetParentNode();
+            preNode->InitGL(f);
+            preNode->Allocate(f);
             preNode->RunNode(f);
+            preNode->Choose(f);
         }
     }
     for (int i = 0; i < ParamPorts.length(); i++) {
@@ -118,7 +121,10 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
         // 输入/参数节点在有默认值的且未连接的情况下是一定就绪的，当输入/参数节点在有链接的情况下，是否就绪取决于链接的节点
         if (!(ParamPorts[i]->isAvailable)) {
             Node *preNode = ParamPorts[i]->LinkedPorts[0]->GetParentNode();
+            preNode->InitGL(f);
+            preNode->Allocate(f);
             preNode->RunNode(f);
+            preNode->Choose(f);
         }
     }
     CalculateNode(f);

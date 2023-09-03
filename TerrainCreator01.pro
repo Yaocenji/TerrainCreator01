@@ -28,6 +28,9 @@ SOURCES += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
+    UserInterface/NodeMenu/userinterface_nodecreator.cpp \
+    UserInterface/NodeMenu/userinterface_nodemenubutton.cpp \
+    UserInterface/NodeMenu/userinterface_nodesubmenu.cpp \
     UserInterface/Title/Buttons/userinterface_titlebar_filebutton.cpp \
     UserInterface/Title/userinterface_titlebar_maximizebutton.cpp \
     UserInterface/Title/userinterface_titlebar_minimizbutton.cpp \
@@ -38,6 +41,7 @@ SOURCES += \
     UserInterface/userinterface_nodegraph.cpp \
     UserInterface/userinterface_node.cpp \
     UserInterface/userinterface_nodeinspector.cpp \
+    UserInterface/NodeMenu/userinterface_nodemenu.cpp \
     UserInterface/userinterface_port.cpp \
     UserInterface/Title/userinterface_titlebar.cpp \
     UserInterface/userinterface_wire.cpp \
@@ -57,6 +61,9 @@ HEADERS += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
+    UserInterface/NodeMenu/userinterface_nodecreator.h \
+    UserInterface/NodeMenu/userinterface_nodemenubutton.h \
+    UserInterface/NodeMenu/userinterface_nodesubmenu.h \
     UserInterface/Title/Buttons/userinterface_titlebar_filebutton.h \
     UserInterface/Title/userinterface_titlebar_maximizebutton.h \
     UserInterface/Title/userinterface_titlebar_minimizbutton.h \
@@ -67,6 +74,7 @@ HEADERS += \
     UserInterface/userinterface_nodegraph.h \
     UserInterface/userinterface_node.h \
     UserInterface/userinterface_nodeinspector.h \
+    UserInterface/NodeMenu/userinterface_nodemenu.h \
     UserInterface/userinterface_port.h \
     UserInterface/Title/userinterface_titlebar.h \
     UserInterface/userinterface_wire.h \
@@ -79,4 +87,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
+    Images/Images.qrc \
     Shaders/RenderSahders.qrc

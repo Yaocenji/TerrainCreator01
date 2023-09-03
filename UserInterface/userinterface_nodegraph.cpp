@@ -47,6 +47,19 @@ Port *&NodeGraph::ChosenPort() {
     return chosenPort;
 }
 
+bool NodeGraph::addNodeByConstructor(QPointF pos,
+                                     KernelNodeConstructorPtr ptr) {
+    // 创建新的kernel节点
+    Kernel::Node *newKernelNode = (*ptr)(targetKernelGraph, targetKernelGraph);
+    // 在kernelgraph中添加新的kernel节点
+    targetKernelGraph->AddNode(newKernelNode);
+    // 创建对应的UI节点并添加之
+    Node *newUINode = new Node(this, newKernelNode, this, pos);
+    this->Nodes.push_back(newUINode);
+
+    return true;
+}
+
 bool NodeGraph::LinkWire(Port *lp1, Port *lp2) {
     // 试图在抽象节点图中添加连线
     Kernel::Wire *ansWire = targetKernelGraph->LinkWire(

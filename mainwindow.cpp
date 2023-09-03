@@ -24,10 +24,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     uiNodeEditor->SetTargetNodeGraph(uiNG);
 
-    uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
-    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
-    //    uiNG->LinkWire(uiNG->GetNodes()[0]->OutputPorts[0],
-    //                   uiNG->GetNodes()[1]->InputPorts[0]);
+    // 节点图初始化
+    //    uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
+    //    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
+
+    nodeMenu = new UserInterface::NodeMenu(this);
 
     pb1 = new QPushButton(this);
     pb1->setText("开始计算");
@@ -35,23 +36,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 分割器初始化
     // 创建下半部分分割器
     splt_1 = new QSplitter(Qt::Horizontal, this);
-    splt_1->setHandleWidth(5);
+    splt_1->setHandleWidth(3);
 
+    splt_1->addWidget(nodeMenu);
     splt_1->addWidget(uiNodeEditor);
     splt_1->addWidget(pb1);
 
-    splt_1->setStretchFactor(0, 80);
-    splt_1->setStretchFactor(1, 20);
+    splt_1->setStretchFactor(0, 20);
+    splt_1->setStretchFactor(1, 60);
+    splt_1->setStretchFactor(2, 20);
 
     // 创建主分割器
     splt = new QSplitter(Qt::Vertical, this);
     splt->addWidget(renderWidget);
-    splt->setHandleWidth(5);
+    splt->setHandleWidth(3);
 
     splt->addWidget(splt_1);
 
-    splt->setStretchFactor(0, 65);
-    splt->setStretchFactor(1, 35);
+    splt->setStretchFactor(0, 50);
+    splt->setStretchFactor(1, 50);
 
     // 创建标题栏分割器
     titleBarSplt = new QSplitter(Qt::Vertical, this);
@@ -80,6 +83,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     beginResolveBtn->show();
 
     connect(pb1, SIGNAL(clicked()), this, SLOT(test()));
+
+    // 测试代码
+    QPushButton *testB = new QPushButton(this);
+    connect(testB, &QPushButton::clicked, [=]() {
+        uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
+    });
 }
 
 void MainWindow::test() {
