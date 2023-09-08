@@ -7,16 +7,19 @@ PerlinNoise_Node::PerlinNoise_Node(QObject *parent, NodeGraph *pNG)
     color = QColor(124, 198, 255);
     // 添加输出：一个二维高度场柏林噪声
     AddOutputPort(PortDataType::Float2D, "高度场输出");
-    // 添加参数：种子
-    AddParamPort(PortDataType::Float, "柏林噪声种子", true, 1.0);
-    // 添加参数：细节层次
-    AddParamPort(PortDataType::Float, "柏林噪声倍频次数", true, 5.0);
-    // 添加参数：大小缩放
+
+    // 0添加参数：种子
+    AddParamPort(PortDataType::Float, "噪声种子", true, 1.0);
+    // 1添加参数：大小缩放
     AddParamPort(PortDataType::Float, "缩放倍率", true, 1.0);
-    // 添加参数：X轴偏移
+    // 2添加参数：X轴偏移
     AddParamPort(PortDataType::Float, "X轴偏移", true, 0);
-    // 添加参数：Y轴偏移
+    // 3添加参数：Y轴偏移
     AddParamPort(PortDataType::Float, "Y轴偏移", true, 0);
+
+    // 添加参数：细节层次
+    AddNonPortParam(NonPortParamType::RangeInt, "噪声细节");
+    nonPortParams[0]->InitData(5, 1, 15);
 }
 
 void PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
@@ -37,11 +40,12 @@ void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     shaderPrograms[0]->setUniformValue("TerrainHeight",
                                        globalinfo::TerrainHeight);
     shaderPrograms[0]->setUniformValue("Detail",
-                                       (int)ParamPorts[1]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("Scale", ParamPorts[2]->GetFloatData(),
-                                       ParamPorts[2]->GetFloatData());
-    qDebug() << ParamPorts[2]->GetFloatData();
-    shaderPrograms[0]->setUniformValue("Transform", 0.0f, 0.0f);
+                                       nonPortParams[0]->data_rangeint);
+    shaderPrograms[0]->setUniformValue("Scale", ParamPorts[1]->GetFloatData(),
+                                       ParamPorts[1]->GetFloatData());
+    shaderPrograms[0]->setUniformValue("Transform",
+                                       ParamPorts[2]->GetFloatData(),
+                                       ParamPorts[3]->GetFloatData());
     qDebug() << f.glGetError();
 
     unsigned int data = OutputPorts[0]->GetBufferData();

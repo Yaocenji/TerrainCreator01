@@ -45,6 +45,18 @@ public:
      * @return 返回值：如果连接成功，返回新创建的连线；否则返回nullptr
      */
     Wire *LinkWire(Port *a, Port *b);
+    /**
+     * @brief 删除连线
+     * @param 目标连线
+     * @return
+     */
+    bool DeleteWire(Wire *tar);
+    /**
+     * @brief 删除节点
+     * @param 要删除的目标节点
+     * @return
+     */
+    bool DeleteNode(Node *tar);
 
     Node *GetParentMacroNode();
 

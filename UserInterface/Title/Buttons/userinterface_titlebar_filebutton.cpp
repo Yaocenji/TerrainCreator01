@@ -1,6 +1,7 @@
 #include "userinterface_titlebar_filebutton.h"
 
 #include "../userinterface_titlebar.h"
+#include "Global/globalfunc.h"
 
 namespace UserInterface {
 
@@ -20,8 +21,8 @@ void TitleBarFileButton::Draw(QPainter &p) {
 
     if (state == ButtonState::Hover) {
         p.setPen(QColor(0, 0, 0, 0));
-        p.setBrush(QBrush(globalui::AverageColor(
-            globalui::ui_background_color, globalui::ui_foreground_color)));
+        p.setBrush(QBrush(AverageColor(globalui::ui_background_color,
+                                       globalui::ui_foreground_color)));
         p.drawRect(rect);
     } else if (state == ButtonState::Pressed) {
         p.setPen(QColor(0, 0, 0, 0));

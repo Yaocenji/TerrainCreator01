@@ -1,5 +1,6 @@
 #include "userinterface_nodecreator.h"
 
+#include "Global/globalfunc.h"
 #include "Global/globalui.h"
 #include "userinterface_nodesubmenu.h"
 
@@ -49,15 +50,12 @@ void NodeCreator::Draw(QPainter &p) {
     // 绘制矩形
     QLinearGradient grad(rect().topLeft(), rect().bottomLeft());
     if (state == NodeCreatorState::None) {
-        grad.setColorAt(
-            0, globalui::MultipyColor(globalui::ui_background_color, 0.8, 3));
-        grad.setColorAt(
-            1, globalui::MultipyColor(globalui::ui_background_color, 0.95, 3));
+        grad.setColorAt(0, MultipyColor(globalui::ui_background_color, 0.8, 3));
+        grad.setColorAt(1,
+                        MultipyColor(globalui::ui_background_color, 0.95, 3));
     } else {
-        grad.setColorAt(
-            0, globalui::MultipyColor(globalui::ui_background_color, 0.4, 3));
-        grad.setColorAt(
-            1, globalui::MultipyColor(globalui::ui_background_color, 0.6, 3));
+        grad.setColorAt(0, MultipyColor(globalui::ui_background_color, 0.4, 3));
+        grad.setColorAt(1, MultipyColor(globalui::ui_background_color, 0.6, 3));
     }
 
     p.setPen(QPen(globalui::ui_foreground_color, 0));
@@ -65,7 +63,7 @@ void NodeCreator::Draw(QPainter &p) {
     p.drawRect(rect());
 
     // 写字
-    p.setPen(globalui::MultipyColor(globalui::ui_foreground_color, 2));
+    p.setPen(MultipyColor(globalui::ui_foreground_color, 2));
     p.setFont(globalui::node_menu_title_font);
     p.drawText(QPointF(rect().topLeft().x(), rect().topLeft().y() + 40), title);
 

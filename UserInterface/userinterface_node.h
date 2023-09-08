@@ -28,25 +28,25 @@ class NodeGraph;
 
 class Node : public QObject {
     Q_OBJECT
-protected:
+public:
     /// 目标核节点
     Kernel::Node *targetNode;
     /// 所属节点图
     NodeGraph *parentNodeGraph;
 
-protected:
+public:
     /// 显示矩形信息
     QRectF rect;
-
-public:
     /// 颜色信息
     QColor color();
-
-public:
-    // 名字
+    /// 名字
     QString name;
 
 public:
+    /// 选中状态
+    NodeChosenState state;
+    /// 被选中时调用该函数
+    void Chosen();
     // 接口数组
     // 分别是输入接口、输出接口和参数接口
     QVector<Port *> InputPorts;
@@ -66,7 +66,7 @@ public:
     /// 移动至某个位置
     void Move(QPointF &pos);
     /// 接口状态更新1：悬浮
-    void PortSuspensionUpdate(Port *tar);
+    void PortHoveredUpdate(Port *tar);
 
 public:
     explicit Node(QObject *parent = nullptr, Kernel::Node *tar = nullptr,

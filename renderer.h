@@ -15,6 +15,7 @@
 #include <QOpenGLWidget>
 #include <QPoint>
 #include <QPointF>
+#include <QTimer>
 #include <QtMath>
 #include <iostream>
 
@@ -24,8 +25,16 @@
 /// 程序的渲染窗口
 class Renderer : public QOpenGLWidget, QOpenGLFunctions_4_5_Core {
     Q_OBJECT
+
+protected:
+    /// 为了流畅性，使用计时器
+    QTimer *timer;
+public slots:
+    /// 计时器重绘
+    void TimerUpdate();
+
     /// 这一部分的变量在每次重新设置全局地形大小时会被重置
-private:
+protected:
     /// 地形网格VBO
     QOpenGLBuffer *terrainVBO;
     /// 地形网格EBO
@@ -37,7 +46,6 @@ private:
     /// 离屏交换矩形网格VAO
     QOpenGLVertexArrayObject *screenVAO;
 
-public:
 protected:
     /// 地形平面顶点数据组
     float *panelVertices;
@@ -46,7 +54,7 @@ protected:
     /// 离屏渲染矩形网格顶点数据组
     float *rectVertices;
 
-private:
+protected:
     /// 地形顶点着色器
     QOpenGLShader *terrainVert;
     /// 地形片元着色器
@@ -60,13 +68,13 @@ private:
     /// 离屏交换渲染着色器程序
     QOpenGLShaderProgram *swapShaderProgram;
 
-private:
+protected:
     /// 离屏渲染缓冲区frame buffer
     GLuint swapFrameBuffer;
     /// 离屏渲染缓冲区frame buffer的颜色缓冲和深度缓冲内容
     GLuint swapColorBuffer, swapDepthBuffer;
 
-private:
+protected:
     /// 摄像机位置
     QVector3D camPos;
     /// 摄像机mvp矩阵内容

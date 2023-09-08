@@ -1,7 +1,7 @@
 #include "renderer.h"
 
 #include "Global/globalrender.h"
-// #include "Global/globalui.h"
+#include "Global/globalui.h"
 
 #define PreRenderTerrainGround(framebuffer)                 \
     {                                                       \
@@ -58,6 +58,29 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     distance = sqrt(2.0);
     rotateSensitive = 0.005f;
     scaleSensitive = 0.001f;
+
+    // 启动计时器
+    timer = new QTimer(this);
+    timer->setTimerType(Qt::PreciseTimer);
+    timer->setInterval(33);
+    timer->start();
+    // 根据计时器信号更新画面
+    connect(timer, SIGNAL(timeout()), this, SLOT(TimerUpdate()));
+}
+
+void Renderer::TimerUpdate() {
+    static unsigned int timerNum = 0;
+    /*    if (timerNum < 250)
+            timerNum++;
+        else */
+    //    if (UserInterface::globalui::real_time_update) {
+    static unsigned int oldHeightFieldBufferIndex =
+        globalinfo::ChosenHeightFieldBuffer;
+    if (oldHeightFieldBufferIndex != globalinfo::ChosenHeightFieldBuffer) {
+        update();
+        oldHeightFieldBufferIndex = globalinfo::ChosenHeightFieldBuffer;
+    }
+    //    }
 }
 
 void Renderer::initializeGL() {

@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Global/globalfunc.cpp \
     Global/globalinfo.cpp \
     Global/globalrender.cpp \
     Global/globalui.cpp \
@@ -28,6 +29,7 @@ SOURCES += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
+    UserInterface/Inspector/userinterface_nodeinspector_item.cpp \
     UserInterface/NodeMenu/userinterface_nodecreator.cpp \
     UserInterface/NodeMenu/userinterface_nodemenubutton.cpp \
     UserInterface/NodeMenu/userinterface_nodesubmenu.cpp \
@@ -40,7 +42,7 @@ SOURCES += \
     UserInterface/userinterface_nodeeditorterminal.cpp \
     UserInterface/userinterface_nodegraph.cpp \
     UserInterface/userinterface_node.cpp \
-    UserInterface/userinterface_nodeinspector.cpp \
+    UserInterface/Inspector/userinterface_nodeinspector.cpp \
     UserInterface/NodeMenu/userinterface_nodemenu.cpp \
     UserInterface/userinterface_port.cpp \
     UserInterface/Title/userinterface_titlebar.cpp \
@@ -50,6 +52,7 @@ SOURCES += \
     renderer.cpp
 
 HEADERS += \
+    Global/globalfunc.h \
     Global/globalinfo.h \
     Global/globalrender.h \
     Global/globalui.h \
@@ -61,6 +64,7 @@ HEADERS += \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
+    UserInterface/Inspector/userinterface_nodeinspector_item.h \
     UserInterface/NodeMenu/userinterface_nodecreator.h \
     UserInterface/NodeMenu/userinterface_nodemenubutton.h \
     UserInterface/NodeMenu/userinterface_nodesubmenu.h \
@@ -73,7 +77,7 @@ HEADERS += \
     UserInterface/userinterface_nodeeditorterminal.h \
     UserInterface/userinterface_nodegraph.h \
     UserInterface/userinterface_node.h \
-    UserInterface/userinterface_nodeinspector.h \
+    UserInterface/Inspector/userinterface_nodeinspector.h \
     UserInterface/NodeMenu/userinterface_nodemenu.h \
     UserInterface/userinterface_port.h \
     UserInterface/Title/userinterface_titlebar.h \

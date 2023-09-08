@@ -1,5 +1,6 @@
 #include "userinterface_nodemenubutton.h"
 
+#include "Global/globalfunc.h"
 #include "Global/globalui.h"
 #include "userinterface_nodemenu.h"
 
@@ -32,13 +33,13 @@ void NodeMenuButton::Draw(QPainter &p) {
 
     QColor brCol;
     if (state == NodeMenuButtonState::Pressed)
-        brCol = globalui::AverageColor(globalui::ui_foreground_color,
-                                       globalui::ui_background_color);
+        brCol = AverageColor(globalui::ui_foreground_color,
+                             globalui::ui_background_color);
     else if (state == NodeMenuButtonState::Hovered)
-        brCol = globalui::AverageColor(
-            globalui::ui_background_color,
-            brCol = globalui::AverageColor(globalui::ui_foreground_color,
-                                           globalui::ui_background_color));
+        brCol =
+            AverageColor(globalui::ui_background_color,
+                         brCol = AverageColor(globalui::ui_foreground_color,
+                                              globalui::ui_background_color));
     else
         brCol = globalui::ui_background_color;
 

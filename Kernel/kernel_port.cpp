@@ -271,13 +271,15 @@ float Port::GetFloatData() {
         return ConFloat;
 }
 
-void Port::GetData(unsigned int &buffer, float &value) {
+bool Port::GetData(unsigned int &buffer, float &value) {
     if (dataType == PortDataType::Float) {
         buffer = 0;
-        value = ConFloat;
+        value = GetFloatData();
+        return true;
     } else {
-        buffer = ConBuffer;
+        buffer = GetBufferData();
         value = 0;
+        return false;
     }
 }
 
@@ -408,6 +410,22 @@ void Port::UpdateAvailableState() {
         qDebug() << "Warning: Output port " + name +
                         " should not update its available state.";
     }
+}
+
+void Port::SetDefaultFloatData(float data) {
+    defaultFloat = data;
+}
+
+void Port::SetDefaultBufferData(unsigned int data) {
+    defaultBuffer = data;
+}
+
+float Port::GetDefaultFloatData() {
+    return defaultFloat;
+}
+
+unsigned int Port::GetDefaultBufferData() {
+    return defaultBuffer;
 }
 
 } // namespace Kernel

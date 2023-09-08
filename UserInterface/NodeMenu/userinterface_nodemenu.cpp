@@ -1,5 +1,6 @@
 #include "userinterface_nodemenu.h"
 
+#include "./Global/globalfunc.h"
 #include "./Global/globalui.h"
 #include "Kernel/kernel_element_inc.h"
 #include "userinterface_nodecreator.h"
@@ -24,8 +25,7 @@ void NodeMenu::paintEvent(QPaintEvent *event) {
     // 反走样
     p.setRenderHint(QPainter::Antialiasing, true);
 
-    p.setBrush(
-        QBrush(globalui::MultipyColor(globalui::ui_background_color, 0.75)));
+    p.setBrush(QBrush(MultipyColor(globalui::ui_background_color, 0.75)));
     p.setPen(QPen(globalui::transparent_color));
 
     p.drawRect(rect());
@@ -219,10 +219,8 @@ void NodeMenu::mouseMoveEvent(QMouseEvent *event) {
             static QPointF mousePos;
             mousePos = camOffset(event->pos());
             // TODO 拖拽事件
-
             // 判断拖动长度是否超过阈值
-            if (QLineF(mousePressPos, mousePos).length() >=
-                QApplication::startDragDistance()) {
+            if ((mousePressPos - mousePos).manhattanLength() >= 5) {
                 // 判断鼠标是否点击
                 static NodeCreator *chosenNodeCreator;
                 chosenNodeCreator = nullptr;

@@ -39,6 +39,11 @@ void Node::AddParamPort(PortDataType dt, QString n, bool hasDefault,
     this->ParamPorts.push_back(npb);
 }
 
+void Node::AddNonPortParam(NonPortParamType type, QString name) {
+    NonPortParam *newParam = new NonPortParam(type, name);
+    nonPortParams.push_back(newParam);
+}
+
 void Node::AddComputeShaderFromPath(QString path) {
     QOpenGLShader *shader;
     QOpenGLShaderProgram *shaderProgram;
@@ -135,6 +140,68 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
         }
     }
     isFinished = true;
+    return true;
+}
+
+bool Node::OccurChangeOnPort(Port *tar) {
+    bool flag = false;
+    // 更新改动的接口的状态
+    for (auto &i : InputPorts) {
+        if (i == tar) {
+            i->UpdateAvailableState();
+            flag = true;
+            break;
+        }
+    }
+    for (auto &i : ParamPorts) {
+        if (i == tar) {
+            i->UpdateAvailableState();
+            flag = true;
+            break;
+        }
+    }
+
+    if (!flag) {
+        qDebug() << "error：接口发生改动，调用OccurChangeOnPort时，传入的接口指"
+                    "针不包含在该节点内";
+        return false;
+    }
+    // 更新节点的完成状态
+    this->isFinished = false;
+    // 更新所有的输出接口状态与和输出接口相连的节点的状态（递归调用该函数）
+    for (auto &i : OutputPorts) {
+        i->isAvailable = false;
+        for (auto &j : i->LinkedPorts) {
+            j->GetParentNode()->OccurChangeOnPort(j);
+        }
+    }
+    return true;
+}
+
+bool Node::OccurChangeOnNonPortParam(NonPortParam *tar) {
+    bool flag = false;
+    // 更新改动的接口的状态
+    for (auto &i : nonPortParams) {
+        if (i == tar) {
+            flag = true;
+            break;
+        }
+    }
+
+    if (!flag) {
+        qDebug() << "error：非接口参数发生改动，调用OccurChangeOnNonPortParam时"
+                    "，传入的接口指针不包含在该节点内";
+        return false;
+    }
+    // 更新节点的完成状态
+    this->isFinished = false;
+    // 更新所有的输出接口状态与和输出接口相连的节点的状态（递归调用该函数）
+    for (auto &i : OutputPorts) {
+        i->isAvailable = false;
+        for (auto &j : i->LinkedPorts) {
+            j->GetParentNode()->OccurChangeOnPort(j);
+        }
+    }
     return true;
 }
 

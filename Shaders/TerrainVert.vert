@@ -24,7 +24,7 @@ uniform bool useHeightFieldBuffer;
 
 void main(){
     vec2 rtexCoord = 2.0 * pos.xy / TerrainSize;
-    texCoord = pos.xy / TerrainSize + vec2(0.5, 0.5);
+    texCoord = pos.xy / TerrainSize + vec2(0.5, 0.5); 
     ivec2 itexCoord = ivec2(texCoord.xy * TerrainGrid);
     // 根据传入顶点信息构建三维顶点
     vec4 modelPos;

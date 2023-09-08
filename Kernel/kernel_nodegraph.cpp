@@ -63,7 +63,39 @@ Wire *NodeGraph::LinkWire(Port *a, Port *b) {
     // 对涉及到的接口更新信息
     in->UpdateLinkInfo(wires);
     out->UpdateLinkInfo(wires);
+    out->GetParentNode()->OccurChangeOnPort(out);
     return newWire;
+}
+
+bool NodeGraph::DeleteWire(Wire *tar) {
+    bool flag = false;
+    for (QVector<Wire *>::iterator it = wires.begin(); it != wires.end();
+         it++) {
+        // 找到要删除的wire
+        if (*it == tar) {
+            flag = true;
+            Port *inport = tar->GetInput();
+            Port *outport = tar->GetOutput();
+
+            // 释放内存
+            // 标记为空指针
+            tar->targetUIWire->targetWire = nullptr;
+            delete tar;
+
+            it = wires.erase(it);
+            inport->UpdateLinkInfo(wires);
+            outport->UpdateLinkInfo(wires);
+            outport->GetParentNode()->OccurChangeOnPort(outport);
+            break;
+        }
+    }
+    return flag;
+}
+
+bool NodeGraph::DeleteNode(Node *tar) {
+    //    bool flag = false;
+    //    for(QVector<>)
+    return true;
 }
 
 Node *NodeGraph::GetParentMacroNode() {

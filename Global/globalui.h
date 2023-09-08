@@ -51,6 +51,8 @@ public:
     static QFont node_name_font;
     /// 节点名字显示位置（相对）
     static QPointF node_name_pos;
+    /// 节点被选中效果颜色
+    static QColor node_chosen_color;
 
     /// 接口之间的间隔
     static float port_interval_size;
@@ -73,6 +75,15 @@ public:
     /// 节点菜单字体（描述）
     static QFont node_menu_descrip_font;
 
+    /// 节点参数编辑器参数名字体
+    static QFont node_inspector_name_font;
+    /// 节点参数编辑器条目宽高
+    static QPointF node_inspector_item_size;
+    /// 节点参数编辑器条目上边距
+    static float node_inspector_item_topmargin;
+    /// 节点参数编辑器输入框大小
+    static QPointF node_inspector_lineedit_size;
+
     /// 背景色
     static QColor editor_background_color;
     /// 前景色透明度
@@ -81,37 +92,12 @@ public:
     static QColor editor_foreground_color;
 
 public:
-    /// 颜色取平均
-    static QColor AverageColor(QColor a, QColor b);
-    /// 颜色乘数
-    static QColor MultipyColor(QColor a, float f);
-    /// 颜色乘数
-    static QColor MultipyColor(QColor a, float f, int chan);
-
 public:
     globalui();
 };
 
 } // namespace UserInterface
 
-// 一些全局函数
-template <typename T>
-T clamp(T l, T r, T x) {
-    T L, R;
-    if (l > r) {
-        L = r;
-        R = l;
-    } else {
-        L = l;
-        R = r;
-    }
-    if (x > R)
-        return R;
-    else if (x < L) {
-        return L;
-    } else {
-        return x;
-    }
-}
+/// 颜色判等
 
 #endif // GLOBALUI

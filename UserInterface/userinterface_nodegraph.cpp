@@ -10,7 +10,7 @@ NodeGraph::NodeGraph(QObject *parent, Kernel::NodeGraph *tarKernelGraph)
     CameraSizeControl = 0.5f;
     CameraSizeMagn = exp(CameraSizeControl);
     mState = UserInterface::MouseState::None;
-    chosenNode = nullptr;
+    chosenNode.resize(0);
     chosenPort = nullptr;
     oldMousePos = QPointF(0.0, 0.0);
 }
@@ -39,8 +39,103 @@ QVector<Node *> &NodeGraph::GetNodes() {
     return Nodes;
 }
 
-Node *&NodeGraph::ChosenNode() {
+QVector<Node *> &NodeGraph::ChosenNode() {
     return chosenNode;
+}
+
+bool NodeGraph::ChooseOneNode(Node *tar) {
+    bool flag = false;
+    for (auto &i : Nodes) {
+        if (tar == i) {
+            flag = true;
+            break;
+        }
+    }
+    if (!flag) {
+        qDebug() << "错误：函数ChooseOneNode传入节点指针不在该节点图内";
+        return false;
+    } else {
+        // 选择节点
+        chosenNode.clear();
+        chosenNode.push_back(tar);
+        // 设置状态
+        tar->Chosen();
+        // 设置其他节点
+        for (auto &i : Nodes) {
+            if (i != tar) {
+                i->state = NodeChosenState::None;
+            }
+        }
+        return true;
+    }
+}
+
+bool NodeGraph::ChooseASetOfNodes(QVector<Node *> tar) {
+    bool allFlag = true;
+    for (auto &i : tar) {
+        bool flag = false;
+        for (auto &j : Nodes) {
+            if (i == j) {
+                flag = true;
+                break;
+            }
+        }
+        if (flag)
+            continue;
+        else {
+            allFlag = false;
+            break;
+        }
+    }
+    if (!allFlag) {
+        qDebug() << "错误：函数ChooseOneNode传入节点指针不在该节点图内";
+        return false;
+    } else {
+        chosenNode.clear();
+        chosenNode.swap(tar);
+        // 设置状态
+        for (auto &i : chosenNode) {
+            i->state = NodeChosenState::Chosen;
+            for (auto &j : Nodes) {
+                if (j != i) {
+                    j->state = NodeChosenState::None;
+                }
+            }
+        }
+        return true;
+    }
+}
+
+bool NodeGraph::ChooseOneWire(Wire *tar) {
+    bool flag = false;
+    for (auto &i : Wires) {
+        if (tar == i) {
+            flag = true;
+            break;
+        }
+    }
+    if (!flag) {
+        qDebug() << "错误：函数ChooseOneWire传入wire指针不在该节点图内";
+        return false;
+    } else {
+        // 选择节点
+        chosenWire.clear();
+        chosenWire.push_back(tar);
+        // 设置状态
+        tar->state = WireChosenState::Chosen;
+        for (auto &i : Wires) {
+            if (i != tar) {
+                i->state = WireChosenState::None;
+            }
+        }
+        return true;
+    }
+}
+
+void NodeGraph::MoveChosenNodes(QPointF delta) {
+    for (auto &i : chosenNode) {
+        i->Move(delta);
+    }
 }
 
 Port *&NodeGraph::ChosenPort() {
@@ -71,28 +166,16 @@ bool NodeGraph::LinkWire(Port *lp1, Port *lp2) {
         Wires.push_back(newWire);
         lp1->Link();
         lp2->Link();
-
-        //        改进：应该在每次连接后检查相关节点的连线是否依然存在
-        // 重新从抽象wire中同步
-        //        ClearWire();
-        //        for (auto &i : targetKernelGraph->wires) {
-        //            Wire *newWire = new Wire(this, i,
-        //            i->GetInput()->targetUIPort,
-        //                                     i->GetInput()->targetUIPort);
-        //            Wires.push_back(newWire);
-        //            i->GetInput()->targetUIPort->Link();
-        //            i->GetInput()->targetUIPort->Link();
-        //        }
-
         for (QVector<Wire *>::iterator it = Wires.begin(); it != Wires.end();) {
             // 如果对应的抽象指针不复存在
             if ((*it)->targetWire == nullptr) {
                 Port *lastp1 = (*it)->linkedPort[0];
                 Port *lastp2 = (*it)->linkedPort[1];
                 delete (*it);
+                it = Wires.erase(it);
+
                 lastp1->PortLinkUpdateByWiresList(Wires);
                 lastp2->PortLinkUpdateByWiresList(Wires);
-                it = Wires.erase(it);
                 if (it == Wires.end()) break;
             } else {
                 it++;
@@ -113,6 +196,36 @@ void NodeGraph::ClearWire() {
     Wires.clear();
 }
 
+bool NodeGraph::DeleteWire(Wire *tar) {
+    // 先在抽象层删除该wire
+    bool flag_0 = targetKernelGraph->DeleteWire(tar->targetWire);
+    if (!flag_0) return flag_0;
+    //  然后在交互层删除该wire
+    bool flag = false;
+    for (QVector<Wire *>::iterator it = Wires.begin(); it != Wires.end();
+         it++) {
+        // 找到要删除的wire
+        if (*it == tar) {
+            flag = true;
+            Port *inport = tar->linkedPort[0];
+            Port *outport = tar->linkedPort[1];
+
+            // 释放内存
+            // 标记为空指针
+            delete tar;
+            tar = nullptr;
+
+            it = Wires.erase(it);
+            inport->PortLinkUpdateByWiresList(Wires);
+            outport->PortLinkUpdateByWiresList(Wires);
+            break;
+        }
+    }
+    qDebug() << "删除wire " << QString(flag ? "成功 " : "失败 ")
+             << Wires.size();
+    return flag;
+}
+
 void NodeGraph::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
     targetKernelGraph->RunNodeGraph(f);
 }
@@ -126,8 +239,14 @@ void NodeGraph::Draw(QPainter &p) {
     }
 }
 
-bool NodeGraph::ClickDetect(QPointF &pos, Node *&clickedNode,
-                            Port *&clickedPort) {
+void NodeGraph::DrawWireCheckFrameBuffer(QPainter &p) {
+    for (auto &i : Wires) {
+        i->DrawFrameBuffer(p);
+    }
+}
+
+bool NodeGraph::ClickDetectNodePort(QPointF &pos, Node *&clickedNode,
+                                    Port *&clickedPort) {
     for (auto &i : Nodes) {
         if (i->ClickDetect(pos, clickedNode, clickedPort)) {
             return true;
@@ -136,9 +255,32 @@ bool NodeGraph::ClickDetect(QPointF &pos, Node *&clickedNode,
     return false;
 }
 
-void NodeGraph::PortSuspensionUpdate(Port *tar) {
+bool NodeGraph::ClickDetectWire(QPointF &pos, Wire *&clickedWire,
+                                QPixmap &pfb) {
+    for (auto &i : Wires) {
+        if (i->ClickDetect(pos, clickedWire, pfb)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void NodeGraph::PortHoveredUpdate(Port *tar) {
     for (auto &i : Nodes) {
-        i->PortSuspensionUpdate(tar);
+        i->PortHoveredUpdate(tar);
+    }
+}
+
+void NodeGraph::WireHoveredUpdate(Wire *tar) {
+    for (auto &i : Wires) {
+        if (i->state != WireChosenState::Chosen) {
+            if (i == tar) {
+                i->state = WireChosenState::Hovered;
+                qDebug() << "触发了wire悬浮检测";
+            } else {
+                i->state = WireChosenState::None;
+            }
+        }
     }
 }
 

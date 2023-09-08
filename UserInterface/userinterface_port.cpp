@@ -151,10 +151,8 @@ bool Port::ClickDetect(QPointF &pos, Port *&clickedPort) {
 }
 
 void Port::PortLinkUpdate() {
-    if (linkedNumber > 0 && state != PortChooseState::Linked)
-        state = PortChooseState::Linked;
-    if (linkedNumber <= 0 && state == PortChooseState::Linked)
-        state = PortChooseState::NoneChosen;
+    if (linkedNumber > 0) state = PortChooseState::Linked;
+    if (linkedNumber <= 0) state = PortChooseState::NoneChosen;
 }
 
 void Port::PortLinkUpdateByWiresList(QVector<Wire *> &Wires) {

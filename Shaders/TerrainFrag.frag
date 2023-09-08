@@ -12,7 +12,15 @@ uniform int TerrainGrid;
 uniform float TerrainSize;
 uniform float TerrainHeight;
 
+uniform sampler2D TerrainData;
+
+uniform bool useHeightFieldBuffer;
+
+
+
 void main(){
+    vec2 sampleTexCoord = vec2(texCoord.xy * TerrainGrid);
+
     float height = worldPos.y * TerrainSize / TerrainHeight;
     FragColor = vec4(0.5, height, height, 1.0);
     vec4 ansCol = vec4((clipPos.xy / clipPos.a) * 0.5 + 0.5, 0.0, 1.0);

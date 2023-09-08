@@ -1,7 +1,9 @@
 #include "userinterface_titlebar_maximizebutton.h"
 
 #include "./mainwindow.h"
+#include "Global/globalfunc.h"
 #include "userinterface_titlebar.h"
+
 namespace UserInterface {
 
 TitleBarMaximizebutton::TitleBarMaximizebutton(QObject *parent,
@@ -39,8 +41,8 @@ void TitleBarMaximizebutton::Draw(QPainter &p) {
 
     if (state == ButtonState::Hover) {
         p.setPen(QColor(0, 0, 0, 0));
-        p.setBrush(QBrush(globalui::AverageColor(
-            globalui::ui_background_color, globalui::ui_foreground_color)));
+        p.setBrush(QBrush(AverageColor(globalui::ui_background_color,
+                                       globalui::ui_foreground_color)));
         p.drawRect(rect);
     } else if (state == ButtonState::Pressed) {
         p.setPen(QColor(0, 0, 0, 0));

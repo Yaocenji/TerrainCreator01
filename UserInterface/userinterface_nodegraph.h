@@ -15,7 +15,14 @@
 
 namespace UserInterface {
 
-enum class MouseState { None, PressNode, PressPort, CreateNode, Grab };
+enum class MouseState {
+    None,
+    PressNode,
+    PressPort,
+    PressWire,
+    CreateNode,
+    Grab
+};
 
 class NodeGraph : public QObject {
     Q_OBJECT
@@ -32,9 +39,11 @@ protected:
     /// 鼠标状态机
     MouseState mState;
     /// 当前选中的焦点节点
-    Node *chosenNode;
+    QVector<Node *> chosenNode;
     /// 当前选中的焦点接口
     Port *chosenPort;
+    /// 当前选中的焦点wire
+    QVector<Wire *> chosenWire;
     /// 所有的节点组成的vector
     QVector<Node *> Nodes;
     /// 所有连线组成的vector
@@ -57,17 +66,33 @@ public:
 public:
     /// 获取节点数组
     QVector<Node *> &GetNodes();
-    /// 获取当前选取的节点
-    Node *&ChosenNode();
+    /// 获取当前选取的节点数组
+    QVector<Node *> &ChosenNode();
+    /// 单选一个节点
+    bool ChooseOneNode(Node *tar);
+    /// 选取一系列节点
+    bool ChooseASetOfNodes(QVector<Node *> tar);
+    /// 单选一个wire
+    bool ChooseOneWire(Wire *tar);
+    /// 移动选区的节点
+    void MoveChosenNodes(QPointF delta);
+    /// 获取当前选取的接口
     Port *&ChosenPort();
 
 public:
     /// 绘制
     void Draw(QPainter &p);
-    /// 点击检测
-    bool ClickDetect(QPointF &pos, Node *&clickedNode, Port *&clickedPort);
+    /// 点击检测：节点与接口
+    bool ClickDetectNodePort(QPointF &pos, Node *&clickedNode,
+                             Port *&clickedPort);
+    /// 点击检测：连线
+    bool ClickDetectWire(QPointF &pos, Wire *&clickedWire, QPixmap &pfb);
+    /// 绘制wire的check-framebuffer
+    void DrawWireCheckFrameBuffer(QPainter &p);
     /// 状态更新1：悬浮
-    void PortSuspensionUpdate(Port *tar);
+    void PortHoveredUpdate(Port *tar);
+    /// 状态更新2：连线悬浮
+    void WireHoveredUpdate(Wire *tar);
 
 public:
     /// 增删改查
@@ -88,6 +113,9 @@ public:
     bool LinkWire(Port *lp1, Port *lp2);
     /// 清空全部连线
     void ClearWire();
+
+    /// 删除连线
+    bool DeleteWire(Wire *tar);
 
     /// 运行
     void RunNodeGraph(QOpenGLFunctions_4_5_Core &f);

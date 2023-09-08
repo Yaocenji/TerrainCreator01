@@ -1,5 +1,6 @@
 #include "userinterface_titlebar_quitbutton.h"
 
+#include "Global/globalfunc.h"
 #include "userinterface_titlebar.h"
 
 namespace UserInterface {
@@ -26,8 +27,8 @@ void TitleBarQuitButton::Draw(QPainter &p) {
 
     if (state == ButtonState::Hover) {
         p.setPen(QColor(0, 0, 0, 0));
-        p.setBrush(QBrush(globalui::AverageColor(globalui::ui_background_color,
-                                                 QColor(166, 25, 0))));
+        p.setBrush(QBrush(
+            AverageColor(globalui::ui_background_color, QColor(166, 25, 0))));
         p.drawRect(rect);
     } else if (state == ButtonState::Pressed) {
         p.setPen(QColor(0, 0, 0, 0));

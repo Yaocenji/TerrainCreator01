@@ -114,7 +114,7 @@ public:
     /// 试图从连线获取连接的数据（如果是输入或参数节点），返回值表示是否成功
     bool TryGetDataFromWire();
     /// 获得连接的数据
-    void GetData(unsigned int &buffer, float &value);
+    bool GetData(unsigned int &buffer, float &value);
     /// 获得连接的buffer
     unsigned int GetBufferData();
     /// 获得链接的float
@@ -136,10 +136,20 @@ public:
     /// 更新是否可用信息
     void UpdateAvailableState();
 
+    /// 设置默认值1
+    void SetDefaultFloatData(float data);
+    /// 设置默认值2
+    void SetDefaultBufferData(unsigned int data);
+    /// 获取默认值1
+    float GetDefaultFloatData();
+    /// 获取默认值2
+    unsigned int GetDefaultBufferData();
+
 public:
     //    Port(QObject *parent = nullptr, Node *pN = nullptr,
     //         PortType t = PortType::Input, PortDataType dt =
-    //         PortDataType::Float2D, QString n = "未命名", bool hD = false);
+    //         PortDataType::Float2D, QString n = "未命名", bool hD =
+    //         false);
     Port(QObject *parent = nullptr, Node *pN = nullptr,
          PortType t = PortType::Input, PortDataType dt = PortDataType::Float2D,
          QString n = "未命名", bool hD = false, float defaultData = 0);

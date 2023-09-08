@@ -10,6 +10,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
+#include <QPixmap>
 #include <QTimer>
 #include <QWidget>
 
@@ -23,7 +24,7 @@ namespace UserInterface {
 
 class NodeEditorTerminal : public QWidget {
     Q_OBJECT
-protected:
+public:
     /// 要显示的目标图
     NodeGraph *targetNodeGraph;
 
@@ -34,6 +35,13 @@ public slots:
     /// 计时器重绘
     void TimerUpdate();
 
+public:
+    /// 一张pixmap作为一个framebuffer，用于wire的点击检测
+    QPixmap wireCheckBuffer;
+
+    /// 是否调试wireCheckBuffer
+    bool isDebugWireCheckBuffer;
+
 protected:
     /// 鼠标是否按下
     bool isPressing;
@@ -43,6 +51,10 @@ protected:
     QPointF oldMousePos;
     /// 鼠标当前位置（世界空间）
     QPointF realMousePos;
+
+public:
+    /// 如果正在创建连线，那么预览连线的两头光滑参数
+    bool creatingWireSmoothInfo[2];
 
 public:
     /// 设置目标显示的节点图
@@ -67,6 +79,8 @@ public:
     void dragMoveEvent(QDragMoveEvent *event) override;
     /// 拖拽释放事件
     void dropEvent(QDropEvent *event) override;
+    /// 缩放事件
+    void resizeEvent(QResizeEvent *event) override;
 
 public:
     explicit NodeEditorTerminal(QWidget *parent = nullptr);
