@@ -123,6 +123,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     // 测试代码
     QPushButton *testB = new QPushButton(this);
+    testB->setGeometry(rect().width() - 300, rect().height() - 75, 300, 75);
+    testB->setText("开始运行/应用改动");
     connect(testB, SIGNAL(clicked()), this, SLOT(test()));
     //    connect(testB, &QPushButton::clicked, [=]() {
     //        uiNodeEditor->isDebugWireCheckBuffer =

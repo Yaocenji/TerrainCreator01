@@ -184,6 +184,9 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
             // 连接：lineEdit被修改时
             connect(lineEdit, SIGNAL(editingFinished()), this,
                     SLOT(LineEditFinished()));
+            // 连接：slider被修改时
+            connect(slider, SIGNAL(valueChanged(int)), this,
+                    SLOT(SliderSlided(int)));
         } else if (tarNonPortParam->type == Kernel::NonPortParamType::Int) {
             lineEdit = new QLineEdit(this);
 
@@ -207,6 +210,9 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
             // 连接：lineEdit被修改时
             connect(lineEdit, SIGNAL(editingFinished()), this,
                     SLOT(LineEditFinished()));
+            // 连接：slider被修改时
+            connect(slider, SIGNAL(valueChanged(int)), this,
+                    SLOT(SliderSlided(int)));
         } else if (tarNonPortParam->type == Kernel::NonPortParamType::Enum) {
             comboBox = new QComboBox(this);
             comboBox->move(60, 0);
@@ -300,6 +306,52 @@ void NodeInspectorItem::LineEditFinished() {
                     QString::number(tarNonPortParam->data_rangeint));
                 slider->setValue(tarNonPortParam->data_rangeint);
             }
+
+            targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+            return;
+
+        } else {
+            qDebug() << "错误 在类型参数不为数时，lineEdit不应该被修改";
+            return;
+        }
+    }
+}
+
+void NodeInspectorItem::SliderSlided(int value) {
+    qDebug() << "触发函数：滑动滑动条";
+    if (targetParamType == ItemTargetParamType::PortParam) {
+        Kernel::Port *tarPort = targetKernelNode->ParamPorts[index];
+        if (tarPort->GetDataType() == Kernel::PortDataType::Float) {
+            bool flag;
+            float data = value;
+            tarPort->SetDefaultFloatData(data);
+
+            lineEdit->setText(QString::number(tarPort->GetDefaultFloatData()));
+            targetKernelNode->OccurChangeOnPort(tarPort);
+            return;
+        } else {
+            // TODO
+            return;
+        }
+    } else {
+        Kernel::NonPortParam *tarNonPortParam =
+            targetKernelNode->nonPortParams[index];
+        if (tarNonPortParam->type == Kernel::NonPortParamType::RangeFloat) {
+            float data = (float(value)) / 100.0f;
+            tarNonPortParam->SetData(data);
+            lineEdit->setText(
+                QString::number(tarNonPortParam->data_rangefloat));
+            slider->setValue(int(tarNonPortParam->data_rangefloat * 100.0f));
+
+            targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+            return;
+        } else if (tarNonPortParam->type ==
+                   Kernel::NonPortParamType::RangeInt) {
+            int data = value;
+            tarNonPortParam->SetData(data);
+
+            lineEdit->setText(QString::number(tarNonPortParam->data_rangeint));
+            slider->setValue(tarNonPortParam->data_rangeint);
 
             targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
             return;

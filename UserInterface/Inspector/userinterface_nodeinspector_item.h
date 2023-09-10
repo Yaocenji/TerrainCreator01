@@ -65,6 +65,8 @@ public:
 public slots:
     /// lineEdit编辑完成后
     void LineEditFinished();
+    /// 滑动了滑动条
+    void SliderSlided(int value);
 
 public:
     void paintEvent(QPaintEvent *event) override;
