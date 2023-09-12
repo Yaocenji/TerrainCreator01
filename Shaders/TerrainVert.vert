@@ -73,7 +73,13 @@ vec3 Grad2Norm(vec2 grad){
     // 斜率绝对值
     float abs_k = length(grad);
     // 法线向量
-    vec3 normal = normalize(normalize(vec3(grad.x, 0, grad.y)) + vec3(0, 1, 0) / abs_k);
+    vec3 normal;
+    if (abs_k >= 0.001){
+        normal = normalize(normalize(vec3(grad.x, 0, grad.y)) + vec3(0, 1, 0) / abs_k);
+    }
+    else {
+        normal = vec3(0, 1, 0);
+    }
     return normal;
 }
 

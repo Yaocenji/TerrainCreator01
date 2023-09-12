@@ -82,6 +82,17 @@ Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
     }
 }
 
+// Port::~Port() {
+//     // 制空
+//     parentNode = nullptr;
+//     targetUIPort = nullptr;
+//     // 释放现存
+//     // TODO
+//     //    DeleteBuffer();
+//     // 清空
+//     LinkedPorts.clear();
+// }
+
 Node *Port::GetParentNode() {
     return parentNode;
 }
@@ -392,8 +403,8 @@ void Port::UpdateLinkInfo(QVector<Wire *> &wires) {
     // 如果是输出节点
     else {
         for (int i = 0; i < wires.length(); i++) {
-            if (wires[i]->GetOutput() == this) {
-                this->LinkedPorts.push_back(wires[i]->GetInput());
+            if (wires[i]->GetInput() == this) {
+                this->LinkedPorts.push_back(wires[i]->GetOutput());
             }
         }
     }

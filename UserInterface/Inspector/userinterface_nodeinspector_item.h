@@ -16,6 +16,9 @@
 
 namespace UserInterface {
 
+/// 前置声明
+class NodeInspector;
+
 enum class ItemTargetParamType { PortParam, NonPortParam };
 
 /// 节点参数编辑器中的“一条”
@@ -36,6 +39,9 @@ public:
     ItemTargetParamType targetParamType;
     /// 索引：目标参数在参数接口/非接口参数数组中的索引
     int index;
+
+    /// 父NodeInspector
+    NodeInspector *parentNodeInspector;
 
 public:
     /// 获取目标参数
@@ -72,7 +78,8 @@ public:
     void paintEvent(QPaintEvent *event) override;
 
 public:
-    explicit NodeInspectorItem(QWidget *parent = nullptr);
+    explicit NodeInspectorItem(QWidget *parent = nullptr,
+                               NodeInspector *parentNI = nullptr);
 
 signals:
 };

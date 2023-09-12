@@ -8,6 +8,9 @@ public:
     /// 背景色
     static QColor backgroundColor;
 
+    /// 是否实时更新渲染窗口
+    static bool real_time_render;
+
 public:
     globalrender();
 };

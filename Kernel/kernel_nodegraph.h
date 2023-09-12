@@ -71,8 +71,9 @@ public:
      * @param 是否是子图（默认：否）
      * @param 如果是子图，那么所属节点（默认：空）
      */
-    explicit NodeGraph(QObject *parent = nullptr, bool iSg = false,
-                       Node *oN = nullptr);
+    explicit NodeGraph(QObject *parent, bool iSg = false, Node *oN = nullptr);
+    // 析构函数
+    ~NodeGraph();
 
 signals:
 };

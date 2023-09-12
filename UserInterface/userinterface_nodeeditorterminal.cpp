@@ -10,6 +10,8 @@ NodeEditorTerminal::NodeEditorTerminal(QWidget *parent) : QWidget(parent) {
     setMouseTracking(true);
     // 拖拽接受
     setAcceptDrops(true);
+    // 键盘事件
+    setFocusPolicy(Qt::ClickFocus);
 
     // wire的checkframebuffer初始化
     wireCheckBuffer = QPixmap(rect().width(), rect().height());
@@ -32,10 +34,13 @@ NodeEditorTerminal::NodeEditorTerminal(QWidget *parent) : QWidget(parent) {
 
 void NodeEditorTerminal::TimerUpdate() {
     static unsigned int timerNum = 0;
-    if (timerNum < 250)
+    if (timerNum < 250) {
         timerNum++;
-    else if (globalui::real_time_update)
+        return;
+    }
+    if (globalui::real_time_update) {
         update();
+    }
 }
 
 void NodeEditorTerminal::SetTargetNodeGraph(NodeGraph *tar) {
@@ -118,7 +123,6 @@ void NodeEditorTerminal::paintEvent(QPaintEvent *event) {
 }
 
 void NodeEditorTerminal::mousePressEvent(QMouseEvent *event) {
-    //    qDebug() << "PRESS";
     isPressing = true;
     // 真实的位置
     realMousePos = event->pos();
@@ -261,8 +265,6 @@ void NodeEditorTerminal::mouseMoveEvent(QMouseEvent *event) {
                 // 根据悬浮的接口类型改变曲线绘制类型
                 creatingWireSmoothInfo[1] = true;
             }
-
-            qDebug() << "正在拖出连线";
         }
 
         // 如果是鼠标右键点击了空白位置并拖动
@@ -277,7 +279,6 @@ void NodeEditorTerminal::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void NodeEditorTerminal::mouseReleaseEvent(QMouseEvent *event) {
-    //    qDebug() << "RELEASE";
     isPressing = false;
     // 鼠标真实的位置
     QPointF realMousePos = event->pos();
@@ -301,7 +302,6 @@ void NodeEditorTerminal::mouseReleaseEvent(QMouseEvent *event) {
                                           clickedPort);
                 targetNodeGraph->ChosenPort() = clickedPort;
             }
-            qDebug() << " 创建了连线";
         }
         mState = MouseState::None;
         update();
@@ -388,6 +388,15 @@ void NodeEditorTerminal::dropEvent(QDropEvent *event) {
 void NodeEditorTerminal::resizeEvent(QResizeEvent *event) {
     // wire的checkframebuffer重新初始化
     wireCheckBuffer = QPixmap(rect().width(), rect().height());
+}
+
+void NodeEditorTerminal::keyPressEvent(QKeyEvent *event) {
+    qDebug() << "键盘事件";
+    if (event->key() == Qt::Key_Delete) {
+        // 删除节点
+        qDebug() << "删除节点";
+        targetNodeGraph->DeleteChosenNode();
+    }
 }
 
 } // namespace UserInterface

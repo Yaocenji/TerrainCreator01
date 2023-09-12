@@ -117,4 +117,8 @@ void NodeInspector::resetTablePos() {
     }
 }
 
+void NodeInspector::GiveSig_OccurValueChange() {
+    emit OccurValueChange();
+}
+
 } // namespace UserInterface

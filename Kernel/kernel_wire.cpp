@@ -18,6 +18,13 @@ Wire::Wire(QObject *parent, Port *ip, Port *op) : QObject(parent) {
     }
 }
 
+// Wire::~Wire() {
+//     // 全部置空即可
+//     inputPort = nullptr;
+//     outputPort = nullptr;
+//     targetUIWire = nullptr;
+// }
+
 Port *Wire::GetInput() {
     return inputPort;
 }
@@ -25,4 +32,4 @@ Port *Wire::GetOutput() {
     return outputPort;
 }
 
-} // namespace kernel
+} // namespace Kernel

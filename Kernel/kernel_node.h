@@ -184,7 +184,7 @@ public:
             data_float = value;
             return true;
         } else if (type == NonPortParamType::RangeFloat) {
-            data_float = clamp<int>(rangefloat_l, rangefloat_r, value);
+            data_rangefloat = clamp<float>(rangefloat_l, rangefloat_r, value);
             return true;
         } else {
             qDebug()
@@ -279,7 +279,8 @@ public:
     bool OccurChangeOnNonPortParam(NonPortParam *tar);
 
 public:
-    explicit Node(QObject *parent = nullptr, NodeGraph *pNM = nullptr);
+    explicit Node(QObject *parent, NodeGraph *pNM = nullptr);
+    //    ~Node();
 
 signals:
 };

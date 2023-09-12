@@ -70,17 +70,17 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
 
 void Renderer::TimerUpdate() {
     static unsigned int timerNum = 0;
-    /*    if (timerNum < 250)
-            timerNum++;
-        else */
-    //    if (UserInterface::globalui::real_time_update) {
+    if (timerNum < 250) timerNum++;
+
     static unsigned int oldHeightFieldBufferIndex =
         globalinfo::ChosenHeightFieldBuffer;
     if (oldHeightFieldBufferIndex != globalinfo::ChosenHeightFieldBuffer) {
         update();
         oldHeightFieldBufferIndex = globalinfo::ChosenHeightFieldBuffer;
     }
-    //    }
+    if (globalrender::real_time_render) {
+        update();
+    }
 }
 
 void Renderer::initializeGL() {
@@ -100,6 +100,10 @@ void Renderer::initializeGL() {
     // 根据设置数据生成顶点数据、vbo、vao、ebo
     setTerrainInfo();
 
+    qDebug() << "初始化错误验证 "
+             << "根据设置数据生成顶点数据、vbo、vao、ebo，错误码："
+             << glGetError();
+
     // 渲染shader内存分配
     terrainVert = new QOpenGLShader(QOpenGLShader::Vertex);
     terrainFrag = new QOpenGLShader(QOpenGLShader::Fragment);
@@ -109,6 +113,9 @@ void Renderer::initializeGL() {
 
     // 渲染shader读取
     setRenderShaders();
+
+    qDebug() << "初始化错误验证 "
+             << "渲染shader，错误码：" << glGetError();
 
     // 离屏渲染shader准备
     swapVert = new QOpenGLShader(QOpenGLShader::Vertex);
@@ -126,14 +133,18 @@ void Renderer::initializeGL() {
     // 离屏渲染（交换链）所有内容准备
     prepareSwapChain();
 
+    qDebug() << "初始化错误验证 "
+             << "离屏渲染所有内容准备，错误码：" << glGetError();
+
     // 摄像机准备
     camPos = QVector3D(0.0, 1.0, -1.0);
     mouseOldPos = QPoint();
     setCameraInfo();
 
-    update();
+    //    update();
 
-    qDebug() << glGetError();
+    qDebug() << "初始化错误验证 "
+             << "摄像机内容准备，错误码：" << glGetError();
 }
 
 void Renderer::resizeGL(int w, int h) {
@@ -198,7 +209,12 @@ void Renderer::setTerrainInfo() {
     panelIndices = new unsigned int[indicesCount()];
 
     generateMesh();
+    qDebug() << "初始化错误验证 "
+             << "网格顶点数组在RAM中准备，错误码：" << glGetError();
+
     allocateBuffer();
+    qDebug() << "初始化错误验证 "
+             << "生成VBO、VAO，错误码：" << glGetError();
 }
 
 void Renderer::generateMesh() {

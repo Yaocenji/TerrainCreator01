@@ -20,6 +20,7 @@ SOURCES += \
     Global/globalinfo.cpp \
     Global/globalrender.cpp \
     Global/globalui.cpp \
+    Kernel/Nodes/Filter/kernel_terrace_node.cpp \
     Kernel/kernel_element_forwarddec.cpp \
     Kernel/kernel_element_inc.cpp \
     Kernel/Nodes/Filter/kernel_clamp_node.cpp \
@@ -56,6 +57,7 @@ HEADERS += \
     Global/globalinfo.h \
     Global/globalrender.h \
     Global/globalui.h \
+    Kernel/Nodes/Filter/kernel_terrace_node.h \
     Kernel/kernel_element_inc.h \
     Kernel/Nodes/Filter/kernel_clamp_node.h \
     Kernel/Nodes/Generator/kernel_input_node.h \

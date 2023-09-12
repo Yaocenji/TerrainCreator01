@@ -7,6 +7,31 @@ Node::Node(QObject *parent, NodeGraph *pNM)
     name = "";
 }
 
+// Node::~Node() {
+//     // 先清除所有接口
+//     for (auto &i : InputPorts) {
+//         delete i;
+//     }
+//     InputPorts.clear();
+//     for (auto &i : OutputPorts) {
+//         delete i;
+//     }
+//     OutputPorts.clear();
+//     for (auto &i : ParamPorts) {
+//         delete i;
+//     }
+//     ParamPorts.clear();
+//     // 然后清除非接口参数
+//     for (auto &i : nonPortParams) {
+//         delete i;
+//     }
+//     nonPortParams.clear();
+//     // 清除shder和program
+//     ClearShaders();
+//     // 置空
+//     parentNodeGraph = nullptr;
+// }
+
 NodeGraph *Node::GetParentNodeManager() {
     return parentNodeGraph;
 }
@@ -133,10 +158,10 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
         }
     }
     CalculateNode(f);
-    for (int i = 0; i < OutputPorts.length(); i++) {
-        OutputPorts[i]->isAvailable = true;
-        for (int i = 0; i < OutputPorts[i]->LinkedPorts.length(); i++) {
-            OutputPorts[i]->LinkedPorts[i]->UpdateAvailableState();
+    for (auto &i : OutputPorts) {
+        i->isAvailable = true;
+        for (auto &j : i->LinkedPorts) {
+            j->UpdateAvailableState();
         }
     }
     isFinished = true;
@@ -144,6 +169,7 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
 }
 
 bool Node::OccurChangeOnPort(Port *tar) {
+    //    qDebug() << "参数接口改变";
     bool flag = false;
     // 更新改动的接口的状态
     for (auto &i : InputPorts) {
@@ -179,6 +205,7 @@ bool Node::OccurChangeOnPort(Port *tar) {
 }
 
 bool Node::OccurChangeOnNonPortParam(NonPortParam *tar) {
+    //    qDebug() << "非接口参数改变";
     bool flag = false;
     // 更新改动的接口的状态
     for (auto &i : nonPortParams) {
@@ -196,12 +223,19 @@ bool Node::OccurChangeOnNonPortParam(NonPortParam *tar) {
     // 更新节点的完成状态
     this->isFinished = false;
     // 更新所有的输出接口状态与和输出接口相连的节点的状态（递归调用该函数）
+    int num = 0;
     for (auto &i : OutputPorts) {
+        num++;
         i->isAvailable = false;
+        int num_1 = 0;
         for (auto &j : i->LinkedPorts) {
+            num_1++;
             j->GetParentNode()->OccurChangeOnPort(j);
         }
+        //        qDebug() << "第" << num << "个输出接口，共" << num_1
+        //                 << "个与之相连的接口被更新";
     }
+    //    qDebug() << "共" << num << "个输出接口 ";
     return true;
 }
 

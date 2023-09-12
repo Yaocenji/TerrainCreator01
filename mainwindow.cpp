@@ -34,6 +34,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     // 节点参数编辑器
     nodeInspector = new UserInterface::NodeInspector(uiNodeEditor, this);
+    // 连接：节点参数编辑器和节点图编辑终端刷新
+    //    connect(nodeInspector,
+    //    &UserInterface::NodeInspector::OccurValueChange,
+    //            [=]() { uiNodeEditor->update(); });
+    //    connect(nodeInspector, SIGNAL(OccurValueChange()), uiNodeEditor,
+    //            SLOT(update()));
 
     pb1 = new QPushButton(this);
     pb1->setText("开始计算");
@@ -131,13 +137,38 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     //            !uiNodeEditor->isDebugWireCheckBuffer;
     //        uiNodeEditor->update();
     //    });
+
+    // 启动计时器
+    timer = new QTimer(this);
+    timer->setTimerType(Qt::PreciseTimer);
+    timer->setInterval(100);
+    timer->start();
+    // 根据计时器信号更新画面
+    connect(timer, SIGNAL(timeout()), this, SLOT(TimerUpdate()));
+}
+
+void MainWindow::TimerUpdate() {
+    static unsigned int timerNum = 0;
+    if (timerNum < 15) {
+        timerNum++;
+        return;
+    }
+    if (globalinfo::keepingCalculating) {
+        if (uiNodeEditor->targetNodeGraph->GetNodes().size() > 0) {
+            uiNodeEditor->targetNodeGraph->RunNodeGraph(
+                *renderWidget->getFunctionAndContext());
+        }
+    }
+    uiNodeEditor->update();
+    renderWidget->update();
 }
 
 void MainWindow::test() {
     //  调试交互编辑器
 
     // 试运行
-    kNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
+    uiNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
+    //    kNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
 
     renderWidget->update();
     uiNodeEditor->update();

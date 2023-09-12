@@ -3,6 +3,7 @@
 
 #include <QBrush>
 #include <QDropEvent>
+#include <QKeyEvent>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QObject>
@@ -81,6 +82,8 @@ public:
     void dropEvent(QDropEvent *event) override;
     /// 缩放事件
     void resizeEvent(QResizeEvent *event) override;
+    /// 键盘事件
+    void keyPressEvent(QKeyEvent *event) override;
 
 public:
     explicit NodeEditorTerminal(QWidget *parent = nullptr);

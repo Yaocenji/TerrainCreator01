@@ -150,9 +150,11 @@ public:
     //         PortType t = PortType::Input, PortDataType dt =
     //         PortDataType::Float2D, QString n = "未命名", bool hD =
     //         false);
-    Port(QObject *parent = nullptr, Node *pN = nullptr,
-         PortType t = PortType::Input, PortDataType dt = PortDataType::Float2D,
-         QString n = "未命名", bool hD = false, float defaultData = 0);
+    Port(QObject *parent, Node *pN = nullptr, PortType t = PortType::Input,
+         PortDataType dt = PortDataType::Float2D, QString n = "未命名",
+         bool hD = false, float defaultData = 0);
+    // 析构函数
+    //    ~Port();
 
 signals:
 };

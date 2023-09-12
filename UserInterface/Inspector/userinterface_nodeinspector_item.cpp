@@ -2,10 +2,12 @@
 
 #include "Global/globalfunc.h"
 #include "Global/globalui.h"
+#include "userinterface_nodeinspector.h"
 
 namespace UserInterface {
 
-NodeInspectorItem::NodeInspectorItem(QWidget *parent) : QWidget(parent) {
+NodeInspectorItem::NodeInspectorItem(QWidget *parent, NodeInspector *parentNI)
+    : QWidget(parent), parentNodeInspector(parentNI) {
     name = "测试";
     resize(200, 30);
     targetKernelNode = nullptr;
@@ -169,13 +171,15 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
                    Kernel::NonPortParamType::RangeFloat) {
             slider = new QSlider(this);
             slider->setOrientation(Qt::Horizontal); // 水平方向
-            slider->setMinimum(tarNonPortParam->rangefloat_l *
-                               100.0f); // 最小值
-            slider->setMaximum(tarNonPortParam->rangefloat_r *
-                               100.0f);                   // 最大值
-            slider->setSingleStep(1);                     // 步长
+            slider->setMinimum(
+                int(tarNonPortParam->rangefloat_l * 100.0f)); // 最小值
+            slider->setMaximum(
+                int(tarNonPortParam->rangefloat_r * 100.0f)); // 最大值
+            slider->setSingleStep(1);                         // 步长
             slider->setTickInterval(10);                  // 设置刻度间隔
             slider->setTickPosition(QSlider::TicksAbove); // 刻度在上方
+
+            slider->setValue(int(tarNonPortParam->data_rangefloat * 100.0f));
 
             lineEdit = new QLineEdit(this);
 
@@ -203,6 +207,8 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
             slider->setSingleStep(1);                        // 步长
             slider->setTickInterval(10);                  // 设置刻度间隔
             slider->setTickPosition(QSlider::TicksAbove); // 刻度在上方
+
+            slider->setValue(int(tarNonPortParam->data_rangeint));
 
             lineEdit = new QLineEdit(this);
             lineEdit->setText(QString::number(tarNonPortParam->data_rangeint));
@@ -239,7 +245,7 @@ void NodeInspectorItem::ResetControllerGeometry() {
             rect().center().x(),
             rect().center().y() -
                 globalui::node_inspector_lineedit_size.y() / 2.0,
-            globalui::node_inspector_lineedit_size.x(),
+            rect().width() / 2.0 - globalui::node_inspector_lineedit_size.x(),
             globalui::node_inspector_lineedit_size.y());
     }
     if (comboBox != nullptr) {
@@ -267,6 +273,7 @@ void NodeInspectorItem::LineEditFinished() {
             lineEdit->setText(QString::number(tarPort->GetDefaultFloatData()));
 
             targetKernelNode->OccurChangeOnPort(tarPort);
+
             return;
         } else {
             // TODO
@@ -291,6 +298,7 @@ void NodeInspectorItem::LineEditFinished() {
             }
 
             targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+
             return;
         } else if (tarNonPortParam->type == Kernel::NonPortParamType::Int ||
                    tarNonPortParam->type ==
@@ -308,6 +316,7 @@ void NodeInspectorItem::LineEditFinished() {
             }
 
             targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+
             return;
 
         } else {
@@ -318,16 +327,15 @@ void NodeInspectorItem::LineEditFinished() {
 }
 
 void NodeInspectorItem::SliderSlided(int value) {
-    qDebug() << "触发函数：滑动滑动条";
     if (targetParamType == ItemTargetParamType::PortParam) {
         Kernel::Port *tarPort = targetKernelNode->ParamPorts[index];
         if (tarPort->GetDataType() == Kernel::PortDataType::Float) {
-            bool flag;
             float data = value;
             tarPort->SetDefaultFloatData(data);
 
             lineEdit->setText(QString::number(tarPort->GetDefaultFloatData()));
             targetKernelNode->OccurChangeOnPort(tarPort);
+
             return;
         } else {
             // TODO
@@ -341,9 +349,15 @@ void NodeInspectorItem::SliderSlided(int value) {
             tarNonPortParam->SetData(data);
             lineEdit->setText(
                 QString::number(tarNonPortParam->data_rangefloat));
-            slider->setValue(int(tarNonPortParam->data_rangefloat * 100.0f));
+            //            slider->setValue(int(tarNonPortParam->data_rangefloat
+            //            * 100.0f));
 
             targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+
+            qDebug() << "value:" << value << " "
+                     << "data:" << data << " " << tarNonPortParam->name << ":"
+                     << tarNonPortParam->data_rangefloat;
+
             return;
         } else if (tarNonPortParam->type ==
                    Kernel::NonPortParamType::RangeInt) {
@@ -351,7 +365,7 @@ void NodeInspectorItem::SliderSlided(int value) {
             tarNonPortParam->SetData(data);
 
             lineEdit->setText(QString::number(tarNonPortParam->data_rangeint));
-            slider->setValue(tarNonPortParam->data_rangeint);
+            //            slider->setValue(tarNonPortParam->data_rangeint);
 
             targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
             return;

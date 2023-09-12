@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QPushButton>
 #include <QSplitter>
+#include <QTimer>
 
 #include "Global/globalinfo.h"
 #include "Global/globalui.h"
@@ -19,6 +20,9 @@
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
+protected:
+    QTimer *timer;
+
 public:
     int width = 1920;
     int height = 1080;
@@ -56,6 +60,8 @@ public:
 
 public slots:
     void test();
+    // 时间更新
+    void TimerUpdate();
 
 public:
     MainWindow(QWidget *parent = nullptr);

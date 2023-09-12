@@ -94,12 +94,14 @@ bool NodeGraph::ChooseASetOfNodes(QVector<Node *> tar) {
         chosenNode.clear();
         chosenNode.swap(tar);
         // 设置状态
-        for (auto &i : chosenNode) {
-            i->state = NodeChosenState::Chosen;
-            for (auto &j : Nodes) {
-                if (j != i) {
-                    j->state = NodeChosenState::None;
-                }
+        //        for (auto &i : chosenNode) {
+        //            i->state = NodeChosenState::Chosen;
+        //        }
+        for (auto &j : Nodes) {
+            if (chosenNode.contains(j)) {
+                j->state = NodeChosenState::Chosen;
+            } else {
+                j->state = NodeChosenState::None;
             }
         }
         return true;
@@ -135,6 +137,16 @@ bool NodeGraph::ChooseOneWire(Wire *tar) {
 void NodeGraph::MoveChosenNodes(QPointF delta) {
     for (auto &i : chosenNode) {
         i->Move(delta);
+    }
+}
+
+void NodeGraph::DeleteChosenNode() {
+    for (auto &i : chosenNode) {
+        DeleteNode(i);
+    }
+    chosenNode.clear();
+    for (auto &i : Nodes) {
+        i->state = NodeChosenState::None;
     }
 }
 
@@ -197,9 +209,16 @@ void NodeGraph::ClearWire() {
 }
 
 bool NodeGraph::DeleteWire(Wire *tar) {
+    if (tar == nullptr) {
+        qDebug() << "警告：UI节点图删除ui::wire时，传入了空指针";
+    }
     // 先在抽象层删除该wire
-    bool flag_0 = targetKernelGraph->DeleteWire(tar->targetWire);
-    if (!flag_0) return flag_0;
+    if (tar->targetWire != nullptr) {
+        targetKernelGraph->DeleteWire(tar->targetWire);
+    } else {
+        qDebug()
+            << "警告：UI节点图删除ui::wire时，找不到与之相连的kernel::wire";
+    }
     //  然后在交互层删除该wire
     bool flag = false;
     for (QVector<Wire *>::iterator it = Wires.begin(); it != Wires.end();
@@ -223,6 +242,49 @@ bool NodeGraph::DeleteWire(Wire *tar) {
     }
     qDebug() << "删除wire " << QString(flag ? "成功 " : "失败 ")
              << Wires.size();
+    return flag;
+}
+
+bool NodeGraph::DeleteNode(Node *tar) {
+    if (tar == nullptr) {
+        qDebug() << "警告：UI节点图删除ui::node时，传入了空指针";
+    }
+
+    bool flag = false;
+    for (QVector<Node *>::iterator it = Nodes.begin(); it != Nodes.end();
+         it++) {
+        // 找到要删除的wire
+        if (*it == tar) {
+            flag = true;
+
+            // 先删除所有与之相连的Wire
+            if (tar->targetNode != nullptr) {
+                targetKernelGraph->DeleteNode(tar->targetNode);
+            } else {
+                qDebug() << "警告：UI节点图删除ui::"
+                            "node时，找不到与之相连的kernel::node";
+            }
+
+            // 删除相关的wire
+            QVector<Wire *> toBeDeletedWires = QVector<Wire *>();
+            for (auto &i : Wires) {
+                if (i->targetWire == nullptr) {
+                    toBeDeletedWires.push_back(i);
+                }
+            }
+            for (auto &i : toBeDeletedWires) {
+                DeleteWire(i);
+            }
+
+            // 释放内存
+            // 标记为空指针
+            delete tar;
+            tar = nullptr;
+
+            it = Nodes.erase(it);
+            break;
+        }
+    }
     return flag;
 }
 

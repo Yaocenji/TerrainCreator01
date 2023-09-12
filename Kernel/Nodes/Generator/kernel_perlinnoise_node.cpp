@@ -46,16 +46,16 @@ void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     shaderPrograms[0]->setUniformValue("Transform",
                                        ParamPorts[2]->GetFloatData(),
                                        ParamPorts[3]->GetFloatData());
-    qDebug() << f.glGetError();
+    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     unsigned int data = OutputPorts[0]->GetBufferData();
     f.glBindImageTexture(0, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    qDebug() << f.glGetError();
+    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     f.glDispatchCompute(globalinfo::TerrainGrid / 32,
                         globalinfo::TerrainGrid / 32, 1);
 
-    qDebug() << f.glGetError();
+    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
 }
 
 void PerlinNoise_Node::Choose(QOpenGLFunctions_4_5_Core &f) {

@@ -10,6 +10,9 @@ NodeGraph::NodeGraph(QObject *parent, bool iSg, Node *oN)
     isFinished = false;
 }
 
+NodeGraph::~NodeGraph() {
+}
+
 void NodeGraph::AddNode(Node *n) {
     nodes.push_back(n);
     return;
@@ -81,6 +84,7 @@ bool NodeGraph::DeleteWire(Wire *tar) {
             // 标记为空指针
             tar->targetUIWire->targetWire = nullptr;
             delete tar;
+            tar = nullptr;
 
             it = wires.erase(it);
             inport->UpdateLinkInfo(wires);
@@ -93,9 +97,33 @@ bool NodeGraph::DeleteWire(Wire *tar) {
 }
 
 bool NodeGraph::DeleteNode(Node *tar) {
-    //    bool flag = false;
-    //    for(QVector<>)
-    return true;
+    bool flag = false;
+    for (QVector<Node *>::iterator it = nodes.begin(); it != nodes.end();
+         it++) {
+        // 找到要删除的node
+        if (*it == tar) {
+            flag = true;
+            // 先找到所有与tar相连的wire，删之
+            QVector<Wire *> toBeDeletedWires;
+            for (auto &iw : wires) {
+                if (iw->GetInput()->GetParentNode() == tar ||
+                    iw->GetOutput()->GetParentNode() == tar) {
+                    toBeDeletedWires.push_back(iw);
+                }
+            }
+            for (auto &i : toBeDeletedWires) {
+                DeleteWire(i);
+            }
+
+            // 释放内存
+            // 标记为空指针
+            delete tar;
+
+            it = nodes.erase(it);
+            break;
+        }
+    }
+    return flag;
 }
 
 Node *NodeGraph::GetParentMacroNode() {
@@ -111,12 +139,13 @@ bool NodeGraph::RunNodeGraph(QOpenGLFunctions_4_5_Core &f) {
     if (isSubgraph) {
         // TODO 从输出节点开始递归计算
     }
-    for (int i = 0; i < nodes.length(); i++) {
+    int i = 0;
+    for (; i < nodes.length(); i++) {
         if (!(nodes[i]->isFinished)) {
             nodes[i]->InitGL(f);
             nodes[i]->Allocate(f);
             nodes[i]->RunNode(f);
-            nodes[i]->Choose(f);
+            //            nodes[i]->Choose(f);
         }
     }
 

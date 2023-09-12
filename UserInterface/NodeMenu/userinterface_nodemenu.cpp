@@ -73,6 +73,13 @@ void NodeMenu::InitMenu() {
             return (Kernel::Node *)(new Kernel::Clamp_Node(parent, nodeGraph));
         },
         "钳制", "设置高度场上下限", ":/test/test/91514322_p1.png");
+
+    subMenus[1]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (
+                Kernel::Node *)(new Kernel::Terrace_Node(parent, nodeGraph));
+        },
+        "阶梯", "", ":/test/test/91514322_p1.png");
 }
 
 void NodeMenu::addSubMenu() {

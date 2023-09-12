@@ -29,8 +29,8 @@ public:
     Port *GetOutput();
 
 public:
-    explicit Wire(QObject *parent = nullptr, Port *ip = nullptr,
-                  Port *op = nullptr);
+    explicit Wire(QObject *parent, Port *ip = nullptr, Port *op = nullptr);
+    //    ~Wire();
 
 signals:
 };

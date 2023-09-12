@@ -51,6 +51,14 @@ public:
     /// 参数条目数组
     QVector<NodeInspectorItem *> items;
 
+signals:
+    /// 数值发生改变
+    void OccurValueChange();
+
+public:
+    /// 抛出：数值发生改变
+    void GiveSig_OccurValueChange();
+
 public:
     explicit NodeInspector(NodeEditorTerminal *tar, QWidget *parent = nullptr);
 

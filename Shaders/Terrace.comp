@@ -1,0 +1,42 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32) in;
+
+layout (binding = 0, rgba32f) uniform image2D sourse;
+
+layout (binding = 1, rgba32f) uniform image2D data;
+
+// 地形最大高度
+uniform float TerrainHeight;
+
+// 输入1：阶梯数
+uniform int TerraceNum;
+// 输入2：阶梯锐利系数
+uniform float Sharpness;
+// 输入3：阶梯模式：单/双向
+uniform bool Model;
+
+float TerraceTransForm(float src){
+   float ans = src;
+   // 阶梯层高
+   float terraceHeight = TerrainHeight / float(TerraceNum);
+   // 所属层数
+   int floorNum = int(src / terraceHeight);
+   // 在所在层内的高度
+   float baseHeight = float(floorNum) * terraceHeight;
+   float innerHeight = src - baseHeight;
+   float innerRelativeHeight = innerHeight / terraceHeight;
+   //if (Model){
+   float newInnerRelativeHeight = pow(innerRelativeHeight, exp(Sharpness * 5.0));
+   float newInnerHeight = newInnerRelativeHeight * terraceHeight;
+   ans = newInnerHeight + baseHeight;
+   //}
+   return ans;
+}
+
+void main(){
+   float ans = imageLoad(sourse, ivec2(gl_GlobalInvocationID.xy)).r;
+   // TODO
+   ans = TerraceTransForm(ans);
+   imageStore(data, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans,ans, ans));
+}

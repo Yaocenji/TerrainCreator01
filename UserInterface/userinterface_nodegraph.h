@@ -76,6 +76,8 @@ public:
     bool ChooseOneWire(Wire *tar);
     /// 移动选区的节点
     void MoveChosenNodes(QPointF delta);
+    /// 全删选区的节点
+    void DeleteChosenNode();
     /// 获取当前选取的接口
     Port *&ChosenPort();
 
@@ -116,6 +118,8 @@ public:
 
     /// 删除连线
     bool DeleteWire(Wire *tar);
+    /// 删除节点
+    bool DeleteNode(Node *tar);
 
     /// 运行
     void RunNodeGraph(QOpenGLFunctions_4_5_Core &f);
