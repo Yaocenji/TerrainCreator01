@@ -1,4 +1,5 @@
 #include "kernel_node.h"
+
 namespace Kernel {
 
 Node::Node(QObject *parent, NodeGraph *pNM)
@@ -96,10 +97,13 @@ void Node::ClearShaders() {
 void Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
     // 准备缓存
     for (auto &i : OutputPorts) {
-        i->AllocateBuffer(f);
+        i->AllocateOrUpdateData(f);
     }
     for (auto &i : InputPorts) {
-        i->AllocateBuffer(f);
+        i->AllocateOrUpdateData(f);
+    }
+    for (auto &i : ParamPorts) {
+        i->AllocateOrUpdateData(f);
     }
 }
 
@@ -139,6 +143,8 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
             preNode->Allocate(f);
             preNode->RunNode(f);
             preNode->Choose(f);
+            // 本节点的输入接口重新更新
+            InputPorts[i]->AllocateOrUpdateData(f);
         }
     }
     for (int i = 0; i < ParamPorts.length(); i++) {
@@ -155,6 +161,8 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
             preNode->Allocate(f);
             preNode->RunNode(f);
             preNode->Choose(f);
+            // 本节点的输入接口重新更新
+            ParamPorts[i]->AllocateOrUpdateData(f);
         }
     }
     CalculateNode(f);
@@ -175,6 +183,7 @@ bool Node::OccurChangeOnPort(Port *tar) {
     for (auto &i : InputPorts) {
         if (i == tar) {
             i->UpdateAvailableState();
+            i->DeleteBuffer(*globalgl::thisContext);
             flag = true;
             break;
         }
@@ -182,6 +191,7 @@ bool Node::OccurChangeOnPort(Port *tar) {
     for (auto &i : ParamPorts) {
         if (i == tar) {
             i->UpdateAvailableState();
+            i->DeleteBuffer(*globalgl::thisContext);
             flag = true;
             break;
         }

@@ -108,6 +108,10 @@ protected:
 
     /// 准备离屏渲染资源，只在程序启动时调用一次
     void prepareSwapChain();
+    /// 生成FBO/COLOR RENDERTEXTURE/DEPTH RENDERTEXTURE
+    void createFrameBufferAndRenderTextures();
+    /// 切换FBO的COLOR RENDERTEXTUREDEPTH RENDERTEXTURE
+    void switchFrameBufferAndRenderTextures();
 
     /// 准备shader渲染资源，只在启动时调用
     void setRenderShaders();

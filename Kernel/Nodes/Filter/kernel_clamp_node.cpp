@@ -30,18 +30,18 @@ void Clamp_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     //                                       nonPortParams[1]->data_rangefloat);
     shaderPrograms[0]->setUniformValue("Low", ParamPorts[0]->GetFloatData());
     shaderPrograms[0]->setUniformValue("High", ParamPorts[1]->GetFloatData());
-    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
+    DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     unsigned int src = InputPorts[0]->GetBufferData();
     unsigned int data = OutputPorts[0]->GetBufferData();
     f.glBindImageTexture(0, src, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     f.glBindImageTexture(1, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
+    DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     f.glDispatchCompute(globalinfo::TerrainGrid / 32,
                         globalinfo::TerrainGrid / 32, 1);
 
-    qDebug() << name << "节点计算时：gl错误验证1" << f.glGetError();
+    DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 }
 
 void Clamp_Node::Choose(QOpenGLFunctions_4_5_Core &f) {

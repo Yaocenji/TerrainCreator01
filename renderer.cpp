@@ -1,15 +1,18 @@
 #include "renderer.h"
 
+#include "Global/globalgl.h"
 #include "Global/globalrender.h"
 #include "Global/globalui.h"
 
-#define PreRenderTerrainGround(framebuffer)                 \
-    {                                                       \
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);     \
-        glClearColor(0.2f, 0.8f, 1, 1);                     \
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); \
-        glEnable(GL_DEPTH_TEST);                            \
-        glDisable(GL_BLEND);                                \
+#define PreRenderTerrainGround(framebuffer)                     \
+    {                                                           \
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);         \
+        glClearColor(globalrender::backgroundColor.redF(),      \
+                     globalrender::backgroundColor.greenF(),    \
+                     globalrender::backgroundColor.blueF(), 1); \
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     \
+        glEnable(GL_DEPTH_TEST);                                \
+        glDisable(GL_BLEND);                                    \
     }
 
 #define PreSwapFrameBufferToScreen(colorbuffer, depthbuffer)           \
@@ -149,8 +152,11 @@ void Renderer::initializeGL() {
 
 void Renderer::resizeGL(int w, int h) {
     makeCurrent();
+    // 重设texture
+    switchFrameBufferAndRenderTextures();
     // 参数X，Y指定了视见区域的左下角在窗口中的位置，一般情况下为（0，0），Width和Height指定了视见区域的宽度和高度。
-    //    int ratio = QApplication::desktop()->devicePixelRatio();
+    //    int ratio =
+    //    QApplication::desktop()->devicePixelRatio();
     proj.setToIdentity();
     proj.perspective(45, GLfloat(w) / h, 0.01, 15.0);
     //    proj.perspective(45, 1, 0.01, 15.0);
@@ -159,14 +165,18 @@ void Renderer::resizeGL(int w, int h) {
 }
 
 void Renderer::paintGL() {
-    //    PreRenderTerrainGround(swapFrameBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-    glClearColor(globalrender::backgroundColor.redF(),
-                 globalrender::backgroundColor.greenF(),
-                 globalrender::backgroundColor.blueF(), 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
+    // 同步上下文
+    globalgl::thisContext = getFunctionAndContext();
+    PreRenderTerrainGround(swapFrameBuffer);
+    //    glBindFramebuffer(GL_FRAMEBUFFER,
+    //    defaultFramebufferObject());
+    //    glClearColor(globalrender::backgroundColor.redF(),
+    //                 globalrender::backgroundColor.greenF(),
+    //                 globalrender::backgroundColor.blueF(),
+    //                 1);
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //    glEnable(GL_DEPTH_TEST);
+    //    glDisable(GL_BLEND);
 
     terrainShaderProgram->bind();
     glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
@@ -188,15 +198,15 @@ void Renderer::paintGL() {
 
     terrainShaderProgram->release();
 
-    //    PreSwapFrameBufferToScreen(swapColorBuffer, swapDepthBuffer);
+    PreSwapFrameBufferToScreen(swapColorBuffer, swapDepthBuffer);
 
-    //    swapShaderProgram->bind();
-    //    swapShaderProgram->setUniformValue("colorBuffer", 0);
-    //    swapShaderProgram->setUniformValue("depthBuffer", 1);
-    //    screenVAO->bind();
-    //    glDrawArrays(GL_TRIANGLES, 0, 6);
+    swapShaderProgram->bind();
+    swapShaderProgram->setUniformValue("colorBuffer", 0);
+    swapShaderProgram->setUniformValue("depthBuffer", 1);
+    screenVAO->bind();
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    //    swapShaderProgram->release();
+    swapShaderProgram->release();
 }
 
 void Renderer::setTerrainInfo() {
@@ -299,6 +309,37 @@ void Renderer::prepareSwapChain() {
                           (void *)0);
     glEnableVertexAttribArray(0);
 
+    createFrameBufferAndRenderTextures();
+
+    // 离屏渲染交换链shader读取
+    bool flag = true;
+    if (swapVert == nullptr) {
+        qDebug() << "ERROR: Swap chain vertex shader is not "
+                    "created!";
+        flag = false;
+    }
+    if (swapFrag == nullptr) {
+        qDebug() << "ERROR: Swap chain frag shader is not created!";
+        flag = false;
+    }
+    if (swapShaderProgram == nullptr) {
+        qDebug() << "ERROR: Swap chain shader program is not "
+                    "created!";
+        flag = false;
+    }
+    if (!flag) {
+        qDebug() << "Cannot set swap screen shaders.";
+        return;
+    }
+    swapVert->compileSourceFile(":/SwapScreenShaders/ScreenVert.vert");
+    swapFrag->compileSourceFile(":/SwapScreenShaders/ScreenFrag.frag");
+
+    swapShaderProgram->addShader(swapVert);
+    swapShaderProgram->addShader(swapFrag);
+    swapShaderProgram->link();
+}
+
+void Renderer::createFrameBufferAndRenderTextures() {
     // 生成frame buffer
     glGenFramebuffers(1, &swapFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, swapFrameBuffer);
@@ -330,33 +371,55 @@ void Renderer::prepareSwapChain() {
                            swapDepthBuffer, 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        qDebug() << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!";
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        qDebug() << "ERROR::FRAMEBUFFER:: Framebuffer is not "
+                    "complete!";
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+}
 
-    // 离屏渲染交换链shader读取
-    bool flag = true;
-    if (swapVert == nullptr) {
-        qDebug() << "ERROR: Swap chain vertex shader is not created!";
-        flag = false;
-    }
-    if (swapFrag == nullptr) {
-        qDebug() << "ERROR: Swap chain frag shader is not created!";
-        flag = false;
-    }
-    if (swapShaderProgram == nullptr) {
-        qDebug() << "ERROR: Swap chain shader program is not created!";
-        flag = false;
-    }
-    if (!flag) {
-        qDebug() << "Cannot set swap screen shaders.";
-        return;
-    }
-    swapVert->compileSourceFile(":/SwapScreenShaders/ScreenVert.vert");
-    swapFrag->compileSourceFile(":/SwapScreenShaders/ScreenFrag.frag");
+void Renderer::switchFrameBufferAndRenderTextures() {
+    // 绑定fbo
+    glBindFramebuffer(GL_FRAMEBUFFER, swapFrameBuffer);
+    // 解绑texture
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           0, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                           0, 0);
 
-    swapShaderProgram->addShader(swapVert);
-    swapShaderProgram->addShader(swapFrag);
-    swapShaderProgram->link();
+    // 删除texture
+    glDeleteTextures(1, &swapColorBuffer);
+    glDeleteTextures(1, &swapDepthBuffer);
+
+    // 重新分配texture
+    // 生成第一张color texture
+    glGenTextures(1, &swapColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, swapColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           swapColorBuffer, 0);
+
+    // 生成第二场depth buffer
+    glGenTextures(1, &swapDepthBuffer);
+    glBindTexture(GL_TEXTURE_2D, swapDepthBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width(), height(), 0,
+                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                           swapDepthBuffer, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        qDebug() << "ERROR::FRAMEBUFFER:: Framebuffer is not "
+                    "complete!";
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
 }
 
 void Renderer::setRenderShaders() {

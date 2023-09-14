@@ -4,7 +4,7 @@ globalinfo::globalinfo() {
 }
 
 // int globalinfo::TerrainGrid = 1024;
-int globalinfo::TerrainGrid = 3072;
+int globalinfo::TerrainGrid = 2048;
 
 float globalinfo::TerrainSize = 1024.0;
 

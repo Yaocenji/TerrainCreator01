@@ -11,6 +11,7 @@
 #include <QVector>
 
 #include "Global/globalfunc.h"
+#include "Global/globalgl.h"
 #include "kernel_port.h"
 
 namespace Kernel {

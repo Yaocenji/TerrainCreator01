@@ -1,5 +1,6 @@
 #include "kernel_port.h"
 
+#include "Global/globalfunc.h"
 #include "kernel_wire.h"
 
 #define glCreateHeightField(glContext, data)                   \
@@ -53,8 +54,15 @@ namespace Kernel {
 // }
 
 Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
-           bool hD, float defaultData)
-    : QObject(parent), type(t), dataType(dt), name(n), hasDefaultValue(hD) {
+           bool hD, float defaultData, bool isR, float R_l, float R_r)
+    : QObject(parent),
+      type(t),
+      dataType(dt),
+      name(n),
+      hasDefaultValue(hD),
+      isRanged(isR),
+      rangefloat_l(R_l),
+      rangefloat_r(R_r) {
     parentNode = pN;
     ConBuffer = 0;
     ConFloat = 0;
@@ -80,6 +88,11 @@ Port::Port(QObject *parent, Node *pN, PortType t, PortDataType dt, QString n,
         defaultFloat = 0;
         defaultBuffer = (unsigned int)defaultData;
     }
+
+    if (dt != PortDataType::Float && isR) {
+        qDebug() << "警告：接口并非是小数类数据，但是在构造时规定了数据范围，该"
+                    "范围将不起作用";
+    }
 }
 
 // Port::~Port() {
@@ -97,7 +110,7 @@ Node *Port::GetParentNode() {
     return parentNode;
 }
 
-void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
+void Port::AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f) {
     // 如果是输入/参数节点，那么将数据和相连的输出节点匹配或使用默认值
     if (type != PortType::Output) {
         if (!isLinked() && hasDefaultValue)
@@ -109,8 +122,14 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
                        " does not have default value and is not connected.";
             return;
         } else {
-            this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
             this->ConBuffer = this->LinkedPorts[0]->ForceGetBufferData();
+            if (isRanged) {
+                this->ConFloat =
+                    clamp<float>(rangefloat_l, rangefloat_r,
+                                 this->LinkedPorts[0]->ForceGetFloatData());
+            } else {
+                this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
+            }
 
             isAllocated = true;
 
@@ -124,8 +143,6 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
                     "allocated again!";
         return;
     }
-    //    QOpenGLFunctions_4_5_Core f;
-    //    f.initializeOpenGLFunctions();
     // 如果是二维高度场的话
     if (this->dataType == PortDataType::Float2D) {
         glCreateHeightField(f, ConBuffer);
@@ -145,7 +162,7 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f) {
     isAllocated = true;
 }
 
-void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size) {
+void Port::AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f, long long size) {
     // 如果是输入/参数节点，那么将数据和相连的输出节点匹配或使用默认值
     if (type != PortType::Output) {
         if (!isLinked() && hasDefaultValue)
@@ -157,8 +174,15 @@ void Port::AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size) {
                        " does not have default value and is not connected.";
             return;
         } else {
-            this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
             this->ConBuffer = this->LinkedPorts[0]->ForceGetBufferData();
+
+            if (isRanged) {
+                this->ConFloat =
+                    clamp<float>(rangefloat_l, rangefloat_r,
+                                 this->LinkedPorts[0]->ForceGetFloatData());
+            } else {
+                this->ConFloat = this->LinkedPorts[0]->ForceGetFloatData();
+            }
 
             isAllocated = true;
 

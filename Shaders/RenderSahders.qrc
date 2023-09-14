@@ -11,5 +11,6 @@
         <file>PerlinNoise.comp</file>
         <file>Clamp.comp</file>
         <file>Terrace.comp</file>
+        <file>Invert.comp</file>
     </qresource>
 </RCC>

@@ -57,6 +57,9 @@ public:
     /// 重设控件位置
     void ResetControllerGeometry();
 
+    /// 更新控件状态、信息
+    void UpdateController();
+
 public:
     /// 名字显示器
     QLabel *lable;

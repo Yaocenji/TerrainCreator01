@@ -35,6 +35,8 @@ void NodeInspectorItem::TimerUpdate() {
         ResetControllerGeometry();
         thisRect = rect();
     }
+    // 更新状态
+    UpdateController();
 }
 
 int NodeInspectorItem::GetTargetParam(unsigned int &buffer, float &f, int &i,
@@ -136,9 +138,28 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
             return false;
         } else if (flag == 1) {
             // 当目标是一个paramPort的float参数时
-            // 生成一个inputDialog
             lineEdit = new QLineEdit(this);
             lineEdit->setText(QString::number(data_fl));
+
+            // 是否有范围？
+            if (tarPort->isRanged) {
+                slider = new QSlider(this);
+                slider->setOrientation(Qt::Horizontal); // 水平方向
+                slider->setMinimum(
+                    int(tarPort->rangefloat_l * 100.0f)); // 最小值
+                slider->setMaximum(
+                    int(tarPort->rangefloat_r * 100.0f)); // 最大值
+                slider->setSingleStep(1);                 // 步长
+                slider->setTickInterval(10);              // 设置刻度间隔
+                slider->setTickPosition(QSlider::TicksAbove); // 刻度在上方
+
+                slider->setValue(int(data_fl * 100.0f));
+
+                // 连接：slider被修改时
+                connect(slider, SIGNAL(valueChanged(int)), this,
+                        SLOT(SliderSlided(int)));
+            }
+
             // 连接：lineEdit被修改时
             connect(lineEdit, SIGNAL(editingFinished()), this,
                     SLOT(LineEditFinished()));
@@ -255,6 +276,37 @@ void NodeInspectorItem::ResetControllerGeometry() {
                 globalui::node_inspector_lineedit_size.y() / 2.0,
             globalui::node_inspector_lineedit_size.x(),
             globalui::node_inspector_lineedit_size.y());
+    }
+}
+
+void NodeInspectorItem::UpdateController() {
+    if (targetKernelNode == nullptr) return;
+    if (targetParamType == ItemTargetParamType::PortParam) {
+        Kernel::Port *tarPort = targetKernelNode->ParamPorts[index];
+        if (tarPort->GetDataType() != Kernel::PortDataType::Float) {
+            return;
+        }
+        if (tarPort->isLinked()) {
+            if (slider != nullptr) {
+                // TODO设置slider不可拖动
+            }
+            if (lineEdit != nullptr) {
+                // 设置lineEdit不可编辑
+                lineEdit->setReadOnly(true);
+            }
+        } else {
+            if (slider != nullptr) {
+                // TODO设置slider可拖动
+            }
+            if (lineEdit != nullptr) {
+                // 设置lineEdit不可编辑
+                lineEdit->setReadOnly(false);
+            }
+        }
+    } else {
+        // TODO 是非节点参数的情况
+
+        return;
     }
 }
 

@@ -57,8 +57,11 @@ QPoint NodeMenu::camOffset(QPoint p) {
 }
 
 void NodeMenu::InitMenu() {
+    // 准备数个子菜单
     addSubMenu();
     addSubMenu();
+    addSubMenu();
+
     chosenSubMenu = subMenus[0];
 
     subMenus[0]->addNodeCreator(
@@ -80,6 +83,18 @@ void NodeMenu::InitMenu() {
                 Kernel::Node *)(new Kernel::Terrace_Node(parent, nodeGraph));
         },
         "阶梯", "", ":/test/test/91514322_p1.png");
+
+    subMenus[1]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (Kernel::Node *)(new Kernel::Invert_Node(parent, nodeGraph));
+        },
+        "反转", "", ":/test/test/91514322_p1.png");
+
+    subMenus[2]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (Kernel::Node *)(new Kernel::Number_Node(parent, nodeGraph));
+        },
+        "数字", "", ":/test/test/91514322_p1.png");
 }
 
 void NodeMenu::addSubMenu() {
@@ -244,7 +259,7 @@ void NodeMenu::mouseMoveEvent(QMouseEvent *event) {
 
                     QMimeData *mimeData = new QMimeData();
 
-                    QPixmap pixmap(":/test/test/91514322_p1.png");
+                    QPixmap pixmap(":/test/test/awesomeface.png");
                     drag->setPixmap(pixmap);
                     drag->setHotSpot(QPoint(20, 30));
 

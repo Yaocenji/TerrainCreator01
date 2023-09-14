@@ -17,10 +17,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     Global/globalfunc.cpp \
+    Global/globalgl.cpp \
     Global/globalinfo.cpp \
     Global/globalrender.cpp \
     Global/globalui.cpp \
+    Kernel/Nodes/Filter/kernel_invert_node.cpp \
     Kernel/Nodes/Filter/kernel_terrace_node.cpp \
+    Kernel/Nodes/Math/kernel_number_node.cpp \
     Kernel/kernel_element_forwarddec.cpp \
     Kernel/kernel_element_inc.cpp \
     Kernel/Nodes/Filter/kernel_clamp_node.cpp \
@@ -54,10 +57,13 @@ SOURCES += \
 
 HEADERS += \
     Global/globalfunc.h \
+    Global/globalgl.h \
     Global/globalinfo.h \
     Global/globalrender.h \
     Global/globalui.h \
+    Kernel/Nodes/Filter/kernel_invert_node.h \
     Kernel/Nodes/Filter/kernel_terrace_node.h \
+    Kernel/Nodes/Math/kernel_number_node.h \
     Kernel/kernel_element_inc.h \
     Kernel/Nodes/Filter/kernel_clamp_node.h \
     Kernel/Nodes/Generator/kernel_input_node.h \

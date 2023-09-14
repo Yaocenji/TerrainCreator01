@@ -85,6 +85,14 @@ protected:
     float defaultFloat;
 
 public:
+    /// 浮点数是否有对应的范围
+    bool isRanged;
+    /// 最小值
+    bool rangefloat_l;
+    /// 最大值
+    bool rangefloat_r;
+
+public:
     /// 连接的接口数组，如果是输入接口，那么该数组只有一个值，否则可能有一系列值
     QVector<Port *> LinkedPorts;
     /// 是否可用：输入节点就是前置输出节点的该值，输出节点就是该节点指向的数据是否计算完毕
@@ -92,9 +100,9 @@ public:
     /// 是否创建了显存缓存
     bool isAllocated;
     /// 创建显存缓存（高度场与贴图）
-    void AllocateBuffer(QOpenGLFunctions_4_5_Core &f);
+    void AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f);
     /// 创建显存缓存（点云）
-    void AllocateBuffer(QOpenGLFunctions_4_5_Core &f, long long size);
+    void AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f, long long size);
     /// 删除显存缓存
     void DeleteBuffer(QOpenGLFunctions_4_5_Core &f);
 
@@ -152,7 +160,8 @@ public:
     //         false);
     Port(QObject *parent, Node *pN = nullptr, PortType t = PortType::Input,
          PortDataType dt = PortDataType::Float2D, QString n = "未命名",
-         bool hD = false, float defaultData = 0);
+         bool hD = false, float defaultData = 0, bool isR = false,
+         float R_l = 0, float R_r = 0);
     // 析构函数
     //    ~Port();
 
