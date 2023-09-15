@@ -145,6 +145,10 @@ public:
             qDebug() << "NonPortParam设置数据时，类型不匹配！";
             return false;
         }
+        if (value < 0 || value >= en_na.size()) {
+            qDebug() << "NonPortParam设置枚举类数据时，默认值数据范围越界！";
+            return false;
+        }
         data_enum = value;
         enum_name = en_na;
         return true;

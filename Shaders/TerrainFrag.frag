@@ -15,8 +15,7 @@ uniform float TerrainHeight;
 
 uniform sampler2D TerrainData;
 
-uniform bool useHeightFieldBuffer;                                                 
-
+uniform bool useHeightFieldBuffer;
 
 void main(){
     vec2 sampleTexCoord = vec2(texCoord.xy * TerrainGrid);
@@ -30,4 +29,7 @@ void main(){
     vec3 ansCol = lightCol * dot(normal, lightDir);
 
     FragColor = vec4(ansCol.xyz, 1.0);
+
+    // 测试代码
+    // FragColor = vec4(texCoord.xy, 1.0, 1.0);
 }

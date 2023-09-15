@@ -12,7 +12,7 @@
 #include <QTimer>
 #include <QWidget>
 
-#include "Kernel/kernel_element_inc.h"
+#include "../../Kernel/kernel_element_inc.h"
 
 namespace UserInterface {
 
@@ -76,6 +76,8 @@ public slots:
     void LineEditFinished();
     /// 滑动了滑动条
     void SliderSlided(int value);
+    /// 操作了下拉菜单
+    void ComboBoxEdited(int value);
 
 public:
     void paintEvent(QPaintEvent *event) override;

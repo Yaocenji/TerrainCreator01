@@ -43,6 +43,8 @@ public:
     QString name;
 
 public:
+    /// 是否被锁定显示
+    bool isLocked;
     /// 选中状态
     NodeChosenState state;
     /// 被选中时调用该函数

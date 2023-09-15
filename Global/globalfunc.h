@@ -3,6 +3,7 @@
 
 #include <QColor>
 #include <QDebug>
+#include <QtMath>
 
 class globalfunc {
 public:

@@ -10,6 +10,7 @@ Node::Node(QObject *parent, Kernel::Node *tar, NodeGraph *parentNG, QPointF pos)
     name = targetNode->name;
     // 初始化状态
     state = NodeChosenState::None;
+    isLocked = false;
     // 初始化节点尺寸
     rect.setTopLeft(pos);
     CalSetRectSize();
@@ -83,6 +84,18 @@ void Node::Draw(QPainter &p) {
                                             globalui::pen_width / 2.0),
                    rect.bottomRight() + QPointF(globalui::pen_width / 2.0,
                                                 globalui::pen_width / 2.0)),
+            globalui::node_angle_radius, globalui::node_angle_radius);
+    }
+    // 如果被锁定的效果
+    if (isLocked) {
+        // 设置笔颜色
+        p.setPen(QPen(globalui::node_locked_color, globalui::pen_width * 1.5));
+        // 绘制选中高亮圆角矩形
+        p.drawRoundedRect(
+            QRectF(rect.topLeft() - QPointF(globalui::pen_width / 1.5,
+                                            globalui::pen_width / 1.5),
+                   rect.bottomRight() + QPointF(globalui::pen_width / 1.5,
+                                                globalui::pen_width / 1.5)),
             globalui::node_angle_radius, globalui::node_angle_radius);
     }
 

@@ -64,6 +64,10 @@ public:
     MouseState &MouseState();
 
 public:
+    /// 当前锁定显示的焦点节点
+    Node *lockedNode;
+
+public:
     /// 获取节点数组
     QVector<Node *> &GetNodes();
     /// 获取当前选取的节点数组

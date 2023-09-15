@@ -27,4 +27,9 @@ public:
     globalinfo();
 };
 
+/// 一行的顶点数
+int RowVertsNumber();
+/// 一行的矩形数
+int RowRectsNumber();
+
 #endif // GLOBALINFO_H

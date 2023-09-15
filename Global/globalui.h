@@ -53,6 +53,8 @@ public:
     static QPointF node_name_pos;
     /// 节点被选中效果颜色
     static QColor node_chosen_color;
+    /// 节点被锁定效果颜色
+    static QColor node_locked_color;
 
     /// 接口之间的间隔
     static float port_interval_size;

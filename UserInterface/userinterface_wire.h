@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPoint>
 #include <QString>
 

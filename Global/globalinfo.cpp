@@ -15,3 +15,11 @@ bool globalinfo::useHeightFieldBuffer = false;
 unsigned int globalinfo::ChosenHeightFieldBuffer = 0;
 
 bool globalinfo::keepingCalculating = true;
+
+int RowVertsNumber() {
+    return globalinfo::TerrainGrid + 2;
+}
+
+int RowRectsNumber() {
+    return globalinfo::TerrainGrid + 1;
+}

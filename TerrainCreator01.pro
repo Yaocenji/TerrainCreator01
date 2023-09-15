@@ -100,4 +100,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     Images/Images.qrc \
-    Shaders/RenderSahders.qrc
+    Shaders/RenderShaders.qrc

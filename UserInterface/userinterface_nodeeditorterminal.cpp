@@ -321,14 +321,14 @@ void NodeEditorTerminal::wheelEvent(QWheelEvent *event) {
         QPointF(width(), height()) * targetNodeGraph->GetCamSize() * 0.5f;
     if (event->delta() < 0) { // 当滚轮远离使用者时
         targetNodeGraph->GetCamSizeCtrl() += 0.05f;
-        targetNodeGraph->GetCamSize() = exp(targetNodeGraph->GetCamSizeCtrl());
+        targetNodeGraph->GetCamSize() = qExp(targetNodeGraph->GetCamSizeCtrl());
 
     } else { // 当滚轮向使用者方向旋转时
              // 最大缩放
              // if (CameraSizeMagn > 0.401f) {
         // 保证画面中心不改变
         targetNodeGraph->GetCamSizeCtrl() -= 0.05f;
-        targetNodeGraph->GetCamSize() = exp(targetNodeGraph->GetCamSizeCtrl());
+        targetNodeGraph->GetCamSize() = qExp(targetNodeGraph->GetCamSizeCtrl());
         //}
     }
     targetNodeGraph->GetCamPos() = Center - QPointF(width(), height()) *
@@ -396,6 +396,20 @@ void NodeEditorTerminal::keyPressEvent(QKeyEvent *event) {
         // 删除节点
         qDebug() << "删除节点";
         targetNodeGraph->DeleteChosenNode();
+    }
+    if (event->key() == Qt::Key_F) {
+        if (targetNodeGraph->lockedNode == nullptr &&
+            targetNodeGraph->ChosenNode().size() > 0) {
+            targetNodeGraph->lockedNode = targetNodeGraph->ChosenNode()[0];
+        } else {
+            targetNodeGraph->lockedNode = nullptr;
+        }
+        for (auto &i : targetNodeGraph->GetNodes()) {
+            if (i == targetNodeGraph->lockedNode)
+                i->isLocked = true;
+            else
+                i->isLocked = false;
+        }
     }
 }
 

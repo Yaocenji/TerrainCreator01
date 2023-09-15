@@ -183,7 +183,7 @@ bool Node::OccurChangeOnPort(Port *tar) {
     for (auto &i : InputPorts) {
         if (i == tar) {
             i->UpdateAvailableState();
-            i->DeleteBuffer(*globalgl::thisContext);
+            //            i->DeleteBuffer(*globalgl::thisContext);
             flag = true;
             break;
         }
@@ -191,7 +191,7 @@ bool Node::OccurChangeOnPort(Port *tar) {
     for (auto &i : ParamPorts) {
         if (i == tar) {
             i->UpdateAvailableState();
-            i->DeleteBuffer(*globalgl::thisContext);
+            //            i->DeleteBuffer(*globalgl::thisContext);
             flag = true;
             break;
         }

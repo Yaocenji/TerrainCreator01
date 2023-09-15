@@ -12,6 +12,7 @@ NodeGraph::NodeGraph(QObject *parent, Kernel::NodeGraph *tarKernelGraph)
     mState = UserInterface::MouseState::None;
     chosenNode.resize(0);
     chosenPort = nullptr;
+    lockedNode = nullptr;
     oldMousePos = QPointF(0.0, 0.0);
 }
 
@@ -60,6 +61,11 @@ bool NodeGraph::ChooseOneNode(Node *tar) {
         chosenNode.push_back(tar);
         // 设置状态
         tar->Chosen();
+        // 有无锁定显示的节点
+        if (lockedNode != nullptr) {
+            globalinfo::ChosenHeightFieldBuffer =
+                lockedNode->targetNode->OutputPorts[0]->GetBufferData();
+        }
         // 设置其他节点
         for (auto &i : Nodes) {
             if (i != tar) {

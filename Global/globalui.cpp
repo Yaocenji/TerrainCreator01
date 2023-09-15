@@ -34,6 +34,7 @@ float globalui::node_angle_radius = 8.0f;
 QFont globalui::node_name_font = QFont("微软雅黑", 14);
 QPointF globalui::node_name_pos = QPointF(0.0, -10.0);
 QColor globalui::node_chosen_color = QColor(255, 255, 122);
+QColor globalui::node_locked_color = QColor(255, 39, 0);
 
 float globalui::port_interval_size = 30;
 float globalui::port_scale = 1.0f;

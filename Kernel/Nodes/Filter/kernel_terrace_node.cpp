@@ -13,8 +13,11 @@ Terrace_Node::Terrace_Node(QObject *parent, NodeGraph *pNG)
     AddNonPortParam(NonPortParamType::RangeFloat, "阶梯锐利因数");
     nonPortParams[1]->InitData(0.5f, -1.0f, 1.0f);
 
-    //    AddNonPortParam(NonPortParamType::Enum, "阶梯模式：单/双向");
-    //    nonPortParams[2]->InitData(0.0f, -1.0f, 1.0f);
+    AddNonPortParam(NonPortParamType::Enum, "阶梯模式：单/双向");
+    QVector<QString> enum_model;
+    enum_model.push_back("单向/尖锐");
+    enum_model.push_back("双向/平滑");
+    nonPortParams[2]->InitData(0, enum_model);
 
     AddOutputPort(PortDataType::Float2D, "输出高度场");
 }
@@ -32,6 +35,7 @@ void Terrace_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
                                        nonPortParams[0]->data_rangeint);
     shaderPrograms[0]->setUniformValue("Sharpness",
                                        nonPortParams[1]->data_rangefloat);
+    shaderPrograms[0]->setUniformValue("Model", nonPortParams[2]->data_enum);
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     unsigned int src = InputPorts[0]->GetBufferData();

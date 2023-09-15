@@ -14,7 +14,8 @@ uniform int TerraceNum;
 // 输入2：阶梯锐利系数
 uniform float Sharpness;
 // 输入3：阶梯模式：单/双向
-uniform bool Model;
+uniform int Model;
+
 
 float TerraceTransForm(float src){
    float ans = src;
@@ -24,13 +25,33 @@ float TerraceTransForm(float src){
    int floorNum = int(src / terraceHeight);
    // 在所在层内的高度
    float baseHeight = float(floorNum) * terraceHeight;
+   // 层内绝对高度
    float innerHeight = src - baseHeight;
+   // 层内的相对高度
    float innerRelativeHeight = innerHeight / terraceHeight;
-   //if (Model){
-   float newInnerRelativeHeight = pow(innerRelativeHeight, exp(Sharpness * 5.0));
-   float newInnerHeight = newInnerRelativeHeight * terraceHeight;
-   ans = newInnerHeight + baseHeight;
-   //}
+   // 新的层内相对高度
+   float newInnerRelativeHeight;
+   // 新的层内绝对高度
+   float newInnerHeight;
+   // 单向
+   if (Model == 0){
+      newInnerRelativeHeight = pow(innerRelativeHeight, exp(Sharpness * 5.0));
+      newInnerHeight = newInnerRelativeHeight * terraceHeight;
+   }
+   // 双向
+   else if (Model == 1){
+      if (innerRelativeHeight >= 0.5){
+         newInnerRelativeHeight = 0.5 * pow(2.0 * innerRelativeHeight - 1.0, exp(Sharpness * 5.0)) + 0.5;
+         newInnerHeight = newInnerRelativeHeight * terraceHeight;
+      }else {
+         newInnerRelativeHeight = -0.5 * pow(-2.0 * innerRelativeHeight + 1.0, exp(Sharpness * 5.0)) + 0.5;
+         newInnerHeight = newInnerRelativeHeight * terraceHeight;
+      }
+   }
+   ans = baseHeight + newInnerHeight;
+   /* 测试代码
+   ans = newInnerRelativeHeight * TerrainHeight;
+   */
    return ans;
 }
 

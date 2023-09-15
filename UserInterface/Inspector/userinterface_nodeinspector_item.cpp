@@ -242,8 +242,13 @@ bool NodeInspectorItem::SetTargetParamType(Kernel::Node *tarNode,
                     SLOT(SliderSlided(int)));
         } else if (tarNonPortParam->type == Kernel::NonPortParamType::Enum) {
             comboBox = new QComboBox(this);
-            comboBox->move(60, 0);
-            comboBox->resize(rect().width() - 60, rect().height());
+            for (auto &i : tarNonPortParam->enum_name) {
+                comboBox->addItem(i, i);
+            }
+            comboBox->setCurrentIndex(0);
+            // 连接：comboBox被修改时
+            connect(comboBox, SIGNAL(currentIndexChanged(int)), this,
+                    SLOT(ComboBoxEdited(int)));
         }
         return true;
     }
@@ -271,10 +276,10 @@ void NodeInspectorItem::ResetControllerGeometry() {
     }
     if (comboBox != nullptr) {
         comboBox->setGeometry(
-            rect().width() - globalui::node_inspector_lineedit_size.x(),
+            rect().width() - 2.5 * globalui::node_inspector_lineedit_size.x(),
             rect().center().y() -
                 globalui::node_inspector_lineedit_size.y() / 2.0,
-            globalui::node_inspector_lineedit_size.x(),
+            2.5 * globalui::node_inspector_lineedit_size.x(),
             globalui::node_inspector_lineedit_size.y());
     }
 }
@@ -291,6 +296,9 @@ void NodeInspectorItem::UpdateController() {
                 // TODO设置slider不可拖动
             }
             if (lineEdit != nullptr) {
+                Kernel::Port *tarPort = targetKernelNode->ParamPorts[index];
+                lineEdit->setText(
+                    QString::number(tarPort->GetDefaultFloatData()));
                 // 设置lineEdit不可编辑
                 lineEdit->setReadOnly(true);
             }
@@ -424,6 +432,31 @@ void NodeInspectorItem::SliderSlided(int value) {
 
         } else {
             qDebug() << "错误 在类型参数不为数时，lineEdit不应该被修改";
+            return;
+        }
+    }
+}
+
+// TODO
+void NodeInspectorItem::ComboBoxEdited(int value) {
+    if (targetParamType == ItemTargetParamType::PortParam) {
+        return;
+    } else {
+        Kernel::NonPortParam *tarNonPortParam =
+            targetKernelNode->nonPortParams[index];
+        if (tarNonPortParam->type == Kernel::NonPortParamType::Enum) {
+            if (value < 0 && value >= tarNonPortParam->enum_name.size()) {
+                qDebug() << "错误 在设置枚举类参数时，传入参数越界";
+                return;
+            }
+            tarNonPortParam->SetData(value);
+            comboBox->setCurrentIndex(value);
+
+            targetKernelNode->OccurChangeOnNonPortParam(tarNonPortParam);
+
+            return;
+        } else {
+            qDebug() << "错误 在类型参数不为枚举时，combobox不应该被修改";
             return;
         }
     }

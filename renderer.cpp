@@ -167,16 +167,9 @@ void Renderer::resizeGL(int w, int h) {
 void Renderer::paintGL() {
     // 同步上下文
     globalgl::thisContext = getFunctionAndContext();
+
+    // 准备离屏渲染
     PreRenderTerrainGround(swapFrameBuffer);
-    //    glBindFramebuffer(GL_FRAMEBUFFER,
-    //    defaultFramebufferObject());
-    //    glClearColor(globalrender::backgroundColor.redF(),
-    //                 globalrender::backgroundColor.greenF(),
-    //                 globalrender::backgroundColor.blueF(),
-    //                 1);
-    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //    glEnable(GL_DEPTH_TEST);
-    //    glDisable(GL_BLEND);
 
     terrainShaderProgram->bind();
     glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
@@ -230,24 +223,24 @@ void Renderer::setTerrainInfo() {
 void Renderer::generateMesh() {
     float unit = ((float)globalinfo::TerrainSize) / globalinfo::TerrainGrid;
     float offset = ((float)globalinfo::TerrainSize) / 2;
-    for (int z = 0; z < globalinfo::TerrainGrid; z++) {
-        for (int x = 0; x < globalinfo::TerrainGrid; x++) {
-            int index = (z * globalinfo::TerrainGrid + x) * 2;
-            panelVertices[index + 0] = x * unit - offset;
-            panelVertices[index + 1] = z * unit - offset;
+    for (int z = 0; z < RowVertsNumber(); z++) {
+        for (int x = 0; x < RowVertsNumber(); x++) {
+            int index = (z * RowVertsNumber() + x) * 2;
+            panelVertices[index + 0] = (x - 1) * unit - offset;
+            panelVertices[index + 1] = (z - 1) * unit - offset;
         }
     }
 
-    for (int z = 0; z < globalinfo::TerrainGrid - 1; z++) {
-        for (int x = 0; x < globalinfo::TerrainGrid - 1; x++) {
-            int iindex = (z * (globalinfo::TerrainGrid - 1) + x) * 6;
-            int vindex = z * globalinfo::TerrainGrid + x;
+    for (int z = 0; z < RowRectsNumber(); z++) {
+        for (int x = 0; x < RowRectsNumber(); x++) {
+            int iindex = (z * RowRectsNumber() + x) * 6;
+            int vindex = z * RowVertsNumber() + x;
             panelIndices[iindex + 0] = vindex + 0;
             panelIndices[iindex + 1] = vindex + 1;
-            panelIndices[iindex + 2] = vindex + globalinfo::TerrainGrid + 1;
+            panelIndices[iindex + 2] = vindex + RowVertsNumber() + 1;
             panelIndices[iindex + 3] = vindex + 0;
-            panelIndices[iindex + 4] = vindex + globalinfo::TerrainGrid + 1;
-            panelIndices[iindex + 5] = vindex + globalinfo::TerrainGrid;
+            panelIndices[iindex + 4] = vindex + RowVertsNumber() + 1;
+            panelIndices[iindex + 5] = vindex + RowVertsNumber();
         }
     }
     //    for (uint i = 0; i < verticiesCount(); i++) {
@@ -257,11 +250,11 @@ void Renderer::generateMesh() {
 }
 
 unsigned int Renderer::verticiesCount() const {
-    return globalinfo::TerrainGrid * globalinfo::TerrainGrid * 2;
+    return RowVertsNumber() * RowVertsNumber() * 2;
 }
 
 unsigned int Renderer::indicesCount() const {
-    return (globalinfo::TerrainGrid - 1) * (globalinfo::TerrainGrid - 1) * 6;
+    return RowRectsNumber() * RowRectsNumber() * 6;
 }
 
 void Renderer::allocateBuffer() {
