@@ -3,19 +3,7 @@
 #include "Global/globalfunc.h"
 #include "kernel_wire.h"
 
-/// 创建高度场
-#define glCreateHeightField(glContext, data)                \
-    {                                                       \
-        glContext.glGenTextures(1, &data);                  \
-        glContext.glBindTexture(GL_TEXTURE_2D, data);       \
-        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, \
-                                 globalinfo::TerrainGrid,   \
-                                 globalinfo::TerrainGrid);  \
-        glContext.glBindTexture(GL_TEXTURE_2D, 0);          \
-    }
-
-/// 创建计算纹理
-#define glCreateImage(glContext, data)                         \
+#define glCreateHeightField(glContext, data)                   \
     {                                                          \
         glContext.glGenTextures(1, &data);                     \
         glContext.glBindTexture(GL_TEXTURE_2D, data);          \
@@ -25,7 +13,6 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);             \
     }
 
-/// 创建普通纹理贴图
 #define glCreateTexture(glContext, data)                                 \
     {                                                                    \
         glContext.glGenTextures(1, &data);                               \
@@ -40,13 +27,12 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
     }
 
-/// 创建点云
-#define glCreatePointCloud(glContext, data, size)                     \
-    {                                                                 \
-        glContext.glGenTextures(1, &data);                            \
-        glContext.glBindTexture(GL_TEXTURE_2D, data);                 \
-        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, size, 1); \
-        glContext.glBindTexture(GL_TEXTURE_2D, 0);                    \
+#define glCreatePointCloud(glContext, data, size)                        \
+    {                                                                    \
+        glContext.glGenTextures(1, &data);                               \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                    \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, size, 1); \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
     }
 
 namespace Kernel {
@@ -161,7 +147,7 @@ void Port::AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f) {
     if (this->dataType == PortDataType::Float2D) {
         glCreateHeightField(f, ConBuffer);
     } else if (this->dataType == PortDataType::RGBA2D) {
-        glCreateImage(f, ConBuffer);
+        glCreateTexture(f, ConBuffer);
     } else if (this->dataType == PortDataType::Float) {
         ConBuffer = 0;
         ConFloat = 0;

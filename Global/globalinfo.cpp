@@ -12,14 +12,9 @@ float globalinfo::TerrainHeight = 256.0;
 
 bool globalinfo::useHeightFieldBuffer = false;
 
-unsigned int globalinfo::HeightFieldBuffer = 0;
+unsigned int globalinfo::ChosenHeightFieldBuffer = 0;
 
-bool globalinfo::keepingCalculating = false;
-
-/// 预设纹理通道
-unsigned int globalinfo::ColorTexture_01 = 0;
-
-unsigned int globalinfo::NormalMap = 0;
+bool globalinfo::keepingCalculating = true;
 
 int RowVertsNumber() {
     return globalinfo::TerrainGrid + 2;

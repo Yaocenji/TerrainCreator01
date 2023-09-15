@@ -76,10 +76,10 @@ void Renderer::TimerUpdate() {
     if (timerNum < 250) timerNum++;
 
     static unsigned int oldHeightFieldBufferIndex =
-        globalinfo::HeightFieldBuffer;
-    if (oldHeightFieldBufferIndex != globalinfo::HeightFieldBuffer) {
+        globalinfo::ChosenHeightFieldBuffer;
+    if (oldHeightFieldBufferIndex != globalinfo::ChosenHeightFieldBuffer) {
         update();
-        oldHeightFieldBufferIndex = globalinfo::HeightFieldBuffer;
+        oldHeightFieldBufferIndex = globalinfo::ChosenHeightFieldBuffer;
     }
     if (globalrender::real_time_render) {
         update();
@@ -172,14 +172,8 @@ void Renderer::paintGL() {
     PreRenderTerrainGround(swapFrameBuffer);
 
     terrainShaderProgram->bind();
-
-    glBindImageTexture(0, globalinfo::HeightFieldBuffer, 0, GL_FALSE, 0,
-                       GL_READ_WRITE, GL_R32F);
-    glBindImageTexture(0, globalinfo::ColorTexture_01, 0, GL_FALSE, 0,
+    glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
                        GL_READ_WRITE, GL_RGBA32F);
-    terrainShaderProgram->setUniformValue("ColorMap_01",
-                                          globalinfo::ColorTexture_01);
-
     terrainShaderProgram->setUniformValue("model", model);
     terrainShaderProgram->setUniformValue("view", view);
     terrainShaderProgram->setUniformValue("proj", proj);

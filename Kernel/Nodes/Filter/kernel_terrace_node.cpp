@@ -41,8 +41,8 @@ void Terrace_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     unsigned int src = InputPorts[0]->GetBufferData();
     unsigned int data = OutputPorts[0]->GetBufferData();
 
-    f.glBindImageTexture(0, src, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
-    f.glBindImageTexture(1, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+    f.glBindImageTexture(0, src, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    f.glBindImageTexture(1, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     f.glDispatchCompute(globalinfo::TerrainGrid / 32,
@@ -53,8 +53,7 @@ void Terrace_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
 
 void Terrace_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
     unsigned int data = OutputPorts[0]->GetBufferData();
-    globalinfo::HeightFieldBuffer = data;
-    globalinfo::ColorTexture_01 = 0;
+    globalinfo::ChosenHeightFieldBuffer = data;
 }
 
 } // namespace Kernel

@@ -37,7 +37,7 @@ void Node::Chosen() {
     this->state = NodeChosenState::Chosen;
     // 设置渲染器状态
     globalinfo::useHeightFieldBuffer = true;
-    globalinfo::HeightFieldBuffer =
+    globalinfo::ChosenHeightFieldBuffer =
         targetNode->OutputPorts[0]->GetBufferData();
 }
 
