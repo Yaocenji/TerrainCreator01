@@ -12,5 +12,6 @@
         <file>Clamp.comp</file>
         <file>Terrace.comp</file>
         <file>Invert.comp</file>
+        <file>NormalMap.comp</file>
     </qresource>
 </RCC>

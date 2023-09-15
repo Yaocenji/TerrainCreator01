@@ -61,6 +61,7 @@ void NodeMenu::InitMenu() {
     addSubMenu();
     addSubMenu();
     addSubMenu();
+    addSubMenu();
 
     chosenSubMenu = subMenus[0];
 
@@ -91,6 +92,13 @@ void NodeMenu::InitMenu() {
         "反转", "", ":/test/test/91514322_p1.png");
 
     subMenus[2]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (
+                Kernel::Node *)(new Kernel::NormalMap_Node(parent, nodeGraph));
+        },
+        "法线纹理生成", "", ":/test/test/91514322_p1.png");
+
+    subMenus[3]->addNodeCreator(
         [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
             return (Kernel::Node *)(new Kernel::Number_Node(parent, nodeGraph));
         },

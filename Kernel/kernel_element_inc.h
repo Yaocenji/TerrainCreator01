@@ -10,6 +10,7 @@
 #include "Nodes/Filter/kernel_terrace_node.h"
 #include "Nodes/Generator/kernel_perlinnoise_node.h"
 #include "Nodes/Math/kernel_number_node.h"
+#include "Nodes/Texture/kernel_normalmap_node.h"
 // 核心组件
 #include "kernel_node.h"
 #include "kernel_nodegraph.h"
