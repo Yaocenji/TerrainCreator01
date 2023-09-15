@@ -49,7 +49,7 @@ void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     unsigned int data = OutputPorts[0]->GetBufferData();
-    f.glBindImageTexture(0, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    f.glBindImageTexture(0, data, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
     f.glDispatchCompute(globalinfo::TerrainGrid / 32,
@@ -60,10 +60,8 @@ void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
 
 void PerlinNoise_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
     unsigned int data = OutputPorts[0]->GetBufferData();
-    //    f.initializeOpenGLFunctions();
-    //    f.glBindImageTexture(0, data, 0, GL_FALSE, 0, GL_READ_WRITE,
-    //    GL_RGBA32F);
-    globalinfo::ChosenHeightFieldBuffer = data;
+    globalinfo::HeightFieldBuffer = data;
+    globalinfo::ColorTexture_01 = 0;
 }
 
 unsigned int PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
@@ -72,7 +70,7 @@ unsigned int PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
     unsigned int test;
     f.glGenTextures(1, &test);
     f.glBindTexture(GL_TEXTURE_2D, test);
-    f.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, globalinfo::TerrainGrid,
+    f.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, globalinfo::TerrainGrid,
                      globalinfo::TerrainGrid);
     ts = new QOpenGLShader(QOpenGLShader::Compute);
     ts->compileSourceFile(":/ComputeShaders/PerlinNoise.comp");
@@ -82,14 +80,14 @@ unsigned int PerlinNoise_Node::test(QOpenGLFunctions_4_5_Core &f) {
     tsp->link();
 
     tsp->bind();
-    f.glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    f.glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
     tsp->setUniformValue("TerrainHeight", 256);
     tsp->setUniformValue("Detail", (int)5);
     tsp->setUniformValue("Scale", 1.0f, 1.0f);
     tsp->setUniformValue("Transform", 0.0f, 0.0f);
     f.glDispatchCompute(32, 32, 1);
 
-    f.glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    f.glBindImageTexture(0, test, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
 
     return test;
 }

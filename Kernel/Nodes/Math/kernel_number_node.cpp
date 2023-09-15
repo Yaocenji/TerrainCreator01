@@ -25,8 +25,8 @@ void Number_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     //    unsigned int data = OutputPorts[0]->GetBufferData();
 
     //    f.glBindImageTexture(0, src, 0, GL_FALSE, 0, GL_READ_WRITE,
-    //    GL_RGBA32F); f.glBindImageTexture(1, data, 0, GL_FALSE, 0,
-    //    GL_READ_WRITE, GL_RGBA32F);
+    //    GL_R32F); f.glBindImageTexture(1, data, 0, GL_FALSE, 0,
+    //    GL_READ_WRITE, GL_R32F);
     OutputPorts[0]->SetData(nonPortParams[0]->data_rangefloat);
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 
@@ -37,8 +37,7 @@ void Number_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
 }
 
 void Number_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
-    unsigned int data = OutputPorts[0]->GetBufferData();
-    globalinfo::ChosenHeightFieldBuffer = data;
+    DoNothing
 }
 
 } // namespace Kernel

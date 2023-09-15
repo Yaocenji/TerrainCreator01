@@ -4,7 +4,7 @@
 
 layout(location = 0)in vec2 pos;
 
-layout (binding = 0, rgba32f) uniform image2D HeightField;
+layout (binding = 0, r32f) uniform image2D HeightField;
 
 out vec4 worldPos;
 out vec2 texCoord;
