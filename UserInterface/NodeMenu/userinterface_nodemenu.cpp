@@ -98,6 +98,13 @@ void NodeMenu::InitMenu() {
         },
         "法线纹理生成", "", ":/test/test/91514322_p1.png");
 
+    subMenus[2]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (Kernel::Node *)(new Kernel::SimpleOverlay_Node(parent,
+                                                                   nodeGraph));
+        },
+        "简单贴图覆盖", "", ":/test/test/91514322_p1.png");
+
     subMenus[3]->addNodeCreator(
         [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
             return (Kernel::Node *)(new Kernel::Number_Node(parent, nodeGraph));

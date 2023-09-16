@@ -92,5 +92,8 @@ void main(){
    vec2 texCoord = vec2(gl_GlobalInvocationID.xy) / float(TerrainGrid);
    // 计算结果法向
    vec3 ansNormal = CalNorm(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
-   imageStore(ansMap, ivec2(gl_GlobalInvocationID.xy), vec4(ansNormal.xyz, 1.0));
+   imageStore(ansMap, ivec2(gl_GlobalInvocationID.xy), vec4(ansNormal.xzy, 1.0));
+
+   // 测试代码
+    //    imageStore(ansMap, ivec2(gl_GlobalInvocationID.xy), vec4(1.0, 0.5, 0.2, 1.0));
 }

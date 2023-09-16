@@ -3,8 +3,9 @@ namespace Kernel {
 NormalMap_Node::NormalMap_Node(QObject *parent, NodeGraph *pNG)
     : Node(parent, pNG) {
     name = "法线纹理";
-    color = QColor(Qt::GlobalColor::darkBlue);
+    color = QColor(Qt::GlobalColor::yellow);
 
+    AddInputPort(PortDataType::Float2D, "输入高度场", false);
     AddOutputPort(PortDataType::RGBA2D, "输出纹理");
 }
 
@@ -39,8 +40,8 @@ void NormalMap_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
 
 void NormalMap_Node::Choose(QOpenGLFunctions_4_5_Core &f) {
     unsigned int data = OutputPorts[0]->GetBufferData();
-    globalinfo::HeightFieldBuffer = 0;
-    globalinfo::ColorTexture_01 = data;
+    globalinfo::ChosenHeightFieldBuffer = 0;
+    globalinfo::ColorMap0 = data;
 }
 
 } // namespace Kernel

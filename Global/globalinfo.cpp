@@ -13,6 +13,7 @@ float globalinfo::TerrainHeight = 256.0;
 bool globalinfo::useHeightFieldBuffer = false;
 
 unsigned int globalinfo::ChosenHeightFieldBuffer = 0;
+unsigned int globalinfo::ColorMap0 = 0;
 
 bool globalinfo::keepingCalculating = true;
 

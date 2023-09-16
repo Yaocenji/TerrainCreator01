@@ -24,7 +24,7 @@ SOURCES += \
     Kernel/Nodes/Filter/kernel_invert_node.cpp \
     Kernel/Nodes/Filter/kernel_terrace_node.cpp \
     Kernel/Nodes/Math/kernel_number_node.cpp \
-    Kernel/Nodes/Texture/kernel_normalmap_node.cpp \
+    Kernel/Nodes/Texture/kernel_simpleoverlay_node.cpp \
     Kernel/kernel_element_forwarddec.cpp \
     Kernel/kernel_element_inc.cpp \
     Kernel/Nodes/Filter/kernel_clamp_node.cpp \
@@ -32,6 +32,7 @@ SOURCES += \
     Kernel/kernel_node.cpp \
     Kernel/kernel_nodegraph.cpp \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.cpp \
+    Kernel/Nodes/Texture/kernel_normalmap_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
     UserInterface/Inspector/userinterface_nodeinspector_item.cpp \
@@ -65,13 +66,14 @@ HEADERS += \
     Kernel/Nodes/Filter/kernel_invert_node.h \
     Kernel/Nodes/Filter/kernel_terrace_node.h \
     Kernel/Nodes/Math/kernel_number_node.h \
-    Kernel/Nodes/Texture/kernel_normalmap_node.h \
+    Kernel/Nodes/Texture/kernel_simpleoverlay_node.h \
     Kernel/kernel_element_inc.h \
     Kernel/Nodes/Filter/kernel_clamp_node.h \
     Kernel/Nodes/Generator/kernel_input_node.h \
     Kernel/kernel_node.h \
     Kernel/kernel_nodegraph.h \
     Kernel/Nodes/Generator/kernel_perlinnoise_node.h \
+    Kernel/Nodes/Texture/kernel_normalmap_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
     UserInterface/Inspector/userinterface_nodeinspector_item.h \

@@ -1,5 +1,6 @@
 #include "userinterface_node.h"
 
+#include "Global/globalgl.h"
 #include "userinterface_nodegraph.h"
 
 namespace UserInterface {
@@ -37,8 +38,9 @@ void Node::Chosen() {
     this->state = NodeChosenState::Chosen;
     // 设置渲染器状态
     globalinfo::useHeightFieldBuffer = true;
-    globalinfo::ChosenHeightFieldBuffer =
-        targetNode->OutputPorts[0]->GetBufferData();
+    //    globalinfo::ChosenHeightFieldBuffer =
+    //        targetNode->OutputPorts[0]->GetBufferData();
+    targetNode->Choose(*globalgl::thisContext);
 }
 
 QRectF Node::GetRectInfo() {

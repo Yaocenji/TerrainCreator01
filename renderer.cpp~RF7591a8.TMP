@@ -178,6 +178,7 @@ void Renderer::paintGL() {
                        GL_RGBA32F);
     terrainShaderProgram->setUniformValue("ColorMap0_value",
                                           globalinfo::ColorMap0);
+    qDebug() << "ColorMap0" << globalinfo::ColorMap0;
 
     terrainShaderProgram->setUniformValue("model", model);
     terrainShaderProgram->setUniformValue("view", view);

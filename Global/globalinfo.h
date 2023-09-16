@@ -19,6 +19,8 @@ public:
     static bool useHeightFieldBuffer;
     /// 渲染选项：当前使用的高度场
     static unsigned int ChosenHeightFieldBuffer;
+    /// 纹理通道1
+    static unsigned int ColorMap0;
 
     /// 解算选项：是否持续自动解算
     static bool keepingCalculating;

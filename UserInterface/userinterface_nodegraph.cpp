@@ -63,8 +63,7 @@ bool NodeGraph::ChooseOneNode(Node *tar) {
         tar->Chosen();
         // 有无锁定显示的节点
         if (lockedNode != nullptr) {
-            globalinfo::ChosenHeightFieldBuffer =
-                lockedNode->targetNode->OutputPorts[0]->GetBufferData();
+            lockedNode->Chosen();
         }
         // 设置其他节点
         for (auto &i : Nodes) {

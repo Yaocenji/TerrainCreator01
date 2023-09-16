@@ -3,7 +3,17 @@
 #include "Global/globalfunc.h"
 #include "kernel_wire.h"
 
-#define glCreateHeightField(glContext, data)                   \
+#define glCreateHeightField(glContext, data)                \
+    {                                                       \
+        glContext.glGenTextures(1, &data);                  \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);       \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, \
+                                 globalinfo::TerrainGrid,   \
+                                 globalinfo::TerrainGrid);  \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);          \
+    }
+
+#define glCreateImage(glContext, data)                         \
     {                                                          \
         glContext.glGenTextures(1, &data);                     \
         glContext.glBindTexture(GL_TEXTURE_2D, data);          \
@@ -147,7 +157,7 @@ void Port::AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f) {
     if (this->dataType == PortDataType::Float2D) {
         glCreateHeightField(f, ConBuffer);
     } else if (this->dataType == PortDataType::RGBA2D) {
-        glCreateTexture(f, ConBuffer);
+        glCreateImage(f, ConBuffer);
     } else if (this->dataType == PortDataType::Float) {
         ConBuffer = 0;
         ConFloat = 0;
