@@ -13,5 +13,10 @@
         <file>Terrace.comp</file>
         <file>Invert.comp</file>
         <file>NormalMap.comp</file>
+        <file>SelectSlope.comp</file>
+        <file>CopyHeightField.comp</file>
+        <file>BasicErosion01.comp</file>
+        <file>TestErosion.comp</file>
+        <file>SetPixel.comp</file>
     </qresource>
 </RCC>

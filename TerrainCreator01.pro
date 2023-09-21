@@ -24,7 +24,9 @@ SOURCES += \
     Kernel/Nodes/Filter/kernel_invert_node.cpp \
     Kernel/Nodes/Filter/kernel_terrace_node.cpp \
     Kernel/Nodes/Math/kernel_number_node.cpp \
+    Kernel/Nodes/Nature/kernel_basicerosion01_node.cpp \
     Kernel/Nodes/Texture/kernel_simpleoverlay_node.cpp \
+    Kernel/Nodes/Selector/kernel_selectslope_node.cpp \
     Kernel/kernel_element_forwarddec.cpp \
     Kernel/kernel_element_inc.cpp \
     Kernel/Nodes/Filter/kernel_clamp_node.cpp \
@@ -66,7 +68,9 @@ HEADERS += \
     Kernel/Nodes/Filter/kernel_invert_node.h \
     Kernel/Nodes/Filter/kernel_terrace_node.h \
     Kernel/Nodes/Math/kernel_number_node.h \
+    Kernel/Nodes/Nature/kernel_basicerosion01_node.h \
     Kernel/Nodes/Texture/kernel_simpleoverlay_node.h \
+    Kernel/Nodes/Selector/kernel_selectslope_node.h \
     Kernel/kernel_element_inc.h \
     Kernel/Nodes/Filter/kernel_clamp_node.h \
     Kernel/Nodes/Generator/kernel_input_node.h \

@@ -1,0 +1,145 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32) in;
+
+// 源高度场
+layout (binding = 0, r32f) uniform image2D HeightField;
+
+// 结果：法线纹理
+layout (binding = 1, rgba32f) uniform image2D ansMap;
+
+// 地形信息
+uniform int TerrainGrid;
+uniform float TerrainSize;
+uniform float TerrainHeight;
+
+// 给出的坡度（角度形式）上限
+uniform float max_angle;
+// 给出的坡度（角度形式）下限
+uniform float min_angle;
+// 柔软选择模式
+uniform int smooth_model;
+// 柔软度
+uniform float smooth_radius_angle;
+
+// 获取高度场数据
+// param0:给出高度长
+// param1:坐标值（原始索引）
+float GetHeightData(int x, int y){
+    float ans = imageLoad(HeightField, ivec2(x, y)).x;
+    return ans;
+}
+// 获取高度场一处数据
+// param0:给出高度长
+// param1:坐标值（原始索引）
+// param2:要设置的值
+void SetHeightData(int x, int y, float value){
+    imageStore(HeightField, ivec2(x, y), vec4(value, value, value, value));
+}
+
+// 计算梯度：
+// param0:给出高度场
+// param1:高度场的细分网格数
+// param2:高度场的真实大小
+// param3:规范化到0-1的位置坐标值
+vec2 CalGrad(int Grid, float Size, float x, float y)
+{
+    // 计算梯度
+    // 还原坐标的小数部分
+    float u = fract(x * Grid);
+    float v = fract(y * Grid);
+    // 还原坐标的整数部分
+    int xInt = int(x * Grid);
+    int yInt = int(y * Grid);
+    int xplus = xInt < Grid - 1 ? xInt + 1 : xInt;
+    int yplus = yInt < Grid - 1 ? yInt + 1 : yInt;
+
+    vec2 grad;
+    grad.x = 
+        (GetHeightData(xplus, yInt) - GetHeightData(xInt, yInt)) * (1.0 - v) 
+        + (GetHeightData(xplus, yplus) - GetHeightData(xInt, yplus)) * v;
+    grad.y = 
+        (GetHeightData(xInt, yplus) - GetHeightData(xInt, yInt)) * (1.0 - u) 
+        + (GetHeightData(xplus, yplus) - GetHeightData(xplus, yInt)) * u;
+    grad /= Size * 2.0 / float(Grid);
+
+    return grad;
+}
+
+// 计算斜率：
+// param0:给出高度场
+// param1:高度场的细分网格数
+// param2:高度场的真实大小
+// param3:规范化到0-1的位置坐标值
+float CalSlope(int Grid, float Size, float x, float y)
+{
+    float ansSlope = length(CalGrad(Grid, Size, x, y));
+    return ansSlope;
+}
+
+void main(){
+    const float PI = 3.14159265359;
+    
+    // 源高度
+    float src = imageLoad(HeightField, ivec2(gl_GlobalInvocationID.xy)).r;
+    // 获取texCoord
+    vec2 texCoord = vec2(gl_GlobalInvocationID.xy) / float(TerrainGrid);
+    // 计算斜率
+    float slope = CalSlope(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
+    // 计算角度
+    float angle = abs(atan(slope)) * 180.0 / PI;
+
+    float ans = 0;
+
+    // 判定参数是否出错
+    if (min_angle >= max_angle){
+        imageStore(ansMap, ivec2(gl_GlobalInvocationID.xy), vec4(0, 0, 0, 1.0));
+        return;
+    }
+
+    // 模式：中间
+    if (smooth_model == 0){
+        if (angle < min_angle - smooth_radius_angle / 2.0 || angle > max_angle + smooth_radius_angle / 2.0){
+            ans = 0.0;
+        }
+        else if (angle < max_angle - smooth_radius_angle / 2.0 && angle > min_angle + smooth_radius_angle / 2.0){
+            ans = 1.0;
+        }else {
+            ans = min(smoothstep(min_angle - smooth_radius_angle / 2.0, min_angle + smooth_radius_angle / 2.0, angle), 
+                      smoothstep(max_angle + smooth_radius_angle / 2.0, max_angle - smooth_radius_angle / 2.0, angle));
+        }
+    }
+    // 模式：向外 
+    else if (smooth_model == 1){
+        if (angle < min_angle - smooth_radius_angle || angle > max_angle + smooth_radius_angle){
+            ans = 0.0;
+        }
+        else if (angle < max_angle && angle > min_angle){
+            ans = 1.0;
+        }else {
+            ans = min(smoothstep(min_angle - smooth_radius_angle, min_angle, angle), 
+                      smoothstep(max_angle + smooth_radius_angle, max_angle, angle));
+        }
+    }
+    // 模式：向内
+    else if (smooth_model == 2){
+        if (angle < min_angle || angle > max_angle){
+            ans = 0.0;
+        }
+        else if (angle < max_angle - smooth_radius_angle && angle > min_angle + smooth_radius_angle){
+            ans = 1.0;
+        }else {
+            ans = min(smoothstep(min_angle + smooth_radius_angle, min_angle, angle), 
+                      smoothstep(max_angle - smooth_radius_angle, max_angle, angle));
+        }
+    }
+    // 未识别
+    else {
+        ans = 0;
+    }
+
+    imageStore(ansMap, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans, ans, 1.0));
+
+    // 测试代码
+    
+}

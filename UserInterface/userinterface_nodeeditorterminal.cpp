@@ -37,9 +37,11 @@ void NodeEditorTerminal::TimerUpdate() {
     if (timerNum < 250) {
         timerNum++;
         return;
+    } else {
+        timerNum++;
     }
     if (globalui::real_time_update) {
-        update();
+        if ((timerNum % 11) == 0) update();
     }
 }
 

@@ -1,0 +1,474 @@
+#version 450 core
+// 在glsl中重写简单侵蚀算法1
+
+#define PI 3.14159265358979323846
+
+layout(local_size_x = 32, local_size_y = 1) in;
+
+// 输入输出的高度场
+layout (binding = 0, r32f) uniform image2D HeightField;
+
+// 输入输出的径流量/湿度图
+layout (binding = 1, r32f) uniform image2D WetRunOff;
+
+// 预计算线性衰减核
+layout (binding = 2, r32f) uniform image2D NormalizedRangeLinearAtten;
+
+// 初始的水滴随机位置,由cpu提供
+uniform vec2 InitialDropPos[256];
+
+// 一个水滴
+struct drop{
+    vec2 pos;  // 位置
+    vec2 dir; // 方向
+    float speed; // 速率
+    float water; // 含水量
+    float sediment; // 含沉积物量
+};
+
+// 通过二维向量生成随机数
+float randomFloat_1(vec2 coord){
+    return fract(sin(dot(coord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+float randomFloat_2(float _a, float _b, float seed_x)
+{
+    float ans = fract(sin(seed_x) * _a + _b);
+    ans = fract(sin(ans) * _a + _b);
+    return ans;
+}
+
+// 地形网格细分数：一般式1024，2048等整数
+uniform int TerrainGrid;
+// 地形尺寸，是正方形地形的边长的一半
+uniform float TerrainSize;
+// 地形最大高度，是高度系数
+uniform float TerrainHeight;
+
+
+// 获取高度场一处数据
+// param1:坐标值（原始索引）
+float GetHeightByInt(int x, int y){
+    float ans = imageLoad(HeightField, ivec2(x, y)).x;
+    return ans;
+}
+// 设置高度场一处数据
+// param1:坐标值（原始索引）
+void SetHeightByInt(int x, int y, float value){
+    imageStore(HeightField, ivec2(x, y), vec4(value, value, value, value));
+}
+
+// 获取湿度/径流量一处数据
+// param1:坐标值（原始索引）
+float GetWetRunOffDataByInt(int x, int y){
+    float ans = imageLoad(WetRunOff, ivec2(x, y)).x;
+    return ans;
+}
+// 设置湿度/径流量一处数据
+// param1:坐标值（原始索引）
+void SetWetRunOffDataByInt(int x, int y, float value){
+    imageStore(WetRunOff, ivec2(x, y), vec4(value, value, value, value));
+}
+
+
+// 向image中双线性添加增量
+// param1:网格细分数
+// param2:（0-1）的浮点位置
+// param3:要添加的增量
+void SetHeightBilinear(int grid, float height, float x, float y, float value){
+    x = clamp(x, 0.0, 1.0);
+    y = clamp(y, 0.0, 1.0);
+
+    // 获取所在位置的取整（左下）位置
+    int xInt = min(int(x * grid), grid - 1);
+    int yInt = min(int(y * grid), grid - 1);
+
+    // 计算所在位置的取整（右上）位置
+    int xIntp = xInt < grid - 1 ? xInt + 1 : xInt;
+    int yIntp = yInt < grid - 1 ? yInt + 1 : yInt;
+
+    // 获取横纵的插值系数
+    float u = fract(x * float(grid));
+    float v = fract(y * float(grid));
+
+    // 准备在四个格点上的增值
+    float value_0_0 = value * (1.0 - u) * (1.0 - v);
+    float value_0_1 = value * (1.0 - u) * v;
+    float value_1_0 = value * u * (1.0 - v);
+    float value_1_1 = value * u * v;
+
+    // 声明要操作的值，并初始化读取
+    float data_0_0 = GetHeightByInt(xInt, yInt);
+    float data_0_1 = GetHeightByInt(xInt, yIntp);
+    float data_1_0 = GetHeightByInt(xIntp, yInt);
+    float data_1_1 = GetHeightByInt(xIntp, yIntp);
+
+    // 操作
+    data_0_0 += value_0_0;
+    data_0_1 += value_0_1;
+    data_1_0 += value_1_0;
+    data_1_1 += value_1_1;
+
+    // 保险：再一次clamp
+    data_0_0 = clamp(data_0_0, 0, height);
+    data_0_1 = clamp(data_0_1, 0, height);
+    data_1_0 = clamp(data_1_0, 0, height);
+    data_1_1 = clamp(data_1_1, 0, height);
+
+    // 写回
+    SetHeightByInt(xInt, yInt, data_0_0);
+    SetHeightByInt(xInt, yIntp, data_0_1);
+    SetHeightByInt(xIntp, yInt, data_1_0);
+    SetHeightByInt(xIntp, yIntp, data_1_1);
+}
+
+// 向image中双线性插值取值
+// param1:网格细分数
+// param2:（0-1）的浮点位置
+float GetHeightBilinear(int grid, float height, float x, float y){
+    x = clamp(x, 0.0, 1.0);
+    y = clamp(y, 0.0, 1.0);
+
+
+    // 获取所在位置的取整（左下）位置
+    int xInt = min(int(x * grid), grid - 1);
+    int yInt = min(int(y * grid), grid - 1);
+
+    // 计算所在位置的取整（右上）位置
+    int xIntp = xInt < grid - 1 ? xInt + 1 : xInt;
+    int yIntp = yInt < grid - 1 ? yInt + 1 : yInt;
+
+    // 获取横纵的插值系数
+    float u = fract(x * grid);
+    float v = fract(y * grid);
+
+    // 获取四个位置的值
+    float data_0_0 = GetHeightByInt(xInt, yInt);
+    float data_0_1 = GetHeightByInt(xInt, yIntp);
+    float data_1_0 = GetHeightByInt(xIntp, yInt);
+    float data_1_1 = GetHeightByInt(xIntp, yIntp);
+
+    float ans = 
+        (data_0_0 * (1 - v) + data_0_1 * v) * (1 - u) + 
+        (data_1_0 * (1 - v) + data_1_1 * v) * u;
+
+    return ans;
+}
+
+
+
+// 向image中双线性添加增量
+// param1:网格细分数
+// param2:（0-1）的浮点位置
+// param3:要添加的增量
+void SetWetBilinear(int grid, float maxValue, float x, float y, float value){
+    x = clamp(x, 0.0, 1.0);
+    y = clamp(y, 0.0, 1.0);
+
+
+    // 获取所在位置的取整（左下）位置
+    int xInt = min(int(x * grid), grid - 1);
+    int yInt = min(int(y * grid), grid - 1);
+
+    // 计算所在位置的取整（右上）位置
+    int xIntp = xInt < grid - 1 ? xInt + 1 : xInt;
+    int yIntp = yInt < grid - 1 ? yInt + 1 : yInt;
+
+    // 获取横纵的插值系数
+    float u = fract(x * grid);
+    float v = fract(y * grid);
+
+    // 准备在四个格点上的增值
+    float value_0_0 = value * (1 - u) * (1 - v);
+    float value_0_1 = value * (1 - u) * v;
+    float value_1_0 = value * u * (1 - v);
+    float value_1_1 = value * u * v;
+
+    // 声明要操作的值，并初始化读取
+    float data_0_0 = imageLoad(WetRunOff, ivec2(xInt, yInt)).r;
+    float data_0_1 = imageLoad(WetRunOff, ivec2(xInt, yIntp)).r;
+    float data_1_0 = imageLoad(WetRunOff, ivec2(xIntp, yInt)).r;
+    float data_1_1 = imageLoad(WetRunOff, ivec2(xIntp, yIntp)).r;
+
+    // 操作
+    data_0_0 += value_0_0;
+    data_0_1 += value_0_1;
+    data_1_0 += value_1_0;
+    data_1_1 += value_1_1;
+
+    // 保险：再一次clamp
+    data_0_0 = clamp(data_0_0, 0, maxValue);
+    data_0_1 = clamp(data_0_1, 0, maxValue);
+    data_1_0 = clamp(data_1_0, 0, maxValue);
+    data_1_1 = clamp(data_1_1, 0, maxValue);
+
+    // 写回
+    imageStore(WetRunOff, ivec2(xInt, yInt), vec4(data_0_0));
+    imageStore(WetRunOff, ivec2(xInt, yIntp), vec4(data_0_1));
+    imageStore(WetRunOff, ivec2(xIntp, yInt), vec4(data_1_0));
+    imageStore(WetRunOff, ivec2(xIntp, yIntp), vec4(data_1_1));
+}
+
+// 向image中双线性插值取值
+// param1:网格细分数
+// param2:（0-1）的浮点位置
+float GetWetBilinear(int grid, float maxValue, float x, float y){
+    x = clamp(x, 0.0, 1.0);
+    y = clamp(y, 0.0, 1.0);
+
+
+    // 获取所在位置的取整（左下）位置
+    int xInt = min(int(x * grid), grid - 1);
+    int yInt = min(int(y * grid), grid - 1);
+
+    // 计算所在位置的取整（右上）位置
+    int xIntp = xInt < grid - 1 ? xInt + 1 : xInt;
+    int yIntp = yInt < grid - 1 ? yInt + 1 : yInt;
+
+    // 获取横纵的插值系数
+    float u = fract(x * grid);
+    float v = fract(y * grid);
+
+    // 获取四个位置的值
+    float data_0_0 = imageLoad(WetRunOff, ivec2(xInt, yInt)).r;
+    float data_0_1 = imageLoad(WetRunOff, ivec2(xInt, yIntp)).r;
+    float data_1_0 = imageLoad(WetRunOff, ivec2(xIntp, yInt)).r;
+    float data_1_1 = imageLoad(WetRunOff, ivec2(xIntp, yIntp)).r;
+
+    float ans = 
+        (data_0_0 * (1 - v) + data_0_1 * v) * (1 - u) + 
+        (data_1_0 * (1 - v) + data_1_1 * v) * u;
+
+    return ans;
+}
+
+
+
+// 计算梯度：
+// param0:给出高度场
+// param1:高度场的细分网格数
+// param2:高度场的真实大小
+// param3:规范化到0-1的位置坐标值
+vec2 CalGrad(int Grid, float size, float x, float y)
+{
+    // 计算梯度
+    // 还原坐标的小数部分
+    float u = fract(x * Grid);
+    float v = fract(y * Grid);
+    // 还原坐标的整数部分
+    int xInt = int(x * Grid);
+    int yInt = int(y * Grid);
+    int xIntp = xInt < Grid - 1 ? xInt + 1 : xInt;
+    int yIntp = yInt < Grid - 1 ? yInt + 1 : yInt;
+
+    vec2 grad;
+    grad.x = 
+        (GetHeightByInt(xIntp, yInt) - GetHeightByInt(xInt, yInt)) * (1.0 - v) 
+        + (GetHeightByInt(xIntp, yIntp) - GetHeightByInt(xInt, yIntp)) * v;
+    grad.y = 
+        (GetHeightByInt(xInt, yIntp) - GetHeightByInt(xInt, yInt)) * (1.0 - u) 
+        + (GetHeightByInt(xIntp, yIntp) - GetHeightByInt(xIntp, yInt)) * u;
+    grad /= size * 2.0 / float(Grid);
+
+    return grad;
+}
+
+// 计算范围内的grad
+vec2 CalRangedGrad(int radius, int Grid, float size, float x, float y){
+    vec2 ans = vec2(0, 0);
+    float steplen = size / float(Grid);
+    for(int i = -radius; i <= radius; ++i){
+        for(int j = -radius; j <= radius; j++){
+            float this_x = x + i * steplen;
+            float this_y = y + i * steplen;
+            ans += CalGrad(Grid, size, this_x, this_y);
+        }
+    }
+    ans /= pow(radius * 2.0 + 1.0, 2.0);
+    return ans;
+}
+
+// 侵蚀参数
+//流水最大长度
+uniform int p_max_water_len;
+
+//流水惯性参数（0~1）
+uniform float p_inertia;
+
+//最小坡度
+uniform float p_minSlope;
+
+//携带容量
+uniform float p_capacity;
+
+//沉积系数（0~1）
+uniform float p_deposition;
+    
+//侵蚀系数（0~1）
+uniform float p_erosion;
+    
+//重力系数（0~10）
+uniform float p_gravity;
+    
+//蒸发系数（0~1）
+uniform float p_evaporation;
+    
+//侵蚀半径（1~50）
+uniform int p_radius;
+
+//硬度系数（0~1）
+uniform float p_hardness;
+
+//初始速度（0~10）
+uniform float p_speed;
+
+// 测试用变量
+uniform int test;
+
+void main(){
+    // 计算步长
+    float steplen = 1.0 / float(TerrainGrid);
+    // 这是一次雨滴模拟
+    drop d;
+    // 初始化
+    // 判断是否越界
+    if (gl_GlobalInvocationID.x >= 256)
+        return;
+    d.pos = InitialDropPos[gl_GlobalInvocationID.x];
+
+    d.pos.x = clamp(d.pos.x, 0.0, 1.0);
+    d.pos.y = clamp(d.pos.y, 0.0, 1.0);
+
+    d.water = 1.0;
+    d.speed = p_speed;
+    d.dir = vec2(0, 0);
+    d.sediment = 0.1;
+
+    for (int path = 0; path < p_max_water_len; path ++){
+        // 记录地表径流
+        SetWetBilinear(TerrainGrid, 10000, d.pos.x, d.pos.y, d.water / 200.0);
+
+        // 计算梯度
+        vec2 grad;
+        grad = CalGrad(TerrainGrid, TerrainSize, d.pos.x, d.pos.y);
+        if (test == 1){
+            grad = CalRangedGrad(10, TerrainGrid, TerrainSize, d.pos.x, d.pos.y);
+        }
+        
+        // 速度初始化
+        if (path == 0){
+            d.speed = p_speed * sin(atan(length(grad)));
+        }
+
+        // 新方向
+        d.dir = d.dir * p_inertia - grad * (1.0 - p_inertia);
+        // 如果方向的模太小，那么随机方向
+        if (length(d.dir) <= p_minSlope * steplen){
+            float RandDirTheta = randomFloat_2(15000.0, 56.25, d.pos.x * d.pos.y) * PI * 2.0;
+
+            d.dir.x = cos(RandDirTheta);
+            d.dir.y = sin(RandDirTheta);
+
+            d.dir *= steplen;
+        }
+        
+        // 归一化
+        d.dir = normalize(d.dir) * steplen;
+
+        // 新位置
+        vec2 newPos = d.pos + d.dir;
+        int newix = int(newPos.x * TerrainGrid);
+        int newiy = int(newPos.y * TerrainGrid);
+
+        // 旧位置的height
+        float Hold = GetHeightBilinear(TerrainGrid, TerrainSize, d.pos.x, d.pos.y);
+        // 新位置的height
+        float Hnew;
+        // 如果水滴离开了地形
+        if (newPos.x >= 0 && newPos.x <= 1.0 && newPos.y >= 0 && newPos.y <= 1.0)
+        {
+            // 插值计算新高度
+            Hnew = GetHeightBilinear(TerrainGrid, TerrainSize, newPos.x, newPos.y);
+        }
+        else
+        {
+            // 否则使用原高度
+            Hnew = Hold;
+        }
+        // 变化高度
+        float Hdif = Hnew - Hold ;
+
+        // 如果上坡
+        if (Hdif > 0)
+        {
+            if (Hdif >= d.sediment) // 凹坑深度大于目前的沉积物质量
+            {
+                SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y, d.sediment);
+                
+                // 损失所有沉积物填坑
+                d.sediment = 0;
+            }
+            else                // 凹坑深度小于
+            {
+                SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y,Hdif);
+                // 填平
+                d.sediment -= Hdif;         // 损失填坑的沉积物
+            }
+        }
+        // 如果下坡
+        else
+        {
+            float c = max(-Hdif, p_minSlope) * d.speed * d.water * p_capacity;
+            if (d.sediment > c)
+            {
+                // 沉积
+                float newsedi = (d.sediment - c) * p_deposition;//min((d.sediment - c) * p_deposition, -Hdif);
+                d.sediment -= newsedi;
+                //heightData[x, y] += (d.sediment - c) * p_deposition;
+                SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y,
+                            newsedi);
+            }
+            else
+            {
+                // 侵蚀
+                float ero = min((c - d.sediment) * p_erosion, -Hdif);
+
+                ero *= (1.0 - p_hardness);
+                
+                d.sediment += ero;
+
+                // 初始方案：直接在该地侵蚀
+                // SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y, -ero);
+
+                // 改进方案：根据线性减弱 核查找对应系数， 在一定范围内侵蚀
+                for (int i = -p_radius; i <= p_radius; i++)
+                {
+                    for (int j = -p_radius; j <= p_radius; j++)
+                    {
+                        int line = i + p_radius;
+                        int column = j + p_radius;
+                        float strength = imageLoad(NormalizedRangeLinearAtten, ivec2(line, column)).r;
+
+                        SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x + float(i) * steplen, d.pos.y + float(j) * steplen, -ero * strength);
+                    }
+                }
+            }
+        }
+
+        // 更新速度、水量
+        d.speed = max(sqrt(d.speed * d.speed - Hdif * p_gravity), p_speed);
+        d.water = d.water * (1 - p_evaporation);
+        // 更新位置
+        d.pos = newPos;
+        // 跳出条件：
+        // 1 地图外
+        if (newix < 0 || newix > TerrainGrid - 1 || newiy < 0 || newiy > TerrainGrid - 1)
+            break;
+        // 2 干涸
+        if (d.water <= 0.02 || path >= p_max_water_len - 1)
+        {
+            SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y, d.sediment);
+            break;
+        }
+    }
+    
+}

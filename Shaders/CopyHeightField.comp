@@ -1,0 +1,16 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32) in;
+
+layout (binding = 0, r32f) uniform image2D sourse;
+
+layout (binding = 1, r32f) uniform image2D data;
+
+// 地形最大高度
+uniform float TerrainHeight;
+
+void main(){
+   float ans = imageLoad(sourse, ivec2(gl_GlobalInvocationID.xy)).r;
+   ans = clamp(ans, 0.0, TerrainHeight);
+   imageStore(data, ivec2(gl_GlobalInvocationID.xy), vec4(ans, ans,ans, ans));
+}

@@ -79,6 +79,9 @@ void Node::AddComputeShaderFromPath(QString path) {
     shaderProgram->create();
     shaderProgram->addShader(shader);
     shaderProgram->link();
+    qDebug() << name << "节点 第" << shaderPrograms.size()
+             << "个着色器编译结果：";
+    qDebug() << shaderProgram->log();
     this->shaderPrograms.push_back(shaderProgram);
     this->shaders.push_back(shader);
 }
@@ -133,7 +136,8 @@ bool Node::RunNode(QOpenGLFunctions_4_5_Core &f) {
     for (int i = 0; i < InputPorts.length(); i++) {
         // 检查是否有必需连接的节点没有链接
         if (!(InputPorts[i]->hasDefaultValue) && !(InputPorts[i]->isLinked())) {
-            qDebug() << "Error: Prerequisites for node computing are not met.";
+            //            qDebug() << "Error: Prerequisites for node computing
+            //            are not met.";
             return false;
         }
         // 检查所有输入/参数节点是否准备就绪，若不就绪，那么运行前置节点
@@ -247,6 +251,75 @@ bool Node::OccurChangeOnNonPortParam(NonPortParam *tar) {
     }
     //    qDebug() << "共" << num << "个输出接口 ";
     return true;
+}
+
+void Node::SetPixel(QOpenGLFunctions_4_5_Core &f, unsigned int Image2D, int x,
+                    int y, float value) {
+    // 先创立shader
+    QOpenGLShader *shader;
+    QOpenGLShaderProgram *shaderProgram;
+    shader = new QOpenGLShader(QOpenGLShader::Compute);
+    shader->compileSourceFile(":/ComputeShaders/SetPixel.comp");
+    shaderProgram = new QOpenGLShaderProgram();
+    shaderProgram->create();
+    shaderProgram->addShader(shader);
+    shaderProgram->link();
+
+    f.glBindImageTexture(0, Image2D, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
+    shaderProgram->bind();
+    shaderProgram->setUniformValue("data", value);
+
+    shaderProgram->setUniformValue("index_x", x);
+    shaderProgram->setUniformValue("index_y", y);
+
+    f.glDispatchCompute(1, 1, 1);
+
+    delete shaderProgram;
+    delete shader;
+
+    return;
+}
+
+void Node::SetImage2D(QOpenGLFunctions_4_5_Core &f, unsigned int Image2D,
+                      float *array, int count, int interval) {
+    if (count % interval != 0) {
+        qDebug() << "函数Set Image 2D"
+                 << "参数count不能整除interval";
+        return;
+    }
+
+    // 先创立shader
+    QOpenGLShader *shader;
+    QOpenGLShaderProgram *shaderProgram;
+    shader = new QOpenGLShader(QOpenGLShader::Compute);
+    shader->compileSourceFile(":/ComputeShaders/SetPixel.comp");
+    shaderProgram = new QOpenGLShaderProgram();
+    shaderProgram->create();
+    shaderProgram->addShader(shader);
+    shaderProgram->link();
+
+    f.glBindImageTexture(0, Image2D, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
+    for (int i = 0; i < count / interval; ++i) {
+        for (int j = 0; j < interval; ++j) {
+            shaderProgram->bind();
+
+            float value = array[i * interval + j];
+
+            shaderProgram->setUniformValue("data", value);
+
+            shaderProgram->setUniformValue("index_x", i);
+            shaderProgram->setUniformValue("index_y", j);
+
+            f.glDispatchCompute(1, 1, 1);
+        }
+    }
+
+    delete shaderProgram;
+    delete shader;
+
+    return;
 }
 
 } // namespace Kernel

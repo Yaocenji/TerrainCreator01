@@ -88,9 +88,9 @@ public:
     /// 浮点数是否有对应的范围
     bool isRanged;
     /// 最小值
-    bool rangefloat_l;
+    float rangefloat_l;
     /// 最大值
-    bool rangefloat_r;
+    float rangefloat_r;
 
 public:
     /// 连接的接口数组，如果是输入接口，那么该数组只有一个值，否则可能有一系列值

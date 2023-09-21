@@ -10,6 +10,7 @@ out vec4 worldPos;
 out vec2 texCoord;
 out vec4 clipPos;
 out vec3 normal;
+out float realHeight;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -107,16 +108,23 @@ void main(){
             && texCoord.y >= 0.0 && texCoord.y <= 1.0){
             float HeightFieldData = imageLoad(HeightField, itexCoord).r;
             modelPos = vec4(pos.x, HeightFieldData, pos.y, 1.0);
+
+            realHeight = HeightFieldData;
+            normal = CalNorm(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
         } else {
             modelPos = vec4(pos.x, 0, pos.y, 1.0);
+
+            realHeight = 0;
+            normal = vec3(0, 1, 0);
         }
-        normal = CalNorm(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
     }
     else{
         float dist = length(rtexCoord);
         dist *= 3;
         float HeightData = 2 * TerrainHeight * 1.0 / sqrt(2.0 * PI) * exp(- dist * dist / 2.0);
         modelPos = vec4(pos.x, HeightData, pos.y, 1.0);
+
+        realHeight = HeightData;
         normal = vec3(0, 1, 0);
     }
     // 乘以mvp矩阵

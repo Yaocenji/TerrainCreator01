@@ -1,0 +1,16 @@
+#version 450 core
+
+// 着色器功能：在cpu中调用一次，设置某个image2D buffer的某个位置的值
+
+layout (local_size_x = 1, local_size_y = 1) in;
+
+layout (binding = 0, r32f) uniform image2D target;
+
+uniform float data;
+
+uniform int index_x;
+uniform int index_y;
+
+void main(){
+   imageStore(target, ivec2(index_x, index_y), vec4(data, data, data, data));
+}

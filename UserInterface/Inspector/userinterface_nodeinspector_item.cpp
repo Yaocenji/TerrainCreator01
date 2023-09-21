@@ -391,7 +391,7 @@ void NodeInspectorItem::SliderSlided(int value) {
         Kernel::Port *tarPort = targetKernelNode->ParamPorts[index];
         if (tarPort->GetDataType() == Kernel::PortDataType::Float) {
             float data = value;
-            tarPort->SetDefaultFloatData(data);
+            tarPort->SetDefaultFloatData(data / 100.0f);
 
             lineEdit->setText(QString::number(tarPort->GetDefaultFloatData()));
             targetKernelNode->OccurChangeOnPort(tarPort);

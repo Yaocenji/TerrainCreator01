@@ -283,6 +283,13 @@ public:
     /// 某个非接口参数发生改变
     bool OccurChangeOnNonPortParam(NonPortParam *tar);
 
+    // 设置Image2D的一个位置
+    void SetPixel(QOpenGLFunctions_4_5_Core &f, unsigned int Image2D, int x,
+                  int y, float value);
+    // 用一个数组 设置一整张Image2D
+    void SetImage2D(QOpenGLFunctions_4_5_Core &f, unsigned int Image2D,
+                    float *array, int count, int interval);
+
 public:
     explicit Node(QObject *parent, NodeGraph *pNM = nullptr);
     //    ~Node();

@@ -5,6 +5,55 @@
     ;             \
     ;             \
     ;
+#define glCreateHeightField(glContext, data)                \
+    {                                                       \
+        glContext.glGenTextures(1, &data);                  \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);       \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, \
+                                 globalinfo::TerrainGrid,   \
+                                 globalinfo::TerrainGrid);  \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);          \
+    }
+
+#define glCreateImage(glContext, data)                         \
+    {                                                          \
+        glContext.glGenTextures(1, &data);                     \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);          \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, \
+                                 globalinfo::TerrainGrid,      \
+                                 globalinfo::TerrainGrid);     \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);             \
+    }
+
+#define glCreateImage2D(glContext, data, width, height)                     \
+    {                                                                       \
+        glContext.glGenTextures(1, &data);                                  \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                       \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_R32F, width, height); \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                          \
+    }
+
+#define glCreateTexture(glContext, data)                                 \
+    {                                                                    \
+        glContext.glGenTextures(1, &data);                               \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                    \
+        glContext.glTexImage2D(                                          \
+            GL_TEXTURE_2D, 0, GL_RGB, globalinfo::TerrainGrid,           \
+            globalinfo::TerrainGrid, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL); \
+        glContext.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  \
+                                  GL_LINEAR);                            \
+        glContext.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,  \
+                                  GL_LINEAR);                            \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
+    }
+
+#define glCreatePointCloud(glContext, data, size)                        \
+    {                                                                    \
+        glContext.glGenTextures(1, &data);                               \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                    \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, size, 1); \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                       \
+    }
 
 /// 全局信息
 class globalinfo {

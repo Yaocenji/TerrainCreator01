@@ -93,6 +93,13 @@ void NodeMenu::InitMenu() {
 
     subMenus[2]->addNodeCreator(
         [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (Kernel::Node *)(new Kernel::SelectSlope_Node(parent,
+                                                                 nodeGraph));
+        },
+        "选择坡度", "", ":/test/test/91514322_p1.png");
+
+    subMenus[2]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
             return (
                 Kernel::Node *)(new Kernel::NormalMap_Node(parent, nodeGraph));
         },
@@ -104,6 +111,13 @@ void NodeMenu::InitMenu() {
                                                                    nodeGraph));
         },
         "简单贴图覆盖", "", ":/test/test/91514322_p1.png");
+
+    subMenus[2]->addNodeCreator(
+        [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
+            return (Kernel::Node *)(new Kernel::BasicErosion01_Node(parent,
+                                                                    nodeGraph));
+        },
+        "基础侵蚀 1", "", ":/test/test/91514322_p1.png");
 
     subMenus[3]->addNodeCreator(
         [](QObject *parent, Kernel::NodeGraph *nodeGraph) {
