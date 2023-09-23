@@ -19,9 +19,12 @@
 #include <QtMath>
 #include <iostream>
 
-#include "Global/globalinfo.h"
-#include "Kernel/kernel_element_inc.h"
+#include "../Global/globalinfo.h"
+#include "../Kernel/kernel_element_inc.h"
+#include "render_camera.h"
+#include "render_rendertexture.h"
 
+namespace Render {
 /// 程序的渲染窗口
 class Renderer : public QOpenGLWidget, QOpenGLFunctions_4_5_Core {
     Q_OBJECT
@@ -69,16 +72,27 @@ protected:
     QOpenGLShaderProgram *swapShaderProgram;
 
 protected:
-    /// 离屏渲染缓冲区frame buffer
+    /// 缓冲RT
+    RenderTexture *swapRT;
+    /// （弃用）离屏渲染缓冲区frame buffer
     GLuint swapFrameBuffer;
-    /// 离屏渲染缓冲区frame buffer的颜色缓冲和深度缓冲内容
+    /// （弃用）离屏渲染缓冲区frame buffer的颜色缓冲和深度缓冲内容
     GLuint swapColorBuffer, swapDepthBuffer;
 
 protected:
-    /// 摄像机位置
+    /// 物体矩阵
+    QMatrix4x4 model;
+    /// 摄像机
+    Camera *camera;
+    /// （弃用）摄像机位置
     QVector3D camPos;
-    /// 摄像机mvp矩阵内容
-    QMatrix4x4 model, view, proj;
+    /// （弃用）摄像机vp矩阵内容
+    QMatrix4x4 view, proj;
+    // （弃用）一系列摄像机参数
+    float altitude;
+    float azimuth;
+    float distance;
+    float scaleSensitive, rotateSensitive;
 
 public:
     explicit Renderer(QWidget *parent = nullptr);
@@ -94,7 +108,6 @@ protected:
 public:
     /// 地形全局设置改变函数
     void setTerrainInfo();
-    void setCameraInfo(int w, int h);
 
 protected:
     /// 网格：顶点数据与三角形索引数据生成函数
@@ -108,25 +121,28 @@ protected:
 
     /// 准备离屏渲染资源，只在程序启动时调用一次
     void prepareSwapChain();
-    /// 生成FBO/COLOR RENDERTEXTURE/DEPTH RENDERTEXTURE
+    /// （弃用）生成FBO/COLOR RENDERTEXTURE/DEPTH RENDERTEXTURE
     void createFrameBufferAndRenderTextures();
-    /// 切换FBO的COLOR RENDERTEXTUREDEPTH RENDERTEXTURE
+    /// （弃用）切换FBO的COLOR RENDERTEXTUREDEPTH RENDERTEXTURE
     void switchFrameBufferAndRenderTextures();
 
     /// 准备shader渲染资源，只在启动时调用
     void setRenderShaders();
 
 protected:
-    /// 设置摄像机
+    /// （弃用）设置摄像机
     void setCameraInfo();
-    /// 鼠标函数
+    /// （弃用）摄像机设置函数
+    void setCameraInfo(int w, int h);
 
+    /// 鼠标函数
+    /// 是否正在控制
     bool isControlling;
+    /// 摄像机控制模式
+    CameraControlMode camCtrlMode;
+    /// 上一时刻鼠标位置
     QPoint mouseOldPos;
-    float altitude;
-    float azimuth;
-    float distance;
-    float scaleSensitive, rotateSensitive;
+    // 系列重载函数
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -138,5 +154,7 @@ public:
 
 signals:
 };
+
+} // namespace Render
 
 #endif // RENDERER_H

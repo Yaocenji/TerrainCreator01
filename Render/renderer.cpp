@@ -26,6 +26,8 @@
         glBindTexture(GL_TEXTURE_2D, depthbuffer);                     \
     }
 
+namespace Render {
+
 Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     // 初始化顶点数据
     terrainVBO = nullptr;
@@ -47,15 +49,18 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     swapVert = nullptr;
     swapFrag = nullptr;
 
-    swapFrameBuffer = 0;
-    swapColorBuffer = 0;
-    swapDepthBuffer = 0;
+    swapRT = new RenderTexture(this);
+    //    swapFrameBuffer = 0;
+    //    swapColorBuffer = 0;
+    //    swapDepthBuffer = 0;
 
     // 初始化摄像机矩阵
+    camera = new Camera(this);
     model = QMatrix4x4();
     view = QMatrix4x4();
     proj = QMatrix4x4();
     isControlling = false;
+    camCtrlMode = CameraControlMode::None;
     azimuth = 0;
     altitude = M_PI / 4.0;
     distance = sqrt(2.0);
@@ -133,16 +138,24 @@ void Renderer::initializeGL() {
     screenVBO->create();
     screenVAO->create();
 
+    // RT创建
+    swapRT->recreateRenderTexture(rect().width(), rect().height(),
+                                  *(getFunctionAndContext()));
+
     // 离屏渲染（交换链）所有内容准备
     prepareSwapChain();
 
     qDebug() << "初始化错误验证 "
              << "离屏渲染所有内容准备，错误码：" << glGetError();
 
-    // 摄像机准备
-    camPos = QVector3D(0.0, 1.0, -1.0);
+    // 鼠标控制变量准备
     mouseOldPos = QPoint();
-    setCameraInfo();
+
+    // 摄像机准备
+    //    camPos = QVector3D(0.0, 1.0, -1.0);
+    //    setCameraInfo();
+    model.setToIdentity();
+    model.scale(0.001f);
 
     //    update();
 
@@ -153,12 +166,15 @@ void Renderer::initializeGL() {
 void Renderer::resizeGL(int w, int h) {
     makeCurrent();
     // 重设texture
-    switchFrameBufferAndRenderTextures();
+    //    switchFrameBufferAndRenderTextures();
+    swapRT->recreateRenderTexture(w, h, *(getFunctionAndContext()));
     // 参数X，Y指定了视见区域的左下角在窗口中的位置，一般情况下为（0，0），Width和Height指定了视见区域的宽度和高度。
     //    int ratio =
     //    QApplication::desktop()->devicePixelRatio();
-    proj.setToIdentity();
-    proj.perspective(45, GLfloat(w) / h, 0.01, 15.0);
+    //    proj.setToIdentity();
+    //    proj.perspective(45, GLfloat(w) / h, 0.01, 15.0);
+
+    camera->setAspectRatio(GLfloat(w) / h);
     //    proj.perspective(45, 1, 0.01, 15.0);
     //    setCameraInfo(w, h);
     update();
@@ -169,7 +185,10 @@ void Renderer::paintGL() {
     globalgl::thisContext = getFunctionAndContext();
 
     // 准备离屏渲染
-    PreRenderTerrainGround(swapFrameBuffer);
+    //    PreRenderTerrainGround(swapFrameBuffer);
+
+    swapRT->clear(*(getFunctionAndContext()));
+    swapRT->bind(*(getFunctionAndContext()));
 
     terrainShaderProgram->bind();
     glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
@@ -178,11 +197,10 @@ void Renderer::paintGL() {
                        GL_RGBA32F);
     terrainShaderProgram->setUniformValue("ColorMap0_value",
                                           globalinfo::ColorMap0);
-    qDebug() << "ColorMap0" << globalinfo::ColorMap0;
 
     terrainShaderProgram->setUniformValue("model", model);
-    terrainShaderProgram->setUniformValue("view", view);
-    terrainShaderProgram->setUniformValue("proj", proj);
+    terrainShaderProgram->setUniformValue("view", camera->matrixView());
+    terrainShaderProgram->setUniformValue("proj", camera->matrixProjection());
     terrainShaderProgram->setUniformValue("TerrainHeight",
                                           globalinfo::TerrainHeight);
     terrainShaderProgram->setUniformValue("TerrainSize",
@@ -197,7 +215,7 @@ void Renderer::paintGL() {
 
     terrainShaderProgram->release();
 
-    PreSwapFrameBufferToScreen(swapColorBuffer, swapDepthBuffer);
+    PreSwapFrameBufferToScreen(swapRT->colorTexture(), swapRT->depthTexture());
 
     swapShaderProgram->bind();
     swapShaderProgram->setUniformValue("colorBuffer", 0);
@@ -308,7 +326,7 @@ void Renderer::prepareSwapChain() {
                           (void *)0);
     glEnableVertexAttribArray(0);
 
-    createFrameBufferAndRenderTextures();
+    //    createFrameBufferAndRenderTextures();
 
     // 离屏渲染交换链shader读取
     bool flag = true;
@@ -448,16 +466,17 @@ void Renderer::setRenderShaders() {
 }
 
 void Renderer::setCameraInfo() {
-    camPos = QVector3D(distance * sinf(altitude) * cosf(azimuth),
-                       distance * cosf(altitude),
-                       distance * sinf(altitude) * sinf(azimuth));
+    //    camPos = QVector3D(distance * sinf(altitude) * cosf(azimuth),
+    //                       distance * cosf(altitude),
+    //                       distance * sinf(altitude) * sinf(azimuth));
 
     model.setToIdentity();
     model.scale(0.001f);
-    view.setToIdentity();
-    view.lookAt(camPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
-    proj.setToIdentity();
-    proj.perspective(45, ((float)width()) / ((float)height()), 0.01, 15.0);
+    //    view.setToIdentity();
+    //    view.lookAt(camPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    //    proj.setToIdentity();
+    //    proj.perspective(45, ((float)width()) / ((float)height()),
+    //    0.01, 15.0);
 }
 
 void Renderer::setCameraInfo(int w, int h) {
@@ -467,27 +486,35 @@ void Renderer::setCameraInfo(int w, int h) {
 
     model.setToIdentity();
     model.scale(0.001f);
-    view.setToIdentity();
-    view.lookAt(camPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
-    proj.setToIdentity();
-    proj.perspective(45, ((float)w) / ((float)h), 0.01, 15.0);
-    //    proj.perspective(45, 1, 0.01, 15.0);
+    //    view.setToIdentity();
+    //    view.lookAt(camPos, QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    //    proj.setToIdentity();
+    //    proj.perspective(45, ((float)w) / ((float)h), 0.01, 15.0);
 }
 
 void Renderer::mousePressEvent(QMouseEvent *event) {
     isControlling = true;
     mouseOldPos = event->pos();
+    if (event->button() == Qt::LeftButton) {
+        camCtrlMode = CameraControlMode::Rotate;
+    } else {
+        camCtrlMode = CameraControlMode::Translate;
+    }
 }
 
 void Renderer::mouseMoveEvent(QMouseEvent *event) {
     QPoint deltaP = event->pos() - mouseOldPos;
-    azimuth += deltaP.x() * rotateSensitive;
-    altitude -= deltaP.y() * rotateSensitive;
-    if (altitude >= M_PI / 2)
-        altitude = M_PI / 2;
-    else if (altitude <= 0.01)
-        altitude = 0.01;
-    setCameraInfo();
+    //    azimuth += deltaP.x() * rotateSensitive;
+    //    altitude -= deltaP.y() * rotateSensitive;
+    //    if (altitude >= M_PI / 2)
+    //        altitude = M_PI / 2;
+    //    else if (altitude <= 0.01)
+    //        altitude = 0.01;
+    //    setCameraInfo();
+    if (camCtrlMode == CameraControlMode::Rotate)
+        camera->rotate(deltaP.x(), deltaP.y());
+    else if (camCtrlMode == CameraControlMode::Translate)
+        camera->translate(deltaP.x(), deltaP.y());
     mouseOldPos = event->pos();
     update();
 }
@@ -495,12 +522,21 @@ void Renderer::mouseMoveEvent(QMouseEvent *event) {
 void Renderer::mouseReleaseEvent(QMouseEvent *event) {
     mouseMoveEvent(event);
     isControlling = false;
+    camCtrlMode = CameraControlMode::None;
 }
 
 void Renderer::wheelEvent(QWheelEvent *event) {
-    distance *= exp(-(event->angleDelta().x() + event->angleDelta().y()) *
-                    scaleSensitive);
-    setCameraInfo();
+    //    distance *= exp(-(event->angleDelta().x() + event->angleDelta().y()) *
+    //                    scaleSensitive);
+
+    int delta = event->delta();
+    if (delta > 0) {
+        camera->zoomin();
+    } else if (delta < 0) {
+        camera->zoomout();
+    }
+
+    //    setCameraInfo();
     update();
 }
 
@@ -508,3 +544,5 @@ QOpenGLFunctions_4_5_Core *Renderer::getFunctionAndContext() {
     QOpenGLFunctions_4_5_Core *f = this;
     return f;
 }
+
+} // namespace Render

@@ -37,6 +37,8 @@ SOURCES += \
     Kernel/Nodes/Texture/kernel_normalmap_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
+    Render/render_light.cpp \
+    Render/render_rendertexture.cpp \
     UserInterface/Inspector/userinterface_nodeinspector_item.cpp \
     UserInterface/NodeMenu/userinterface_nodecreator.cpp \
     UserInterface/NodeMenu/userinterface_nodemenubutton.cpp \
@@ -57,7 +59,8 @@ SOURCES += \
     UserInterface/userinterface_wire.cpp \
     main.cpp \
     mainwindow.cpp \
-    renderer.cpp
+    Render/render_camera.cpp \
+    Render/renderer.cpp
 
 HEADERS += \
     Global/globalfunc.h \
@@ -80,6 +83,8 @@ HEADERS += \
     Kernel/Nodes/Texture/kernel_normalmap_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
+    Render/render_light.h \
+    Render/render_rendertexture.h \
     UserInterface/Inspector/userinterface_nodeinspector_item.h \
     UserInterface/NodeMenu/userinterface_nodecreator.h \
     UserInterface/NodeMenu/userinterface_nodemenubutton.h \
@@ -99,7 +104,8 @@ HEADERS += \
     UserInterface/Title/userinterface_titlebar.h \
     UserInterface/userinterface_wire.h \
     mainwindow.h \
-    renderer.h
+    Render/render_camera.h \
+    Render/renderer.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

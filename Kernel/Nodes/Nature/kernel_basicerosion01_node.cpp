@@ -15,31 +15,31 @@ BasicErosion01_Node::BasicErosion01_Node(QObject *parent, NodeGraph *pNG)
     AddOutputPort(PortDataType::Float2D, "地表径流量统计");
 
     AddNonPortParam(NonPortParamType::RangeInt, "迭代次数");
-    nonPortParams[0]->InitData(3000, 1, 75000);
+    nonPortParams[0]->InitData(12000, 1, 50000);
 
     AddNonPortParam(NonPortParamType::RangeInt, "地表径流最大流动长度");
-    nonPortParams[1]->InitData(600, 100, 10000);
+    nonPortParams[1]->InitData(600, 100, 1500);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "地表流体惯性");
     nonPortParams[2]->InitData(0.8f, 0.001f, 0.999f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "地表粘性（最小坡度系数）");
-    nonPortParams[3]->InitData(0.001f, 0.0f, 0.3f);
+    nonPortParams[3]->InitData(0.001f, 0.0f, 0.9f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "地表径流固体沉积物携带上限");
-    nonPortParams[4]->InitData(2.0f, 0.5f, 32.0f);
+    nonPortParams[4]->InitData(2.0f, 0.5f, 12.0f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "沉积系数");
-    nonPortParams[5]->InitData(0.65f, 0.001f, 0.999f);
+    nonPortParams[5]->InitData(0.45f, 0.001f, 0.999f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "侵蚀系数");
-    nonPortParams[6]->InitData(0.322f, 0.001f, 0.999f);
+    nonPortParams[6]->InitData(0.1f, 0.001f, 0.999f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "重力加速度");
-    nonPortParams[7]->InitData(1.0f, 0.01f, 20.0f);
+    nonPortParams[7]->InitData(1.0f, 0.01f, 10.0f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "地表径流蒸发强度");
-    nonPortParams[8]->InitData(0.08f, 0.001f, 0.3f);
+    nonPortParams[8]->InitData(0.08f, 0.001f, 0.5f);
 
     AddNonPortParam(NonPortParamType::RangeInt, "侵蚀半径");
     nonPortParams[9]->InitData(5, 1, 40);
@@ -48,10 +48,10 @@ BasicErosion01_Node::BasicErosion01_Node(QObject *parent, NodeGraph *pNG)
     nonPortParams[10]->InitData(0.12f, 0.0f, 1.0f);
 
     AddNonPortParam(NonPortParamType::RangeFloat, "地表径流初速度");
-    nonPortParams[11]->InitData(2.42f, 0.0f, 15.0f);
+    nonPortParams[11]->InitData(2.42f, 0.0f, 8.0f);
 
-    AddNonPortParam(NonPortParamType::Int, "测试");
-    nonPortParams[12]->InitData(0);
+    AddNonPortParam(NonPortParamType::RangeInt, "流动检测半径");
+    nonPortParams[12]->InitData(3, 0, 15);
 }
 
 void BasicErosion01_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
@@ -89,7 +89,7 @@ void BasicErosion01_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
     // 生成一张线性减小核buffer
     unsigned int linearKernel;
     // 最大半径40，对应变长81，但是81小于OpenGL纹理最小边长，所以使用128
-    glCreateImage2D(f, linearKernel, 128, 128);
+    glCreateSizedHeightField(f, linearKernel, 128, 128);
 
     int radius = nonPortParams[9]->data_rangeint;
     int kernelSize = (radius * 2 + 1);

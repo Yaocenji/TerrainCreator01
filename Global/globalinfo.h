@@ -5,6 +5,8 @@
     ;             \
     ;             \
     ;
+
+/// 创建和地形大小匹配的二维高度场
 #define glCreateHeightField(glContext, data)                \
     {                                                       \
         glContext.glGenTextures(1, &data);                  \
@@ -15,7 +17,8 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);          \
     }
 
-#define glCreateImage(glContext, data)                         \
+/// 创建和地形大小匹配的二维RGBA32位浮点图像/向量数组
+#define glCreateRGBAImage(glContext, data)                         \
     {                                                          \
         glContext.glGenTextures(1, &data);                     \
         glContext.glBindTexture(GL_TEXTURE_2D, data);          \
@@ -25,7 +28,8 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);             \
     }
 
-#define glCreateImage2D(glContext, data, width, height)                     \
+/// 创建任意大小的二维高度场/浮点数组
+#define glCreateSizedHeightField(glContext, data, width, height)                     \
     {                                                                       \
         glContext.glGenTextures(1, &data);                                  \
         glContext.glBindTexture(GL_TEXTURE_2D, data);                       \
@@ -33,6 +37,16 @@
         glContext.glBindTexture(GL_TEXTURE_2D, 0);                          \
     }
 
+/// 创建任意大小的二维RGBA32位浮点图像/向量数组
+#define glCreateSizedRGBAImage(glContext, data, width, height)                 \
+    {                                                                          \
+        glContext.glGenTextures(1, &data);                                     \
+        glContext.glBindTexture(GL_TEXTURE_2D, data);                          \
+        glContext.glTexStorage2D(GL_TEXTURE_2D, 8, GL_RGBA32F, width, height); \
+        glContext.glBindTexture(GL_TEXTURE_2D, 0);                             \
+    }
+
+/// 创建和地形大小匹配的纹理
 #define glCreateTexture(glContext, data)                                 \
     {                                                                    \
         glContext.glGenTextures(1, &data);                               \

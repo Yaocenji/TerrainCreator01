@@ -1,11 +1,11 @@
 #include "userinterface_beginresolvebutton.h"
 
+#include "./Render/renderer.h"
 #include "./UserInterface/userinterface_nodeeditorterminal.h"
-#include "./renderer.h"
 
 namespace UserInterface {
 
-BeginResolveButton::BeginResolveButton(Renderer *parent)
+BeginResolveButton::BeginResolveButton(Render::Renderer *parent)
     : QPushButton(parent), targetRenderer(parent) {
     buttonSize = QPointF(75, 50);
 

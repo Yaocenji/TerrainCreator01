@@ -6,173 +6,179 @@
 #include "Kernel/kernel_element_inc.h"
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-  resize(width, height);
+    resize(width, height);
 
-  // 最大化
-  //    showMaximized();
-  // 隐藏标题栏
-  setWindowFlags(Qt::FramelessWindowHint);
+    // 最大化
+    //    showMaximized();
+    // 隐藏标题栏
+    setWindowFlags(Qt::FramelessWindowHint);
 
-  titleBar = new UserInterface::TitleBar(this, this);
+    titleBar = new UserInterface::TitleBar(this, this);
 
+    renderWidget = new Render::Renderer(this);
 
-  renderWidget = new Renderer(this);
+    kNG = new Kernel::NodeGraph(this, false, nullptr);
+    uiNG = new UserInterface::NodeGraph(this, kNG);
 
-  kNG = new Kernel::NodeGraph(this, false, nullptr);
-  uiNG = new UserInterface::NodeGraph(this, kNG);
+    uiNodeEditor = new UserInterface::NodeEditorTerminal(this);
 
-  uiNodeEditor = new UserInterface::NodeEditorTerminal(this);
+    uiNodeEditor->SetTargetNodeGraph(uiNG);
 
-  uiNodeEditor->SetTargetNodeGraph(uiNG);
+    // 节点图初始化
+    uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
+    //    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
+    //    uiNG->LinkWire(uiNG->GetNodes()[0]->OutputPorts[0],
+    //                   uiNG->GetNodes()[1]->InputPorts[0]);
 
-  // 节点图初始化
-  uiNG->addNode<Kernel::PerlinNoise_Node>(QPointF(150, 150));
-  //    uiNG->addNode<Kernel::Clamp_Node>(QPointF(550, 170));
-  //    uiNG->LinkWire(uiNG->GetNodes()[0]->OutputPorts[0],
-  //                   uiNG->GetNodes()[1]->InputPorts[0]);
+    nodeMenu = new UserInterface::NodeMenu(this);
 
-  nodeMenu = new UserInterface::NodeMenu(this);
+    // 节点参数编辑器
+    nodeInspector = new UserInterface::NodeInspector(uiNodeEditor, this);
+    // 连接：节点参数编辑器和节点图编辑终端刷新
+    //    connect(nodeInspector,
+    //    &UserInterface::NodeInspector::OccurValueChange,
+    //            [=]() { uiNodeEditor->update(); });
+    //    connect(nodeInspector, SIGNAL(OccurValueChange()), uiNodeEditor,
+    //            SLOT(update()));
 
-  // 节点参数编辑器
-  nodeInspector = new UserInterface::NodeInspector(uiNodeEditor, this);
-  // 连接：节点参数编辑器和节点图编辑终端刷新
-  //    connect(nodeInspector,
-  //    &UserInterface::NodeInspector::OccurValueChange,
-  //            [=]() { uiNodeEditor->update(); });
-  //    connect(nodeInspector, SIGNAL(OccurValueChange()), uiNodeEditor,
-  //            SLOT(update()));
+    pb1 = new QPushButton(this);
+    pb1->setText("开始计算");
 
-  pb1 = new QPushButton(this);
-  pb1->setText("开始计算");
+    // 分割器初始化
+    // 创建上半部分分割器
+    splt_0 = new QSplitter(Qt::Horizontal, this);
+    splt_0->setHandleWidth(3);
 
-  // 分割器初始化
-  // 创建上半部分分割器
-  splt_0 = new QSplitter(Qt::Horizontal, this);
-  splt_0->setHandleWidth(3);
+    splt_0->addWidget(renderWidget);
 
-  splt_0->addWidget(renderWidget);
+    splt_0->setStretchFactor(0, 60);
+    // 设置大小
+    //    QList<int> splt_0_sizelist;
+    //    splt_0_sizelist.push_back(300);
+    //    splt_0_sizelist.push_back(rect().height() - 600);
+    //    splt_0_sizelist.push_back(300);
 
-  splt_0->setStretchFactor(0, 60);
-  // 设置大小
-  //    QList<int> splt_0_sizelist;
-  //    splt_0_sizelist.push_back(300);
-  //    splt_0_sizelist.push_back(rect().height() - 600);
-  //    splt_0_sizelist.push_back(300);
+    //    splt_0->setSizes(splt_0_sizelist);
 
-  //    splt_0->setSizes(splt_0_sizelist);
+    // 创建下半部分分割器
+    splt_1 = new QSplitter(Qt::Horizontal, this);
+    splt_1->setHandleWidth(3);
 
-  // 创建下半部分分割器
-  splt_1 = new QSplitter(Qt::Horizontal, this);
-  splt_1->setHandleWidth(3);
+    splt_1->addWidget(nodeMenu);
+    splt_1->addWidget(uiNodeEditor);
+    splt_1->addWidget(nodeInspector);
 
-  splt_1->addWidget(nodeMenu);
-  splt_1->addWidget(uiNodeEditor);
-  splt_1->addWidget(nodeInspector);
+    splt_1->setStretchFactor(0, 0);
+    splt_1->setStretchFactor(1, 60);
+    splt_1->setStretchFactor(2, 0);
 
-  splt_1->setStretchFactor(0, 0);
-  splt_1->setStretchFactor(1, 60);
-  splt_1->setStretchFactor(2, 0);
+    // 设置大小
+    QList<int> splt_1_sizelist;
+    splt_1_sizelist.push_back(300);
+    splt_1_sizelist.push_back(rect().height() - 700);
+    splt_1_sizelist.push_back(500);
 
-  // 设置大小
-  QList<int> splt_1_sizelist;
-  splt_1_sizelist.push_back(300);
-  splt_1_sizelist.push_back(rect().height() - 700);
-  splt_1_sizelist.push_back(500);
+    splt_1->setSizes(splt_1_sizelist);
 
-  splt_1->setSizes(splt_1_sizelist);
+    splt_1->handle(1)->setDisabled(true);
 
-  splt_1->handle(1)->setDisabled(true);
+    // 创建主分割器
+    splt = new QSplitter(Qt::Vertical, this);
+    splt->addWidget(splt_0);
+    splt->setHandleWidth(3);
 
-  // 创建主分割器
-  splt = new QSplitter(Qt::Vertical, this);
-  splt->addWidget(splt_0);
-  splt->setHandleWidth(3);
+    splt->addWidget(splt_1);
 
-  splt->addWidget(splt_1);
+    splt->setStretchFactor(0, 50);
+    splt->setStretchFactor(1, 50);
 
-  splt->setStretchFactor(0, 50);
-  splt->setStretchFactor(1, 50);
+    // 主分割器设置大小
+    QList<int> splt_sizelist;
+    splt_sizelist.push_back(
+        (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
+    splt_sizelist.push_back(
+        (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
 
-  // 主分割器设置大小
-  QList<int> splt_sizelist;
-  splt_sizelist.push_back(
-      (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
-  splt_sizelist.push_back(
-      (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
+    splt->setSizes(splt_sizelist);
 
-  splt->setSizes(splt_sizelist);
+    // 创建标题栏分割器
+    titleBarSplt = new QSplitter(Qt::Vertical, this);
+    titleBarSplt->setHandleWidth(0);
 
-  // 创建标题栏分割器
-  titleBarSplt = new QSplitter(Qt::Vertical, this);
-  titleBarSplt->setHandleWidth(0);
+    titleBarSplt->addWidget(titleBar);
+    titleBarSplt->addWidget(splt);
 
-  titleBarSplt->addWidget(titleBar);
-  titleBarSplt->addWidget(splt);
+    titleBarSplt->setStretchFactor(0, 0);
+    titleBarSplt->setStretchFactor(1, 1);
 
-  titleBarSplt->setStretchFactor(0, 0);
-  titleBarSplt->setStretchFactor(1, 1);
+    // 标题栏分割器设置大小
+    QList<int> sizelist;
+    sizelist.push_back(UserInterface::globalui::title_bar_height);
+    sizelist.push_back(rect().height() -
+                       UserInterface::globalui::title_bar_height);
 
-  // 标题栏分割器设置大小
-  QList<int> sizelist;
-  sizelist.push_back(UserInterface::globalui::title_bar_height);
-  sizelist.push_back(rect().height() -
-                     UserInterface::globalui::title_bar_height);
+    titleBarSplt->setSizes(sizelist);
+    // 标题栏分割器不可调整
+    titleBarSplt->handle(1)->setDisabled(true);
 
-  titleBarSplt->setSizes(sizelist);
-  // 标题栏分割器不可调整
-  titleBarSplt->handle(1)->setDisabled(true);
+    titleBarSplt->show();
+    setCentralWidget(titleBarSplt);
 
-  titleBarSplt->show();
-  setCentralWidget(titleBarSplt);
+    beginResolveBtn = new UserInterface::BeginResolveButton(renderWidget);
+    beginResolveBtn->show();
 
-  beginResolveBtn = new UserInterface::BeginResolveButton(renderWidget);
-  beginResolveBtn->show();
+    // 开始按钮
+    testB = new QPushButton(this);
+    testB->setGeometry(rect().width() - 300, rect().height() - 50, 300, 50);
+    testB->setText("开始运行/应用改动");
+    connect(testB, SIGNAL(clicked()), this, SLOT(test()));
+    //    connect(testB, &QPushButton::clicked, [=]() {
+    //        uiNodeEditor->isDebugWireCheckBuffer =
+    //            !uiNodeEditor->isDebugWireCheckBuffer;
+    //        uiNodeEditor->update();
+    //    });
 
-  // 测试代码
-  QPushButton* testB = new QPushButton(this);
-  testB->setGeometry(rect().width() - 300, rect().height() - 75, 300, 75);
-  testB->setText("开始运行/应用改动");
-  connect(testB, SIGNAL(clicked()), this, SLOT(test()));
-  //    connect(testB, &QPushButton::clicked, [=]() {
-  //        uiNodeEditor->isDebugWireCheckBuffer =
-  //            !uiNodeEditor->isDebugWireCheckBuffer;
-  //        uiNodeEditor->update();
-  //    });
-
-  // 启动计时器
-  timer = new QTimer(this);
-  timer->setTimerType(Qt::PreciseTimer);
-  timer->setInterval(100);
-  timer->start();
-  // 根据计时器信号更新画面
-  connect(timer, SIGNAL(timeout()), this, SLOT(TimerUpdate()));
+    // 启动计时器
+    timer = new QTimer(this);
+    timer->setTimerType(Qt::PreciseTimer);
+    timer->setInterval(100);
+    timer->start();
+    // 根据计时器信号更新画面
+    connect(timer, SIGNAL(timeout()), this, SLOT(TimerUpdate()));
 }
 
 void MainWindow::TimerUpdate() {
-  static unsigned int timerNum = 0;
-  if (timerNum < 15) {
-    timerNum++;
-    return;
-  }
-  if (globalinfo::keepingCalculating) {
-    if (uiNodeEditor->targetNodeGraph->GetNodes().size() > 0) {
-      uiNodeEditor->targetNodeGraph->RunNodeGraph(
-          *renderWidget->getFunctionAndContext());
+    static unsigned int timerNum = 0;
+    if (timerNum < 15) {
+        timerNum++;
+        return;
     }
-  }
-  uiNodeEditor->update();
-  renderWidget->update();
+    if (globalinfo::keepingCalculating) {
+        if (uiNodeEditor->targetNodeGraph->GetNodes().size() > 0) {
+            uiNodeEditor->targetNodeGraph->RunNodeGraph(
+                *renderWidget->getFunctionAndContext());
+        }
+    }
+    uiNodeEditor->update();
+    renderWidget->update();
+
+    WidgetGeometryUpdate();
+}
+
+void MainWindow::WidgetGeometryUpdate() {
+    testB->setGeometry(rect().width() - 300, rect().height() - 50, 300, 50);
 }
 
 void MainWindow::test() {
-  //  调试交互编辑器
+    //  调试交互编辑器
 
-  // 试运行
-  uiNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
-  //    kNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
+    // 试运行
+    uiNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
+    //    kNG->RunNodeGraph(*renderWidget->getFunctionAndContext());
 
-  renderWidget->update();
-  uiNodeEditor->update();
+    renderWidget->update();
+    uiNodeEditor->update();
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+}

@@ -32,10 +32,16 @@ vec3 ColorWithHeight(float relativeHeight){
     return ans;
 }
 vec3 ColorWithSlope(vec3 norm){
-    vec3 col_0 = vec3(43, 115, 71) / 255.0;
+    vec3 col_0 = vec3(11, 100, 43) / 255.0;
     vec3 col_1 = vec3(104, 101, 91) / 255.0;
-    float k = abs(norm.y / length(norm.xz));
-    vec3 ans = step(0.3, k) * col_0 + (1.0 - step(0.3, k)) * col_1;
+    float k;
+    k = abs(length(norm.xz) / norm.y);
+    vec3 ans;
+    if (k > 0.3){
+        ans = col_1;
+    } else {
+        ans = col_0;
+    }
     return ans;
 }
 
@@ -50,18 +56,24 @@ void main(){
     }else {
         albedo = ColorWithHeight(height);
         
-        // albedo = ColorWithSlope(normal);
+        albedo = ColorWithSlope(normal);
     }
 
     // 简单光照模型
+    float lightStrength = 25;
     vec3 lightCol = vec3(1, 1, 1);
-    vec3 lightDir = normalize(vec3(2.3, 3.5, 5.1));
+    vec3 light = lightCol * lightStrength;
 
-    vec3 ansCol = albedo * lightCol * dot(normal, lightDir);
+    vec3 lightDir = normalize(vec3(2.3, 2, 5.1));
+
+    vec3 ansCol = albedo * light * max(dot(normal, lightDir), 0);
+
+    ansCol = ansCol / (ansCol + vec3(1, 1, 1));
+    ansCol = pow(ansCol, vec3(2.2));
 
     FragColor = vec4(ansCol.xyz, 1.0);
 
     // 测试代码
    
-//    FragColor = vec4(normal.xzy, 1.0);
+//    FragColor = vec4(albedo.xzy, 1.0);
 }

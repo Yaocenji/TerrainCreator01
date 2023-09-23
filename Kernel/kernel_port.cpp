@@ -116,7 +116,7 @@ void Port::AllocateOrUpdateData(QOpenGLFunctions_4_5_Core &f) {
     if (this->dataType == PortDataType::Float2D) {
         glCreateHeightField(f, ConBuffer);
     } else if (this->dataType == PortDataType::RGBA2D) {
-        glCreateImage(f, ConBuffer);
+        glCreateRGBAImage(f, ConBuffer);
     } else if (this->dataType == PortDataType::Float) {
         ConBuffer = 0;
         ConFloat = 0;

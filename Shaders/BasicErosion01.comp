@@ -383,7 +383,7 @@ void main(){
         float Hold = GetHeightBilinear(TerrainGrid, TerrainSize, d.pos.x, d.pos.y);
         // 新位置的height
         float Hnew;
-        // 如果水滴离开了地形
+        // 如果水滴没有离开了地形
         if (newPos.x >= 0 && newPos.x <= 1.0 && newPos.y >= 0 && newPos.y <= 1.0)
         {
             // 插值计算新高度
@@ -391,8 +391,11 @@ void main(){
         }
         else
         {
-            // 否则使用原高度
-            Hnew = Hold;
+            // 否则假设一个高度（认为梯度不变）
+            vec2 lastPos = d.pos - d.dir;
+            float lastH = GetHeightBilinear(TerrainGrid, TerrainSize, lastPos.x, lastPos.y);
+
+            Hnew = 2 * Hold - lastH;
         }
         // 变化高度
         float Hdif = Hnew - Hold ;
@@ -461,10 +464,12 @@ void main(){
         d.pos = newPos;
         // 跳出条件：
         // 1 地图外
-        if (newix < 0 || newix > TerrainGrid - 1 || newiy < 0 || newiy > TerrainGrid - 1)
+        if (newix < 0 || newix > TerrainGrid - 1 || newiy < 0 || newiy > TerrainGrid - 1){
+            // SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y, d.sediment);
             break;
-        // 2 干涸
-        if (d.water <= 0.02 || path >= p_max_water_len - 1)
+        }
+        // 2 干涸/达到最大长度
+        if (d.water <= 0.001 || path >= p_max_water_len - 1)
         {
             SetHeightBilinear(TerrainGrid, TerrainHeight, d.pos.x, d.pos.y, d.sediment);
             break;

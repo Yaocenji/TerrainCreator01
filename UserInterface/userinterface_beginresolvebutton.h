@@ -14,7 +14,11 @@
 #include "../Global/globalui.h"
 
 /// 前置声明
+namespace Render {
+
 class Renderer;
+
+}
 
 namespace UserInterface {
 /// 前置声明
@@ -27,7 +31,7 @@ protected:
     /// 按钮尺寸
     QPointF buttonSize;
     /// （用于显示定位用）渲染窗口器
-    Renderer *targetRenderer;
+    Render::Renderer *targetRenderer;
     /// 目标节点编辑器终端
     NodeEditorTerminal *targetEditor;
     /// 父的位置信息
@@ -49,7 +53,7 @@ public slots:
     virtual void ClickedFunction();
 
 public:
-    explicit BeginResolveButton(Renderer *parent = nullptr);
+    explicit BeginResolveButton(Render::Renderer *parent = nullptr);
 
 signals:
 };

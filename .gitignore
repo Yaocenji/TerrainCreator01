@@ -1,0 +1,5 @@
+# 缓存文件不用提交
+*.TMP
+
+# 提交日志不用提交
+ername” --pretty=tformat --numstat  awk { add += $1; subs += $2; loc += $1 - $2 } END { printf added lines -s, removed lines -s, total lines -sn, add, subs, loc }

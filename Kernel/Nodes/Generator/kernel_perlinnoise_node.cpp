@@ -16,13 +16,13 @@ PerlinNoise_Node::PerlinNoise_Node(QObject *parent, NodeGraph *pNG)
     ParamPorts[1]->rangefloat_l = 0.01f;
     ParamPorts[1]->rangefloat_r = 5.0f;
     // 2添加参数：X轴偏移
-    AddParamPort(PortDataType::Float, "X轴偏移", true, 2.0);
+    AddParamPort(PortDataType::Float, "X轴偏移", true, 0.0);
     ParamPorts[2]->isRanged = true;
     ParamPorts[2]->rangefloat_l = -10.0f;
     ParamPorts[2]->rangefloat_r = 10.0f;
 
     // 3添加参数：Y轴偏移
-    AddParamPort(PortDataType::Float, "Y轴偏移", true, 2.0);
+    AddParamPort(PortDataType::Float, "Y轴偏移", true, 0.0);
     ParamPorts[3]->isRanged = true;
     ParamPorts[3]->rangefloat_l = -10.0f;
     ParamPorts[3]->rangefloat_r = 10.0f;
@@ -34,7 +34,7 @@ PerlinNoise_Node::PerlinNoise_Node(QObject *parent, NodeGraph *pNG)
     ParamPorts[4]->rangefloat_r = 2.0f;
 
     // 3添加参数：高度对比
-    AddParamPort(PortDataType::Float, "高度对比", true, 3.0f);
+    AddParamPort(PortDataType::Float, "高度对比", true, 2.0f);
     ParamPorts[5]->isRanged = true;
     ParamPorts[5]->rangefloat_l = 0.0f;
     ParamPorts[5]->rangefloat_r = 10.0f;

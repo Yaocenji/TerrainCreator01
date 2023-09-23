@@ -10,13 +10,13 @@
 #include "Global/globalinfo.h"
 #include "Global/globalui.h"
 #include "Kernel/kernel_element_inc.h"
+#include "Render/renderer.h"
 #include "UserInterface/Inspector/userinterface_nodeinspector.h"
 #include "UserInterface/NodeMenu/userinterface_nodemenu.h"
 #include "UserInterface/Title/userinterface_titlebar.h"
 #include "UserInterface/userinterface_beginresolvebutton.h"
 #include "UserInterface/userinterface_nodeeditorterminal.h"
 #include "UserInterface/userinterface_nodegraph.h"
-#include "renderer.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -42,7 +42,7 @@ public:
     UserInterface::TitleBar *titleBar;
 
     /// 渲染窗口
-    Renderer *renderWidget;
+    Render::Renderer *renderWidget;
 
     /// 开始解算按钮
     UserInterface::BeginResolveButton *beginResolveBtn;
@@ -52,6 +52,7 @@ public:
     UserInterface::NodeInspector *nodeInspector;
     /// 运行按钮
     QPushButton *pb1;
+    QPushButton *testB;
     /// kernel与ui节点图
     Kernel::NodeGraph *kNG;
     UserInterface::NodeGraph *uiNG;
@@ -62,6 +63,8 @@ public slots:
     void test();
     // 时间更新
     void TimerUpdate();
+    // 非split组件更新位置
+    void WidgetGeometryUpdate();
 
 public:
     MainWindow(QWidget *parent = nullptr);
