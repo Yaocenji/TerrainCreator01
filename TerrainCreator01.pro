@@ -37,8 +37,11 @@ SOURCES += \
     Kernel/Nodes/Texture/kernel_normalmap_node.cpp \
     Kernel/kernel_port.cpp \
     Kernel/kernel_wire.cpp \
-    Render/render_light.cpp \
+    Render/Light/render_light.cpp \
+    Render/Light/render_parallellight.cpp \
+    Render/render_renderimage2d.cpp \
     Render/render_rendertexture.cpp \
+    Render/render_terrainmesh.cpp \
     UserInterface/Inspector/userinterface_nodeinspector_item.cpp \
     UserInterface/NodeMenu/userinterface_nodecreator.cpp \
     UserInterface/NodeMenu/userinterface_nodemenubutton.cpp \
@@ -83,8 +86,11 @@ HEADERS += \
     Kernel/Nodes/Texture/kernel_normalmap_node.h \
     Kernel/kernel_port.h \
     Kernel/kernel_wire.h \
-    Render/render_light.h \
+    Render/Light/render_light.h \
+    Render/Light/render_parallellight.h \
+    Render/render_renderimage2d.h \
     Render/render_rendertexture.h \
+    Render/render_terrainmesh.h \
     UserInterface/Inspector/userinterface_nodeinspector_item.h \
     UserInterface/NodeMenu/userinterface_nodecreator.h \
     UserInterface/NodeMenu/userinterface_nodemenubutton.h \

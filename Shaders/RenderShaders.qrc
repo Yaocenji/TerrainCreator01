@@ -2,6 +2,7 @@
     <qresource prefix="/TerrainShaders">
         <file>TerrainFrag.frag</file>
         <file>TerrainVert.vert</file>
+        <file>RayTracing01.comp</file>
     </qresource>
     <qresource prefix="/SwapScreenShaders">
         <file>ScreenFrag.frag</file>
@@ -18,5 +19,6 @@
         <file>BasicErosion01.comp</file>
         <file>TestErosion.comp</file>
         <file>SetPixel.comp</file>
+        <file>PerlinNoiseAdvanced.comp</file>
     </qresource>
 </RCC>

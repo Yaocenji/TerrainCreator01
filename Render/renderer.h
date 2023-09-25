@@ -21,8 +21,11 @@
 
 #include "../Global/globalinfo.h"
 #include "../Kernel/kernel_element_inc.h"
+#include "Light/render_parallellight.h"
 #include "render_camera.h"
+#include "render_renderimage2d.h"
 #include "render_rendertexture.h"
+#include "render_terrainmesh.h"
 
 namespace Render {
 /// 程序的渲染窗口
@@ -38,11 +41,13 @@ public slots:
 
     /// 这一部分的变量在每次重新设置全局地形大小时会被重置
 protected:
-    /// 地形网格VBO
+    /// 地形网格
+    TerrainMesh *terrainMesh;
+    /// （弃用）地形网格VBO
     QOpenGLBuffer *terrainVBO;
-    /// 地形网格EBO
+    /// （弃用）地形网格EBO
     QOpenGLBuffer *terrainEBO;
-    /// 地形网格VAO
+    /// （弃用）地形网格VAO
     QOpenGLVertexArrayObject *terrainVAO;
     /// 离屏渲染矩形网格VBO
     QOpenGLBuffer *screenVBO;
@@ -50,9 +55,9 @@ protected:
     QOpenGLVertexArrayObject *screenVAO;
 
 protected:
-    /// 地形平面顶点数据组
+    /// （弃用）地形平面顶点数据组
     float *panelVertices;
-    /// 地形网格三角形顶点索引数据组
+    /// （弃用）地形网格三角形顶点索引数据组
     unsigned int *panelIndices;
     /// 离屏渲染矩形网格顶点数据组
     float *rectVertices;
@@ -60,10 +65,22 @@ protected:
 protected:
     /// 地形顶点着色器
     QOpenGLShader *terrainVert;
-    /// 地形片元着色器
-    QOpenGLShader *terrainFrag;
+    /// 地形片元着色器——颜色
+    QOpenGLShader *terrainFrag_DirectLight;
     /// 地形渲染着色器程序
-    QOpenGLShaderProgram *terrainShaderProgram;
+    QOpenGLShaderProgram *terrainShaderProgram_DirectLight;
+    /// 地形渲染着色器程序——世界空间坐标
+    QOpenGLShaderProgram *terrainShaderProgram_WorldPos;
+    /// 地形渲染着色器程序——世界空间法线
+    QOpenGLShaderProgram *terrainShaderProgram_WorldNorm;
+    /// 地形渲染着色器程序——基础色
+    QOpenGLShaderProgram *terrainShaderProgram_Albedo;
+
+    /// 光线追踪着色器
+    QOpenGLShader *terrainShader_RayTracing;
+    /// 光线追踪着色器程序
+    QOpenGLShaderProgram *terrainShaderProgram_RayTracing;
+
     /// 离屏交换顶点着色器
     QOpenGLShader *swapVert;
     /// 离屏交换片元着色器
@@ -72,14 +89,26 @@ protected:
     QOpenGLShaderProgram *swapShaderProgram;
 
 protected:
-    /// 缓冲RT
-    RenderTexture *swapRT;
+    /// 缓冲RT——直接光照渲染
+    RenderTexture *G_Buffer_DirectLight;
+    /// 缓冲RT——世界空间坐标
+    RenderTexture *G_Buffer_WorldPos;
+    /// 缓冲RT——世界空间法线
+    RenderTexture *G_Buffer_WorldNormal;
+    /// 缓冲RT——基础色
+    RenderTexture *G_Buffer_Albedo;
+
+    /// 缓冲RI——光线追踪计算结果
+    RenderImage2D *ANS_Buffer_RayTracing;
+
     /// （弃用）离屏渲染缓冲区frame buffer
     GLuint swapFrameBuffer;
     /// （弃用）离屏渲染缓冲区frame buffer的颜色缓冲和深度缓冲内容
     GLuint swapColorBuffer, swapDepthBuffer;
 
 protected:
+    /// 日光
+    ParallelLight sunLight;
     /// 物体矩阵
     QMatrix4x4 model;
     /// 摄像机

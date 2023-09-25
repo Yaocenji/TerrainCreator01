@@ -23,7 +23,9 @@ uniform sampler2D TerrainData;
 
 uniform bool useHeightFieldBuffer;
 
-//uniform int testArray[125];
+uniform vec3 mainLightColor;
+uniform float mainLightStrength;
+uniform vec3 mainLightDir;
 
 vec3 ColorWithHeight(float relativeHeight){
     vec3 col_0 = vec3(43, 115, 71) / 255.0;
@@ -60,13 +62,9 @@ void main(){
     }
 
     // 简单光照模型
-    float lightStrength = 25;
-    vec3 lightCol = vec3(1, 1, 1);
-    vec3 light = lightCol * lightStrength;
+    vec3 mainLight = mainLightColor * mainLightStrength;
 
-    vec3 lightDir = normalize(vec3(2.3, 2, 5.1));
-
-    vec3 ansCol = albedo * light * max(dot(normal, lightDir), 0);
+    vec3 ansCol = albedo * mainLight * max(dot(normal, mainLightDir), 0);
 
     ansCol = ansCol / (ansCol + vec3(1, 1, 1));
     ansCol = pow(ansCol, vec3(2.2));
@@ -75,5 +73,5 @@ void main(){
 
     // 测试代码
    
-//    FragColor = vec4(albedo.xzy, 1.0);
+//    FragColor = vec4(1.0, texCoord.xy, 1.0);
 }

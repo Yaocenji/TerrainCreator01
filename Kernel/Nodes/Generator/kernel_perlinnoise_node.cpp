@@ -52,28 +52,30 @@ void PerlinNoise_Node::InitGL(QOpenGLFunctions_4_5_Core &f) {
     ClearShaders();
     // 准备第一个shader：柏林噪声生成器
     AddComputeShaderFromPath(":/ComputeShaders/PerlinNoise.comp");
+    // 准备第二个shader：测试进阶噪声
+    AddComputeShaderFromPath(":/ComputeShaders/PerlinNoiseAdvanced.comp");
 }
 
 // void PerlinNoise_Node::Allocate(QOpenGLFunctions_4_5_Core &f) {
 // }
 
 void PerlinNoise_Node::CalculateNode(QOpenGLFunctions_4_5_Core &f) {
-    shaderPrograms[0]->bind();
-    shaderPrograms[0]->setUniformValue("TerrainHeight",
+    shaderPrograms[1]->bind();
+    shaderPrograms[1]->setUniformValue("TerrainHeight",
                                        globalinfo::TerrainHeight);
-    shaderPrograms[0]->setUniformValue("TerrainSize", globalinfo::TerrainSize);
+    shaderPrograms[1]->setUniformValue("TerrainSize", globalinfo::TerrainSize);
 
-    shaderPrograms[0]->setUniformValue("Seed", ParamPorts[0]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("Detail",
+    shaderPrograms[1]->setUniformValue("Seed", ParamPorts[0]->GetFloatData());
+    shaderPrograms[1]->setUniformValue("Detail",
                                        nonPortParams[0]->data_rangeint);
-    shaderPrograms[0]->setUniformValue("Scale", ParamPorts[1]->GetFloatData(),
+    shaderPrograms[1]->setUniformValue("Scale", ParamPorts[1]->GetFloatData(),
                                        ParamPorts[1]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("Transform",
+    shaderPrograms[1]->setUniformValue("Transform",
                                        ParamPorts[2]->GetFloatData(),
                                        ParamPorts[3]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("HeightOffset",
+    shaderPrograms[1]->setUniformValue("HeightOffset",
                                        ParamPorts[4]->GetFloatData());
-    shaderPrograms[0]->setUniformValue("HeightContrast",
+    shaderPrograms[1]->setUniformValue("HeightContrast",
                                        ParamPorts[5]->GetFloatData());
     DEBUG_GL << name << "节点计算时：gl错误验证1" << f.glGetError();
 

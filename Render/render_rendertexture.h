@@ -21,6 +21,8 @@ public:
     /// 目标深度 depth buffer
     GLuint depthBuffer;
     // 不支持模板
+    /// 是否拥有depth纹理
+    const bool hasDepthBuffer;
 
 public:
     /// 完全删除当前buffer缓存
@@ -41,7 +43,7 @@ public:
     GLuint depthTexture();
 
 public:
-    explicit RenderTexture(QObject *parent = nullptr);
+    explicit RenderTexture(QObject *parent = nullptr, bool hasDep = false);
     ~RenderTexture();
 
 signals:

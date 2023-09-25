@@ -1,0 +1,248 @@
+#version 450 core
+
+// path tracing 关于高度场地形的特化版本
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 渲染源数据
+// 为什么使用texture作为源数据而非image2D？
+// 因为预渲染的渲染结果是
+// 屏幕RT颜色通道
+uniform sampler2D RTColor;
+// 世界空间坐标通道
+uniform sampler2D RTWorldPos;
+// 法线通道
+uniform sampler2D RTNormal;
+
+// 渲染目标
+// 为何使用image2D而非texture
+// -- 因为使用了计算着色器而非片元着色器，计算着色器无法写入数据到texture
+layout (binding = 0, rgba32f) uniform image2D RTTarget;
+
+// 地形信息
+layout (binding = 1, r32f) uniform image2D HeightField;
+uniform int TerrainGrid;
+uniform float TerrainSize;
+uniform float TerrainHeight;
+
+// AABB包围盒
+struct AABB{
+    vec3 pointMin;
+    vec3 pointMax;
+};
+// 射线
+struct Ray{
+    vec3 point;
+    vec3 direction;
+};
+
+// 交换数a、b
+void swap(float a, float b){
+    float c = a;
+    a = b;
+    b = c;
+}
+// 三数最大值
+float max3(float a, float b, float c){
+    return max(max(a, b), c);
+}
+// 三数最小值
+float min3(float a, float b, float c){
+    return min(min(a, b), c);
+}
+
+// 数x是否在数a和数b之间
+bool contains(float x, float a, float b){
+    if (a <= b){
+        if (x >= a && x <= b) return true;
+        else  return false;
+    } else {
+        if (x >= b && x <= a) return true;
+        else  return false;
+    }
+}
+// 点是否在盒内
+bool contains(vec3 px, vec3 pa, vec3 pb){
+    if (contains(px.x, pa.x, pb.x) 
+        && contains(px.y, pa.y, pb.y)
+        && contains(px.z, pa.z, pb.z))
+        return true;
+    else return false;
+}
+bool contains(vec3 px, AABB myAABB){
+    if (contains(px.x, myAABB.pointMin.x, myAABB.pointMax.x) 
+        && contains(px.y, myAABB.pointMin.y, myAABB.pointMax.y)
+        && contains(px.z, myAABB.pointMin.z, myAABB.pointMax.z))
+        return true;
+    else return false;
+}
+
+// 射线与平行与坐标平面的平面相交
+bool ray_intersection_xz_plane(Ray myRay, float y, out float t, out vec3 inter_point){
+    // 看y分量差值
+    float delta_y = y - myRay.point.y;
+    // 如果方向y分量为0
+    if (myRay.direction.y == 0){
+        if (delta_y == 0){
+            inter_point = myRay.point;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    // 否则计算步进长度
+    float this_t = delta_y / myRay.direction.y;
+    // 为负说明交点在后方
+    if (this_t < 0){
+        return false;
+    }else {
+        t = this_t;
+        inter_point = myRay.point + this_t * myRay.direction;
+        return true;
+    }
+}
+bool ray_intersection_xy_plane(Ray myRay, float z, out float t,out vec3 inter_point){
+    // 看y分量差值
+    float delta_z = z - myRay.point.z;
+    // 如果方向y分量为0
+    if (myRay.direction.z == 0){
+        if (delta_z == 0){
+            inter_point = myRay.point;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    // 否则计算步进长度
+    float this_t = delta_z / myRay.direction.z;
+    // 为负说明交点在后方
+    if (this_t < 0){
+        return false;
+    }else {
+        t = this_t;
+        inter_point = myRay.point + this_t * myRay.direction;
+        return true;
+    }
+}
+bool ray_intersection_yz_plane(Ray myRay, float x, out float t,out vec3 inter_point){
+    // 看y分量差值
+    float delta_x = x - myRay.point.x;
+    // 如果方向y分量为0
+    if (myRay.direction.x == 0){
+        if (delta_x == 0){
+            inter_point = myRay.point;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    // 否则计算步进长度
+    float this_t = delta_x / myRay.direction.x;
+    // 为负说明交点在后方
+    if (this_t < 0){
+        return false;
+    }else {
+        t = this_t;
+        inter_point = myRay.point + this_t * myRay.direction;
+        return true;
+    }
+}
+
+// 射线与aabb盒求交
+bool ray_intersection_aabb(Ray myRay, AABB myAABB, out float t, out vec3 inter_point){
+    // 判断射线起点是否在aabb内
+    // 如果起点在aabb内，那么必然相交，寻找最小的非负t即可
+    // 否则需要判断t构成的区间是否有交集，寻找最大的tmin和最小的tmax
+    if (contains(myRay.point, myAABB)){
+        float tmax_x = 0, tmax_y = 0, tmax_z = 0;
+        vec3 tmp_inter_point;
+        // 和6个面求交，获得最小t（总有三个面相交结果为负，不会改变t）
+        ray_intersection_xy_plane(myRay, myAABB.pointMin.z, tmax_z, tmp_inter_point);
+        ray_intersection_xy_plane(myRay, myAABB.pointMax.z, tmax_z, tmp_inter_point);
+
+        ray_intersection_xz_plane(myRay, myAABB.pointMin.y, tmax_y, tmp_inter_point);
+        ray_intersection_xz_plane(myRay, myAABB.pointMax.y, tmax_y, tmp_inter_point);
+
+        ray_intersection_yz_plane(myRay, myAABB.pointMin.x, tmax_x, tmp_inter_point);
+        ray_intersection_yz_plane(myRay, myAABB.pointMax.x, tmax_x, tmp_inter_point);
+        // 计算最小t
+        float ans_tmax = min3(tmax_x, tmax_y, tmax_z);
+        inter_point = myRay.point + ans_tmax * myRay.direction;
+        t = ans_tmax;
+        return true;
+    } 
+    // 点不在盒内
+    else {
+        float tmax_x = 0, tmax_y = 0, tmax_z = 0;
+        float tmin_x = 0, tmin_y = 0, tmin_z = 0;
+        vec3 tmp_inter_point;
+        // 相交存储t
+        ray_intersection_xy_plane(myRay, myAABB.pointMin.z, tmin_z, tmp_inter_point);
+        ray_intersection_xy_plane(myRay, myAABB.pointMax.z, tmax_z, tmp_inter_point);
+
+        ray_intersection_xz_plane(myRay, myAABB.pointMin.y, tmin_y, tmp_inter_point);
+        ray_intersection_xz_plane(myRay, myAABB.pointMax.y, tmax_y, tmp_inter_point);
+
+        ray_intersection_yz_plane(myRay, myAABB.pointMin.x, tmin_x, tmp_inter_point);
+        ray_intersection_yz_plane(myRay, myAABB.pointMax.x, tmax_x, tmp_inter_point);
+        // 规范化tmin、tmax
+        if (tmin_x > tmax_x) swap(tmin_x, tmax_x);
+        if (tmin_y > tmax_y) swap(tmin_y, tmax_y);
+        if (tmin_z > tmax_z) swap(tmin_z, tmax_z);
+        // 最大的tmin
+        float max_tmin = max3(tmin_x, tmin_y, tmin_z);
+        // 最小的tmax
+        float min_tmax = min3(tmax_x, tmax_y, tmax_z);
+        // 相交
+        if (max_tmin <= min_tmax){
+            // max_tmin 和 min_tmax 构成相交区间
+            inter_point = myRay.point + max_tmin * myRay.direction;
+            t = max_tmin;
+            return true;
+        }
+        // 不相交
+        else {
+            return false;
+        }
+    }
+}
+
+
+
+/** 
+    光线与地形求交
+    函数特化：因为地形网格为标准xz平面的正方形grid，
+    因此不需要显式加速Tree，而使用特殊的算法
+*/
+bool ray_intersection_terrainmesh(Ray myRay, inout vec3 inter_point){
+    // 首先判定ray和地形整体的aabb是否相交
+
+    return true;
+}
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+    
+    vec2 texCoord = vec2(float(gl_GlobalInvocationID.x) / screenWidth, 
+                         float(gl_GlobalInvocationID.y) / screenHeight);
+
+    vec4 color = texture(RTColor, texCoord);
+
+    // 测试：aabb相交函数
+    float unit = TerrainSize / TerrainGrid;
+    float len = TerrainSize + 2 * unit;
+    AABB terrainAABB;
+    terrainAABB.pointMin = vec3(-len / 2.0, 0, -len / 2.0);
+    terrainAABB.pointMax = vec3(len / 2.0, TerrainHeight, len / 2.0);
+
+    imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), color);
+    
+}

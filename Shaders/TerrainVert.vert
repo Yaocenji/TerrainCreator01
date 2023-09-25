@@ -104,8 +104,9 @@ void main(){
     // 根据传入顶点信息构建三维顶点
     vec4 modelPos;
     if (useHeightFieldBuffer){
-        if (texCoord.x >= 0.0 && texCoord.x <= 1.0 
-            && texCoord.y >= 0.0 && texCoord.y <= 1.0){
+        float unit = TerrainSize / TerrainGrid;
+        if (pos.x >= -TerrainSize / 2.0 - unit / 2.0  && texCoord.x <= TerrainSize / 2.0 + unit / 2.0 
+            && texCoord.y >= -TerrainSize / 2.0 - unit / 2.0 && texCoord.y <= TerrainSize / 2.0 + unit / 2.0 ){
             float HeightFieldData = imageLoad(HeightField, itexCoord).r;
             modelPos = vec4(pos.x, HeightFieldData, pos.y, 1.0);
 
