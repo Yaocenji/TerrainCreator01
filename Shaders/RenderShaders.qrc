@@ -3,6 +3,8 @@
         <file>TerrainFrag.frag</file>
         <file>TerrainVert.vert</file>
         <file>RayTracing01.comp</file>
+        <file>TerrainFrag_WorldNormal.frag</file>
+        <file>TerrainFrag_WorldPos.frag</file>
     </qresource>
     <qresource prefix="/SwapScreenShaders">
         <file>ScreenFrag.frag</file>

@@ -51,6 +51,11 @@ public:
     QMatrix4x4 matrixView();
     /// 获取当前的proj矩阵
     QMatrix4x4 matrixProjection();
+    /// 获取近平面距离
+    float Near();
+    /// 获取远平面距离
+    float Far();
+
     /// 设置距离系数
     void setDistanceCoef(float coef);
     /// 设置宽高比
@@ -75,7 +80,7 @@ public:
                     float Azimuth = 0.0, float Altitude = M_PI / 4.0,
                     float rSense = 0.005, float zSense = 0.1,
                     float DistanceCoef = 1.5,
-                    QVector3D LookPos = QVector3D(0, 0, 0));
+                    QVector3D LookPos = QVector3D(0, 0.03, 0));
 
 signals:
 };

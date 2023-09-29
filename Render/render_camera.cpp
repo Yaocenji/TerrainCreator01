@@ -42,6 +42,14 @@ QMatrix4x4 Camera::matrixProjection() {
     return proj;
 }
 
+float Camera::Near() {
+    return nearPlane;
+}
+
+float Camera::Far() {
+    return farPlane;
+}
+
 void Camera::setDistanceCoef(float coef) {
     distanceCoef = coef;
 }
@@ -64,8 +72,8 @@ void Camera::rotate(float delta_x, float delta_y) {
     altitude -= delta_y * rotateSensitive;
     if (altitude >= M_PI / 2)
         altitude = M_PI / 2;
-    else if (altitude <= 0.01)
-        altitude = 0.01;
+    else if (altitude <= 0.1)
+        altitude = 0.1;
     return;
 }
 

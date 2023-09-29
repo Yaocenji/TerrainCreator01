@@ -45,6 +45,8 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     // 初始化渲染shader
     terrainVert = nullptr;
     terrainFrag_DirectLight = nullptr;
+    terrainFrag_WorldNormal = nullptr;
+    terrainFrag_WorldPos = nullptr;
 
     terrainShaderProgram_DirectLight = nullptr;
     terrainShaderProgram_WorldPos = nullptr;
@@ -59,6 +61,8 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     swapFrag = nullptr;
 
     G_Buffer_DirectLight = new RenderTexture(this, true);
+    G_Buffer_WorldPos = new RenderTexture(this, true);
+    G_Buffer_WorldNormal = new RenderTexture(this, true);
     G_Buffer_Albedo = new RenderTexture(this, false);
 
     ANS_Buffer_RayTracing = new RenderImage2D(this);
@@ -68,7 +72,7 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     //    swapDepthBuffer = 0;
 
     // 初始化摄像机矩阵
-    camera = new Camera(this);
+    camera = new Camera(this, 16.0 / 9.0, 25);
     model = QMatrix4x4();
     view = QMatrix4x4();
     proj = QMatrix4x4();
@@ -131,9 +135,15 @@ void Renderer::initializeGL() {
     // 渲染shader内存分配
     terrainVert = new QOpenGLShader(QOpenGLShader::Vertex);
     terrainFrag_DirectLight = new QOpenGLShader(QOpenGLShader::Fragment);
+    terrainFrag_WorldPos = new QOpenGLShader(QOpenGLShader::Fragment);
+    terrainFrag_WorldNormal = new QOpenGLShader(QOpenGLShader::Fragment);
 
     terrainShaderProgram_DirectLight = new QOpenGLShaderProgram();
     terrainShaderProgram_DirectLight->create();
+    terrainShaderProgram_WorldNorm = new QOpenGLShaderProgram();
+    terrainShaderProgram_WorldNorm->create();
+    terrainShaderProgram_WorldPos = new QOpenGLShaderProgram();
+    terrainShaderProgram_WorldPos->create();
 
     terrainShader_RayTracing = new QOpenGLShader(QOpenGLShader::Compute);
     terrainShader_RayTracing->compileSourceFile(
@@ -166,6 +176,12 @@ void Renderer::initializeGL() {
     // RT创建
     G_Buffer_DirectLight->recreateRenderTexture(rect().width(), rect().height(),
                                                 *(getFunctionAndContext()));
+    G_Buffer_WorldPos->recreateRenderTexture(rect().width(), rect().height(),
+                                             *(getFunctionAndContext()));
+    G_Buffer_WorldNormal->recreateRenderTexture(rect().width(), rect().height(),
+                                                *(getFunctionAndContext()));
+    G_Buffer_Albedo->recreateRenderTexture(rect().width(), rect().height(),
+                                           *(getFunctionAndContext()));
 
     ANS_Buffer_RayTracing->recreateRenderImage2D(
         rect().width(), rect().height(), *(getFunctionAndContext()));
@@ -189,6 +205,7 @@ void Renderer::initializeGL() {
     // 场景主光源准备
     sunLight.setColor(QColor(255, 245, 245));
     sunLight.setStrength(25.0);
+    sunLight.setDirection(QVector3D(1, 0.75, 1));
 
     qDebug() << "初始化错误验证 "
              << "摄像机内容准备，错误码：" << glGetError();
@@ -200,6 +217,12 @@ void Renderer::resizeGL(int w, int h) {
     //    switchFrameBufferAndRenderTextures();
     G_Buffer_DirectLight->recreateRenderTexture(w, h,
                                                 *(getFunctionAndContext()));
+    G_Buffer_WorldPos->recreateRenderTexture(rect().width(), rect().height(),
+                                             *(getFunctionAndContext()));
+    G_Buffer_WorldNormal->recreateRenderTexture(rect().width(), rect().height(),
+                                                *(getFunctionAndContext()));
+    G_Buffer_Albedo->recreateRenderTexture(rect().width(), rect().height(),
+                                           *(getFunctionAndContext()));
     ANS_Buffer_RayTracing->recreateRenderImage2D(w, h + 50,
                                                  *(getFunctionAndContext()));
     // 参数X，Y指定了视见区域的左下角在窗口中的位置，一般情况下为（0，0），Width和Height指定了视见区域的宽度和高度。
@@ -224,47 +247,54 @@ void Renderer::paintGL() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    G_Buffer_DirectLight->clear(*(getFunctionAndContext()));
-    G_Buffer_DirectLight->bind(*(getFunctionAndContext()));
-
-    terrainShaderProgram_DirectLight->bind();
     glBindImageTexture(0, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
                        GL_READ_WRITE, GL_R32F);
     glBindImageTexture(1, globalinfo::ColorMap0, 0, GL_FALSE, 0, GL_READ_WRITE,
                        GL_RGBA32F);
-    terrainShaderProgram_DirectLight->setUniformValue("ColorMap0_value",
-                                                      globalinfo::ColorMap0);
 
-    terrainShaderProgram_DirectLight->setUniformValue("model", model);
-    terrainShaderProgram_DirectLight->setUniformValue("view",
-                                                      camera->matrixView());
-    terrainShaderProgram_DirectLight->setUniformValue(
-        "proj", camera->matrixProjection());
-    terrainShaderProgram_DirectLight->setUniformValue(
-        "TerrainHeight", globalinfo::TerrainHeight);
-    terrainShaderProgram_DirectLight->setUniformValue("TerrainSize",
-                                                      globalinfo::TerrainSize);
-    terrainShaderProgram_DirectLight->setUniformValue("TerrainGrid",
-                                                      globalinfo::TerrainGrid);
-    terrainShaderProgram_DirectLight->setUniformValue(
-        "useHeightFieldBuffer", globalinfo::useHeightFieldBuffer);
-
-    terrainShaderProgram_DirectLight->setUniformValue("mainLightColor",
-                                                      sunLight.getColor());
-    terrainShaderProgram_DirectLight->setUniformValue("mainLightStrength",
-                                                      sunLight.getStrength());
-    terrainShaderProgram_DirectLight->setUniformValue("mainLightDir",
-                                                      sunLight.getDirection());
-
-    //    terrainVAO->bind();
-    //    glDrawElements(GL_TRIANGLES, indicesCount(), GL_UNSIGNED_INT, 0);
+    G_Buffer_DirectLight->clear(*(getFunctionAndContext()));
+    G_Buffer_DirectLight->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*terrainShaderProgram_DirectLight);
     terrainMesh->drawMesh(*(getFunctionAndContext()));
 
-    terrainShaderProgram_DirectLight->release();
+    G_Buffer_WorldNormal->clear(*(getFunctionAndContext()));
+    G_Buffer_WorldNormal->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*terrainShaderProgram_WorldNorm);
+    terrainMesh->drawMesh(*(getFunctionAndContext()));
+
+    G_Buffer_WorldPos->clear(*(getFunctionAndContext()));
+    G_Buffer_WorldPos->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*terrainShaderProgram_WorldPos);
+    terrainMesh->drawMesh(*(getFunctionAndContext()));
+    //    terrainVAO->bind();
+    //    glDrawElements(GL_TRIANGLES, indicesCount(), GL_UNSIGNED_INT, 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, G_Buffer_DirectLight->colorTexture());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, G_Buffer_WorldPos->colorTexture());
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, G_Buffer_WorldNormal->colorTexture());
+
+    glActiveTexture(GL_TEXTURE0);
 
     // 光线追踪阶段
     terrainShaderProgram_RayTracing->bind();
+
     terrainShaderProgram_RayTracing->setUniformValue("RTColor", 0);
+    terrainShaderProgram_RayTracing->setUniformValue("RTWorldPos", 1);
+    terrainShaderProgram_RayTracing->setUniformValue("RTNormal", 2);
+
+    terrainShaderProgram_RayTracing->setUniformValue("model", model);
+    terrainShaderProgram_RayTracing->setUniformValue(
+        "view_inverse", camera->matrixView().inverted());
+    terrainShaderProgram_RayTracing->setUniformValue(
+        "proj_inverse", camera->matrixProjection().inverted());
+    terrainShaderProgram_RayTracing->setUniformValue("near", camera->Near());
+    terrainShaderProgram_RayTracing->setUniformValue("far", camera->Far());
+    terrainShaderProgram_RayTracing->setUniformValue("cameraPos",
+                                                     camera->cameraPos());
+
     terrainShaderProgram_RayTracing->setUniformValue("screenWidth",
                                                      rect().width());
     terrainShaderProgram_RayTracing->setUniformValue("screenHeight",
@@ -275,11 +305,22 @@ void Renderer::paintGL() {
                                                      globalinfo::TerrainSize);
     terrainShaderProgram_RayTracing->setUniformValue("TerrainHeight",
                                                      globalinfo::TerrainHeight);
+
+    terrainShaderProgram_RayTracing->setUniformValue("mainLightColor",
+                                                     sunLight.getColor());
+    terrainShaderProgram_RayTracing->setUniformValue("mainLightStrength",
+                                                     sunLight.getStrength());
+    terrainShaderProgram_RayTracing->setUniformValue("mainLightDir",
+                                                     sunLight.getDirection());
+
     ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+    glBindImageTexture(1, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,
+                       GL_READ_WRITE, GL_R32F);
 
     glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
                       1);
 
+    // 帧缓冲复制阶段
     PreSwapFrameBufferToScreen(G_Buffer_DirectLight->colorTexture(),
                                G_Buffer_DirectLight->depthTexture());
 
@@ -532,6 +573,41 @@ void Renderer::setRenderShaders() {
     terrainShaderProgram_DirectLight->addShader(terrainVert);
     terrainShaderProgram_DirectLight->addShader(terrainFrag_DirectLight);
     terrainShaderProgram_DirectLight->link();
+
+    terrainFrag_WorldPos->compileSourceFile(
+        ":/TerrainShaders/TerrainFrag_WorldPos.frag");
+    terrainFrag_WorldNormal->compileSourceFile(
+        ":/TerrainShaders/TerrainFrag_WorldNormal.frag");
+
+    terrainShaderProgram_WorldPos->addShader(terrainVert);
+    terrainShaderProgram_WorldPos->addShader(terrainFrag_WorldPos);
+    terrainShaderProgram_WorldPos->link();
+
+    terrainShaderProgram_WorldNorm->addShader(terrainVert);
+    terrainShaderProgram_WorldNorm->addShader(terrainFrag_WorldNormal);
+    terrainShaderProgram_WorldNorm->link();
+}
+
+void Renderer::bindShaderAndPassParam(QOpenGLShaderProgram &shader) {
+    shader.bind();
+    shader.setUniformValue("ColorMap0_value", globalinfo::ColorMap0);
+
+    shader.setUniformValue("model", model);
+    shader.setUniformValue("view", camera->matrixView());
+    shader.setUniformValue("proj", camera->matrixProjection());
+    shader.setUniformValue("view_inverse", camera->matrixView().inverted());
+    shader.setUniformValue("proj_inverse",
+                           camera->matrixProjection().inverted());
+
+    shader.setUniformValue("TerrainHeight", globalinfo::TerrainHeight);
+    shader.setUniformValue("TerrainSize", globalinfo::TerrainSize);
+    shader.setUniformValue("TerrainGrid", globalinfo::TerrainGrid);
+    shader.setUniformValue("useHeightFieldBuffer",
+                           globalinfo::useHeightFieldBuffer);
+
+    shader.setUniformValue("mainLightColor", sunLight.getColor());
+    shader.setUniformValue("mainLightStrength", sunLight.getStrength());
+    shader.setUniformValue("mainLightDir", sunLight.getDirection());
 }
 
 void Renderer::setCameraInfo() {

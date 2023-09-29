@@ -105,16 +105,15 @@ void main(){
     vec4 modelPos;
     if (useHeightFieldBuffer){
         float unit = TerrainSize / TerrainGrid;
-        if (pos.x >= -TerrainSize / 2.0 - unit / 2.0  && texCoord.x <= TerrainSize / 2.0 + unit / 2.0 
-            && texCoord.y >= -TerrainSize / 2.0 - unit / 2.0 && texCoord.y <= TerrainSize / 2.0 + unit / 2.0 ){
+        if (pos.x >= -TerrainSize / 2.0  && texCoord.x <= TerrainSize / 2.0 
+            && texCoord.y >= -TerrainSize / 2.0 && texCoord.y <= TerrainSize / 2.0){
             float HeightFieldData = imageLoad(HeightField, itexCoord).r;
             modelPos = vec4(pos.x, HeightFieldData, pos.y, 1.0);
 
             realHeight = HeightFieldData;
             normal = CalNorm(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
         } else {
-            modelPos = vec4(pos.x, 0, pos.y, 1.0);
-
+            modelPos = vec4(clamp(pos.x, -TerrainSize / 2.0, TerrainSize / 2.0), 0, clamp(pos.y, -TerrainSize / 2.0, TerrainSize / 2.0), 1.0);
             realHeight = 0;
             normal = vec3(0, 1, 0);
         }

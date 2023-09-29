@@ -19,6 +19,11 @@ uniform int TerrainGrid;
 uniform float TerrainSize;
 uniform float TerrainHeight;
 
+uniform mat4 model;
+// vp逆矩阵
+uniform mat4 view_inverse;
+uniform mat4 proj_inverse;
+
 uniform sampler2D TerrainData;
 
 uniform bool useHeightFieldBuffer;
@@ -72,6 +77,12 @@ void main(){
     FragColor = vec4(ansCol.xyz, 1.0);
 
     // 测试代码
-   
-//    FragColor = vec4(1.0, texCoord.xy, 1.0);
+    // // 裁剪坐标做齐次除法后
+    // vec4 ndcPos = clipPos / clipPos.w;
+    // // 还原世界坐标
+    // vec4 reducedWorldPos =  view_inverse * proj_inverse * (ndcPos * gl_FragCoord.z / gl_FragCoord.w);
+    // // 还原的世界坐标和真正的世界坐标之查
+    // vec4 diff = reducedWorldPos - worldPos;
+
+    // FragColor = vec4(worldPos.xyz, 1.0);
 }

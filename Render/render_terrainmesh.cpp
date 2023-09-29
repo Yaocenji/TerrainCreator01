@@ -80,12 +80,10 @@ void TerrainMesh::recreateMesh(QOpenGLFunctions_4_5_Core &f) {
     for (int line = 0; line < tileNum; ++line) {
         for (int column = 0; column < tileNum; ++column) {
             /// 计算该tile的偏移
-            float offset_x = (float(line) / float(tileNum) - 0.5f) *
-                                 globalinfo::TerrainSize -
-                             0.5f * unit;
+            float offset_x =
+                (float(line) / float(tileNum) - 0.5f) * globalinfo::TerrainSize;
             float offset_z = (float(column) / float(tileNum) - 0.5f) *
-                                 globalinfo::TerrainSize -
-                             0.5f * unit;
+                             globalinfo::TerrainSize;
 
             /// 更新vert数组
             for (int z = 0; z < vertNum; z++) {
@@ -128,6 +126,8 @@ void TerrainMesh::recreateMesh(QOpenGLFunctions_4_5_Core &f) {
 
     delete[] indices;
     delete[] vertices;
+
+    // 补充生成
 }
 
 void TerrainMesh::drawMesh(QOpenGLFunctions_4_5_Core &f) {

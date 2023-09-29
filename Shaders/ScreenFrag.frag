@@ -19,8 +19,9 @@ void main()
     int yIndex = int(texCoord.y * screenHeight);
     vec4 color = imageLoad(RTTarget, ivec2(xIndex, yIndex));
 
-    vec3 ans = texture(colorBuffer, texCoord).rgb;
-    FragColor = vec4(ans.xyz, 1);
+    // vec3 ans = texture(colorBuffer, texCoord).rgb;
+    // FragColor = vec4(ans.xyz, 1);
 
     FragColor = color;
+
 }

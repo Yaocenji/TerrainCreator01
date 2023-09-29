@@ -67,6 +67,11 @@ protected:
     QOpenGLShader *terrainVert;
     /// 地形片元着色器——颜色
     QOpenGLShader *terrainFrag_DirectLight;
+    /// 地形片元着色器——世界坐标
+    QOpenGLShader *terrainFrag_WorldPos;
+    /// 地形片元着色器——法线
+    QOpenGLShader *terrainFrag_WorldNormal;
+
     /// 地形渲染着色器程序
     QOpenGLShaderProgram *terrainShaderProgram_DirectLight;
     /// 地形渲染着色器程序——世界空间坐标
@@ -157,6 +162,8 @@ protected:
 
     /// 准备shader渲染资源，只在启动时调用
     void setRenderShaders();
+    /// 着色器绑定与传参
+    void bindShaderAndPassParam(QOpenGLShaderProgram &shader);
 
 protected:
     /// （弃用）设置摄像机
