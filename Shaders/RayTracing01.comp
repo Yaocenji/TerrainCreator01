@@ -5,6 +5,10 @@
 // kernel对应屏幕空间的像素
 layout (local_size_x = 32, local_size_y = 32) in;
 
+/**
+    uniform内容
+*/
+
 // 屏幕(RT)大小
 uniform int screenWidth;
 uniform int screenHeight;
@@ -48,6 +52,19 @@ uniform vec3 mainLightColor;
 uniform float mainLightStrength;
 uniform vec3 mainLightDir;
 
+// 时间信息
+struct Time{
+    int hour;
+    int minute;
+    int second;
+    int msec;
+};
+uniform Time time;
+
+/**
+    一些封装的结构体
+*/
+
 // AABB包围盒
 struct AABB{
     vec3 pointMin;
@@ -81,6 +98,10 @@ struct SurfPoint{
 
 };
 
+/**
+    数学轮子
+*/
+
 // 交换数a、b
 void swap(inout float a, inout float b){
     float c = a;
@@ -102,6 +123,76 @@ float LinearizeDepth(float depth)
     float z = depth * 2.0 - 1.0;
     return (2.0 * near * far) / (far + near - z * (far - near));
 }
+
+// 用到的一个质数数列
+const uint primeNumbers[297] = 
+{17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113
+, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251
+, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397
+, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557
+, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701
+, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863
+, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009, 1013, 1019, 1021, 1031
+, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087, 1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171
+, 1181, 1187, 1193, 1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279, 1283, 1289, 1291, 1297, 1301, 1303
+, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381, 1399, 1409, 1423, 1427, 1429, 1433, 1439, 1447, 1451, 1453, 1459, 1471
+, 1481, 1483, 1487, 1489, 1493, 1499, 1511, 1523, 1531, 1543, 1549, 1553, 1559, 1567, 1571, 1579, 1583, 1597, 1601, 1607
+, 1609, 1613, 1619, 1621, 1627, 1637, 1657, 1663, 1667, 1669, 1693, 1697, 1699, 1709, 1721, 1723, 1733, 1741, 1747, 1753
+, 1759, 1777, 1783, 1787, 1789, 1801, 1811, 1823, 1831, 1847, 1861, 1867, 1871, 1873, 1877, 1879, 1889, 1901, 1907, 1913
+, 1931, 1933, 1949, 1951, 1973, 1979, 1987, 1993, 1997, 1999};
+uint getPrime(uint index){
+    return primeNumbers[index % 295];
+}
+
+// time转随机数种子
+uint timeSeed(){
+    uint msec = uint(time.hour * 3600 * 1e3 + time.minute * 60 * 1e3 + time.second * 1e3 + time.msec);
+    uint index= time.hour % 3 + time.minute % 5 + time.second + time.msec;
+    msec %= getPrime(index);
+    return max(msec, 11);
+}
+
+// 随机数种子生成器
+// value的三个分量都要大于0；
+uint seetGenCnt = 0;
+uint SeedGen(vec3 value){
+    uint seed;
+    seed = uint((value.x * 7 + value.y * 11 + value.z * 13 + 17 * timeSeed()) * TerrainSize * getPrime(seetGenCnt) * getPrime(seetGenCnt + 1) * 19);
+    seetGenCnt ++;
+    seetGenCnt %= 475;
+    return seed;
+}
+
+// XOR Shift随机数生成器
+uint XorShift(uint seed){
+    uint ans = seed;
+    ans ^= (ans << 13);
+    ans ^= (ans >> 17);
+    ans ^= (ans << 5);
+    return ans;
+}
+float XorShiftRand(uint seed){
+    uint tar = seed;
+    for(int i = 0; i < 3; i++){
+        tar = XorShift(tar);
+    }
+    return float(tar) * (1.0 / 4294967296.0);
+}
+
+//LCG随机数生成器
+uint LCG(uint seed)
+{
+    seed = uint(1664525) * seed + uint(1013904223);
+    return seed;
+}
+float LCGRand(uint seed){
+    return float(LCG(seed)) * (1.0 / 4294967296.0);
+}
+
+
+/**
+    光线算法轮子
+*/
 
 // 数x是否在数a和数b之间
 bool contains(float x, float a, float b){
@@ -610,6 +701,25 @@ bool ray_intersection_terrainmesh(Ray3D myRay, out float t, out vec3 inter_point
     }
 }
 
+/** 
+    光线与场景求交
+    除了地形，还有一个地平面
+
+*/
+bool ray_intersection_scene(Ray3D myRay, out float t, out vec3 inter_point, out vec3 normal, out int returnState){
+    if (ray_intersection_terrainmesh(myRay, t, inter_point, normal, returnState)){
+        return true;
+    }
+    else if (ray_intersection_xz_rect(myRay, 0, vec2(-3, 3), vec2(-3, 3), t, inter_point)){
+        normal = vec3(0, 1, 0);
+        returnState = 0;
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 void main(){
     // 首先清理无用kernel
     if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
@@ -646,38 +756,156 @@ void main(){
     vec3 inter_point_0 = vec3(0, 0, 0);
     vec3 normal_0 = vec3(0, 0, 0);
     int returnState_0 = 0;
+
+
     // 进行n次光线弹射
+    // 实验代码
+    
+    vec3 lastCol = imageLoad(RTTarget, ivec2(gl_GlobalInvocationID.xy)).xyz;
 
+    /** 默认材质：
+    颜色：深绿
+    粗糙度：rough
+    金属度：0
+    */
+    vec3 green = vec3(45, 153, 83) / 255.0;
+    vec3 red = vec3(216, 59, 31) / 255.0;
+    vec3 sky = vec3(158, 231, 255) / 255.0;
 
-    // for(int ej = 0; ej < 2; ej++){
-    //     if (ray_intersection_terrainmesh(myRay, t_0, inter_point_0, normal_0, returnState_0)){
+    vec3 ansCol_0 = vec3(0);
+    vec3 ansCol_1 = vec3(0);
 
-    //     }
+    bool flag = false;
+    float strength = 1.0;
+    float atten = 0.99;
+    int ej = 0;
+    float dist = 0;
+    // 光线击中地形
+    flag = ray_intersection_scene(myRay, t_0, inter_point_0, normal_0, returnState_0);
+    // 没击中直接退出
+    if (!flag){
+        imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), vec4(sky, 1));
+        return;
+    }
+
+    // 首先根据击中的信息，将射线结果叠加到该像素上
+    // 先确定击中位置的颜色
+    // 再次求交，计算直射光颜色
+    // 进行阴影测试
+    vec3 light;
+
+    float t_1 = 0; 
+    vec3 inter_point_1 = vec3(0, 0, 0);
+    vec3 normal_1 = vec3(0, 0, 0);
+    int returnState_1 = 0;
+
+    Ray3D newRay;
+    newRay.point = inter_point_0 + normal_0 * 0.01 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
+    newRay.direction = normalize(mainLightDir);
+    if (!ray_intersection_scene(newRay, t_1, inter_point_1, normal_1, returnState_1)){
+        light = mainLightStrength * mainLightColor * max(dot(normal_0, mainLightDir), 0);
+    } else {
+        light = vec3(0.1);
+    }
+    // 计算该点颜色
+    vec3 thisCol;
+    if (inter_point_0.x <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.x >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x)){
+        thisCol = light * green;
+    }else {
+        thisCol = light * red;
+    }
+    ansCol_0 = thisCol * strength;
+
+    // 那么需要更新光线信息
+    myRay.point = inter_point_0 + normal_0 * 0.01 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
+
+    // 方向为Normal球上随机
+    // while(true){
+        // 先生成种子和u、v、r2
+        uint seed_0 = 0, seed_1 = 0; 
+        float u = 2, v = 2, r2 = 2;
+        while(r2 > 1){
+            seed_0 = uint((abs(inter_point_0.x) * (ej + 2) + abs(inter_point_0.y) * (ej + 1) + abs(inter_point_0.z) * (ej + 0)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 125685 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
+            seed_1 = uint((abs(inter_point_0.x) * (ej + 0) + abs(inter_point_0.y) * (ej + 2) + abs(inter_point_0.z) * (ej + 1)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 568512 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
+
+            u = XorShiftRand(seed_0);
+            v = XorShiftRand(seed_1);
+            r2 = u * u + v * v;
+        }
+        // 根据R2计算半球上的方向
+        myRay.direction.x = 2 * u * sqrt(1 - r2);
+        myRay.direction.y = 2 * v * sqrt(1 - r2);
+        myRay.direction.z = 1 - 2 * r2;
+        vec3 refDir = reflect(rayDir, normal_0);
+        myRay.direction = normalize(refDir * 0.75 + myRay.direction);
+        // 考察其是否可用
+        // if (dot(normalize(myRay.direction), normalize(normal_0)) > 0.9){
+        //     myRay.direction = normalize(myRay.direction);
+        //     break;
+        // }
     // }
 
+    // 第二次
+    ej ++;
+    // 光线击中地形
+    vec3 last_point = inter_point_0;
+    flag = ray_intersection_scene(myRay, t_0, inter_point_0, normal_0, returnState_0);
+    // 没击中直接退出
+    if (flag){
+        light = vec3(0);
+
+        t_1 = 0; 
+        inter_point_1 = vec3(0, 0, 0);
+        normal_1 = vec3(0, 0, 0);
+        returnState_1 = 0;
+
+        newRay.point = inter_point_0 + normal_0 * 0.01 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
+        newRay.direction = normalize(mainLightDir);
+        if (!ray_intersection_scene(newRay, t_1, inter_point_1, normal_1, returnState_1)){
+            light = mainLightStrength * mainLightColor * max(dot(normal_0, mainLightDir), 0);
+        } else {
+            light = vec3(0.1);
+        }
+        // 计算该点颜色
+        if (inter_point_0.x <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.x >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x)){
+            thisCol = light * green;
+        }else {
+            thisCol = light * red;
+        }
+        dist += length(last_point - inter_point_0);
+        strength = strength / ((dist + 1) * (dist + 1));
+        ansCol_1 = thisCol * strength;
+    } else {
+        ansCol_1 = sky * 0.3;
+    }
+
+    vec3 ansCol = ansCol_0 + ansCol_1;
+    ans = vec4(ansCol * 0.1 + lastCol * 0.9, 1);
+
+    // Ray3D testRay;
+    // testRay.point = cameraPos;
+    // testRay.direction = rayDir;
+    // float test_t;
+    // vec3 test_p;
+    // if (ray_intersection_xz_rect(testRay, 0, vec2(-5, 5), vec2(-5, 5), test_t, test_p)){
+    //     vec2 col = test_p.xz * 0.2 + 0.5;
+    //     vec3 reflected = reflect(testRay.direction, vec3(0, 1, 0));
+    //     ans = vec4(reflected, 1);
+    // } else ans = vec4(0, 0, 0, 1);
 
     // 进行一次直接光照+阴影
-    // if (ray_intersection_terrainmesh(myRay, t_0, inter_point_0, normal_0, returnState_0)){
-    //     ans = vec4(normal_0.xxx, 1);
-    //     // 进行阴影测试
-    //     // vec3 light;
-    //     // vec3 pos = inter_point_0 * 0.5 + 0.5;
-    //     // Ray3D newRay;
-    //     // newRay.point = inter_point_0 + normal_0 * 0.25 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
-    //     // newRay.direction = normalize(mainLightDir);
-    //     // if (!ray_intersection_terrainmesh(newRay, t_0, inter_point_0, normal_0, returnState_0)){
-    //     //     light = mainLightColor;
-    //     //     // 光线弹射一次
-            
-    //     // } else {
-    //     //     light = vec3(0.1);
-    //     // }
-    //     // ans = vec4(light, 1);
+    // normal_0 = vec3(0);
+    // if (ray_intersection_scene(myRay, t_0, inter_point_0, normal_0, returnState_0)){
+    //     ans = vec4(normal_0, 1);
     // }else {
     //     ans = vec4(89.0 / 255.0, 177.0 / 255.0, 215.0 / 255.0, 1);
     // }
 
-    // ans = vec4(normal,1);
+
+
+    // ans = vec4(newDir * 0.5 + 0.5,1);
+
+    // TODO 将ans值框定到[0,+∞)
 
     imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), ans);
 }

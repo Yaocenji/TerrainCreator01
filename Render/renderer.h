@@ -15,6 +15,7 @@
 #include <QOpenGLWidget>
 #include <QPoint>
 #include <QPointF>
+#include <QTime>
 #include <QTimer>
 #include <QtMath>
 #include <iostream>
@@ -36,7 +37,7 @@ protected:
     /// 为了流畅性，使用计时器
     QTimer *timer;
 public slots:
-    /// 计时器重绘
+    /// 计时器消息
     void TimerUpdate();
 
     /// 这一部分的变量在每次重新设置全局地形大小时会被重置

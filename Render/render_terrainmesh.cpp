@@ -45,9 +45,9 @@ void TerrainMesh::recreateMesh(QOpenGLFunctions_4_5_Core &f) {
     int tileNum = globalinfo::TerrainGrid / tileSize;
 
     /// 数据
-    vbos.resize(tileNum);
-    vaos.resize(tileNum);
-    ebos.resize(tileNum);
+    vbos.resize(tileNum + 1);
+    vaos.resize(tileNum + 1);
+    ebos.resize(tileNum + 1);
 
     /// 一个tile内的顶点数
     int vertNum = tileSize + 1;
@@ -68,11 +68,11 @@ void TerrainMesh::recreateMesh(QOpenGLFunctions_4_5_Core &f) {
             int iindex = (z * rectNum + x) * 6;
             int vindex = z * vertNum + x;
             indices[iindex + 0] = vindex + 0;
-            indices[iindex + 2] = vindex + 1;
             indices[iindex + 1] = vindex + vertNum + 1;
+            indices[iindex + 2] = vindex + 1;
             indices[iindex + 3] = vindex + 0;
-            indices[iindex + 5] = vindex + vertNum + 1;
             indices[iindex + 4] = vindex + vertNum;
+            indices[iindex + 5] = vindex + vertNum + 1;
         }
     }
 
@@ -127,7 +127,95 @@ void TerrainMesh::recreateMesh(QOpenGLFunctions_4_5_Core &f) {
     delete[] indices;
     delete[] vertices;
 
-    // 补充生成
+    // TODO
+    // X和Z上界的“壁”缺少，补充生成两个面
+    float *addVert = new float[(globalinfo::TerrainGrid + 1) * 2 * 2];
+    float *addIndex = new float[globalinfo::TerrainGrid * 6];
+
+    /// 三角形索引原始数据生成，生成完毕后不用每次生成tile时改变
+    for (int i = 0; i < globalinfo::TerrainGrid; i++) {
+        int iindex = i * 6;
+        int vindex = i;
+        addIndex[iindex + 0] = vindex + 0;
+        addIndex[iindex + 1] = vindex + globalinfo::TerrainGrid + 1 + 1;
+        addIndex[iindex + 2] = vindex + 1;
+        addIndex[iindex + 3] = vindex + 0;
+        addIndex[iindex + 4] = vindex + globalinfo::TerrainGrid + 1;
+        addIndex[iindex + 5] = vindex + globalinfo::TerrainGrid + 1 + 1;
+    }
+
+    for (int i = 0; i < globalinfo::TerrainGrid + 1; ++i) {
+        addVert[2 * i] = (i / float(globalinfo::TerrainGrid) - 0.5f) *
+                         globalinfo::TerrainSize;
+        addVert[2 * i + 1] = -0.5 * globalinfo::TerrainSize;
+
+        addVert[2 * i + globalinfo::TerrainGrid + 1] =
+            (i / float(globalinfo::TerrainGrid) - 0.5f) *
+            globalinfo::TerrainSize;
+        addVert[2 * i + 1 + globalinfo::TerrainGrid + 1] =
+            -0.5 * globalinfo::TerrainSize - unit;
+    }
+
+    QOpenGLBuffer *vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    QOpenGLBuffer *ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    QOpenGLVertexArrayObject *vao = new QOpenGLVertexArrayObject();
+    vbo->create();
+    ebo->create();
+    vao->create();
+    vao->bind();
+    vbo->bind();
+    vbo->allocate(addVert,
+                  sizeof(float) * ((globalinfo::TerrainGrid + 1) * 2 * 2));
+    ebo->bind();
+    ebo->allocate(addIndex,
+                  sizeof(unsigned int) * (globalinfo::TerrainGrid * 6));
+    f.glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float),
+                            (void *)0);
+    f.glEnableVertexAttribArray(0);
+    vao->release();
+    vbo->release();
+    ebo->release();
+    vbos[vbos.size() - 1].push_back(vbo);
+    ebos[ebos.size() - 1].push_back(ebo);
+    vaos[vaos.size() - 1].push_back(vao);
+
+    for (int i = 0; i < globalinfo::TerrainGrid + 1; ++i) {
+        addVert[2 * i] = -0.5 * globalinfo::TerrainSize;
+        addVert[2 * i + 1] = (i / float(globalinfo::TerrainGrid) - 0.5f) *
+                             globalinfo::TerrainSize;
+
+        addVert[2 * i + globalinfo::TerrainGrid + 1] =
+            -0.5 * globalinfo::TerrainSize - unit;
+        addVert[2 * i + 1 + globalinfo::TerrainGrid + 1] =
+            (i / float(globalinfo::TerrainGrid) - 0.5f) *
+            globalinfo::TerrainSize;
+    }
+
+    vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    vao = new QOpenGLVertexArrayObject();
+    vbo->create();
+    ebo->create();
+    vao->create();
+    vao->bind();
+    vbo->bind();
+    vbo->allocate(addVert,
+                  sizeof(float) * ((globalinfo::TerrainGrid + 1) * 2 * 2));
+    ebo->bind();
+    ebo->allocate(addIndex,
+                  sizeof(unsigned int) * (globalinfo::TerrainGrid * 6));
+    f.glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float),
+                            (void *)0);
+    f.glEnableVertexAttribArray(0);
+    vao->release();
+    vbo->release();
+    ebo->release();
+    vbos[vbos.size() - 1].push_back(vbo);
+    ebos[ebos.size() - 1].push_back(ebo);
+    vaos[vaos.size() - 1].push_back(vao);
+
+    delete[] addVert;
+    delete[] addIndex;
 }
 
 void TerrainMesh::drawMesh(QOpenGLFunctions_4_5_Core &f) {

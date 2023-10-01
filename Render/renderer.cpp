@@ -204,8 +204,8 @@ void Renderer::initializeGL() {
 
     // 场景主光源准备
     sunLight.setColor(QColor(255, 245, 245));
-    sunLight.setStrength(25.0);
-    sunLight.setDirection(QVector3D(1, 0.75, 1));
+    sunLight.setStrength(15);
+    sunLight.setDirection(QVector3D(1.5, 1.2, 0.7));
 
     qDebug() << "初始化错误验证 "
              << "摄像机内容准备，错误码：" << glGetError();
@@ -312,6 +312,16 @@ void Renderer::paintGL() {
                                                      sunLight.getStrength());
     terrainShaderProgram_RayTracing->setUniformValue("mainLightDir",
                                                      sunLight.getDirection());
+
+    QTime currentTime = QTime::currentTime();
+    terrainShaderProgram_RayTracing->setUniformValue("time.hour",
+                                                     currentTime.hour());
+    terrainShaderProgram_RayTracing->setUniformValue("time.minute",
+                                                     currentTime.minute());
+    terrainShaderProgram_RayTracing->setUniformValue("time.second",
+                                                     currentTime.second());
+    terrainShaderProgram_RayTracing->setUniformValue("time.msec",
+                                                     currentTime.msec());
 
     ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
     glBindImageTexture(1, globalinfo::ChosenHeightFieldBuffer, 0, GL_FALSE, 0,

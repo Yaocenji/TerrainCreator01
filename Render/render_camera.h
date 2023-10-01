@@ -77,7 +77,7 @@ public:
 public:
     explicit Camera(QObject *parent = nullptr, float Asp = 16.0 / 9.0,
                     int FOV = 25, float Near = 0.01, float Far = 50.0,
-                    float Azimuth = 0.0, float Altitude = M_PI / 4.0,
+                    float Azimuth = 0.3, float Altitude = M_PI / 3.0,
                     float rSense = 0.005, float zSense = 0.1,
                     float DistanceCoef = 1.5,
                     QVector3D LookPos = QVector3D(0, 0.03, 0));
