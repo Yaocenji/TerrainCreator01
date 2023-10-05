@@ -3,6 +3,6 @@
 globalrender::globalrender() {
 }
 
-QColor globalrender::backgroundColor = QColor(92, 104, 122);
+QColor globalrender::backgroundColor = QColor(0, 0, 0);
 
 bool globalrender::real_time_render = true;

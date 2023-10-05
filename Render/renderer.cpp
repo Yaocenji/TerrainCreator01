@@ -31,6 +31,7 @@ namespace Render {
 Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     // 初始化顶点数据
     terrainMesh = nullptr;
+    rectMesh = nullptr;
     terrainVBO = nullptr;
     terrainEBO = nullptr;
     terrainVAO = nullptr;
@@ -47,14 +48,52 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     terrainFrag_DirectLight = nullptr;
     terrainFrag_WorldNormal = nullptr;
     terrainFrag_WorldPos = nullptr;
+    terrainFrag_MotionVector = nullptr;
 
     terrainShaderProgram_DirectLight = nullptr;
     terrainShaderProgram_WorldPos = nullptr;
     terrainShaderProgram_WorldNorm = nullptr;
     terrainShaderProgram_Albedo = nullptr;
+    terrainShaderProgram_MotionVector = nullptr;
 
+    // 初始化海底shader
+    rectVert = nullptr;
+    rectFrag_WorldNormal = nullptr;
+    rectFrag_WorldPos = nullptr;
+    rectFrag_MotionVector = nullptr;
+
+    rectShaderProgram_WorldPos = nullptr;
+    rectShaderProgram_WorldNorm = nullptr;
+    rectShaderProgram_Albedo = nullptr;
+    rectShaderProgram_MotionVector = nullptr;
+
+    // 初始化光追shader
     terrainShader_RayTracing = nullptr;
     terrainShaderProgram_RayTracing = nullptr;
+
+    // 初始化滤波shader
+    FilterShader = nullptr;
+    FilterShaderProgram = nullptr;
+
+    // 初始化合并shader
+    CombinerShader = nullptr;
+    CombinerShaderProgram = nullptr;
+
+    // 初始化复制shader
+    CopyShader = nullptr;
+    CopyShaderProgram = nullptr;
+
+    // 初始化方差计算着色器
+    VarianceCalShader = nullptr;
+    VarianceCalShaderProgram = nullptr;
+
+    // 初始化方差时间滤波着色器
+    VarianceTemporalFilterShader = nullptr;
+    VarianceTemporalFilterShaderProgram = nullptr;
+
+    // 初始化方差空间滤波着色器
+    VarianceSpatioFilterShader = nullptr;
+    VarianceSpatioFilterShaderProgram = nullptr;
 
     // 初始化离屏渲染交换链
     swapVert = nullptr;
@@ -63,16 +102,21 @@ Renderer::Renderer(QWidget *parent) : QOpenGLWidget(parent) {
     G_Buffer_DirectLight = new RenderTexture(this, true);
     G_Buffer_WorldPos = new RenderTexture(this, true);
     G_Buffer_WorldNormal = new RenderTexture(this, true);
-    G_Buffer_Albedo = new RenderTexture(this, false);
+    G_Buffer_Albedo = new RenderTexture(this, true);
+    G_Buffer_MotionVector = new RenderTexture(this, false);
 
     ANS_Buffer_RayTracing = new RenderImage2D(this);
+    FILTER_ANS_Buffer_RayTracing = new RenderImage2D(this);
+    LAST_ANS_Buffer_RayTracing = new RenderImage2D(this);
+
+    VARIANCE_Buffer_RayTracing = new RenderImage2D(this);
 
     //    swapFrameBuffer = 0;
     //    swapColorBuffer = 0;
     //    swapDepthBuffer = 0;
 
     // 初始化摄像机矩阵
-    camera = new Camera(this, 16.0 / 9.0, 25);
+    camera = new Camera(this, 16.0 / 9.0, 10);
     model = QMatrix4x4();
     view = QMatrix4x4();
     proj = QMatrix4x4();
@@ -128,6 +172,10 @@ void Renderer::initializeGL() {
     terrainMesh = new TerrainMesh(this);
     terrainMesh->recreateMesh(*(getFunctionAndContext()));
 
+    rectMesh = new RectMesh(this);
+    rectMesh->recreateMesh(globalinfo::TerrainSize * 3,
+                           *(getFunctionAndContext()));
+
     qDebug() << "初始化错误验证 "
              << "根据设置数据生成顶点数据、vbo、vao、ebo，错误码："
              << glGetError();
@@ -137,6 +185,7 @@ void Renderer::initializeGL() {
     terrainFrag_DirectLight = new QOpenGLShader(QOpenGLShader::Fragment);
     terrainFrag_WorldPos = new QOpenGLShader(QOpenGLShader::Fragment);
     terrainFrag_WorldNormal = new QOpenGLShader(QOpenGLShader::Fragment);
+    terrainFrag_MotionVector = new QOpenGLShader(QOpenGLShader::Fragment);
 
     terrainShaderProgram_DirectLight = new QOpenGLShaderProgram();
     terrainShaderProgram_DirectLight->create();
@@ -144,15 +193,84 @@ void Renderer::initializeGL() {
     terrainShaderProgram_WorldNorm->create();
     terrainShaderProgram_WorldPos = new QOpenGLShaderProgram();
     terrainShaderProgram_WorldPos->create();
+    terrainShaderProgram_MotionVector = new QOpenGLShaderProgram();
+    terrainShaderProgram_MotionVector->create();
 
+    // 海底shader
+    rectVert = new QOpenGLShader(QOpenGLShader::Vertex);
+    rectFrag_WorldPos = new QOpenGLShader(QOpenGLShader::Fragment);
+    rectFrag_WorldNormal = new QOpenGLShader(QOpenGLShader::Fragment);
+    rectFrag_MotionVector = new QOpenGLShader(QOpenGLShader::Fragment);
+
+    rectShaderProgram_WorldNorm = new QOpenGLShaderProgram();
+    rectShaderProgram_WorldNorm->create();
+    rectShaderProgram_WorldPos = new QOpenGLShaderProgram();
+    rectShaderProgram_WorldPos->create();
+    rectShaderProgram_MotionVector = new QOpenGLShaderProgram();
+    rectShaderProgram_MotionVector->create();
+
+    // 光追shader
     terrainShader_RayTracing = new QOpenGLShader(QOpenGLShader::Compute);
     terrainShader_RayTracing->compileSourceFile(
         ":/TerrainShaders/RayTracing01.comp");
-
     terrainShaderProgram_RayTracing = new QOpenGLShaderProgram();
     terrainShaderProgram_RayTracing->create();
     terrainShaderProgram_RayTracing->addShader(terrainShader_RayTracing);
     terrainShaderProgram_RayTracing->link();
+
+    // 滤波shader
+    FilterShader = new QOpenGLShader(QOpenGLShader::Compute);
+    FilterShader->compileSourceFile(":/TerrainShaders/RayTracingFilter01.comp");
+    FilterShaderProgram = new QOpenGLShaderProgram();
+    FilterShaderProgram->create();
+    FilterShaderProgram->addShader(FilterShader);
+    FilterShaderProgram->link();
+
+    // 合并shader
+    CombinerShader = new QOpenGLShader(QOpenGLShader::Compute);
+    CombinerShader->compileSourceFile(
+        ":/TerrainShaders/RayTracingTemporaryCombiner.comp");
+    CombinerShaderProgram = new QOpenGLShaderProgram();
+    CombinerShaderProgram->create();
+    CombinerShaderProgram->addShader(CombinerShader);
+    CombinerShaderProgram->link();
+
+    // 复制shader
+    CopyShader = new QOpenGLShader(QOpenGLShader::Compute);
+    CopyShader->compileSourceFile(":/TerrainShaders/RayTracingCopy.comp");
+    CopyShaderProgram = new QOpenGLShaderProgram();
+    CopyShaderProgram->create();
+    CopyShaderProgram->addShader(CopyShader);
+    CopyShaderProgram->link();
+
+    // 方差计算shader
+    VarianceCalShader = new QOpenGLShader(QOpenGLShader::Compute);
+    VarianceCalShader->compileSourceFile(
+        ":/TerrainShaders/RayTracingLuminanceVariance.comp");
+    VarianceCalShaderProgram = new QOpenGLShaderProgram();
+    VarianceCalShaderProgram->create();
+    VarianceCalShaderProgram->addShader(VarianceCalShader);
+    VarianceCalShaderProgram->link();
+
+    // 方差时间滤波shader
+    VarianceTemporalFilterShader = new QOpenGLShader(QOpenGLShader::Compute);
+    VarianceTemporalFilterShader->compileSourceFile(
+        ":/TerrainShaders/RayTracingLuminanceVarianceTemporalFilter.comp");
+    VarianceTemporalFilterShaderProgram = new QOpenGLShaderProgram();
+    VarianceTemporalFilterShaderProgram->create();
+    VarianceTemporalFilterShaderProgram->addShader(
+        VarianceTemporalFilterShader);
+    VarianceTemporalFilterShaderProgram->link();
+
+    // 方差空间滤波shader
+    VarianceSpatioFilterShader = new QOpenGLShader(QOpenGLShader::Compute);
+    VarianceSpatioFilterShader->compileSourceFile(
+        ":/TerrainShaders/"
+        "RayTracingLuminanceVarianceSpatioFilterAndCopyToLastChannel.comp");
+    VarianceSpatioFilterShaderProgram = new QOpenGLShaderProgram();
+    VarianceSpatioFilterShaderProgram->create();
+    VarianceSpatioFilterShaderProgram->addShader(VarianceSpatioFilterShader);
+    VarianceSpatioFilterShaderProgram->link();
 
     // 渲染shader读取
     setRenderShaders();
@@ -182,8 +300,16 @@ void Renderer::initializeGL() {
                                                 *(getFunctionAndContext()));
     G_Buffer_Albedo->recreateRenderTexture(rect().width(), rect().height(),
                                            *(getFunctionAndContext()));
+    G_Buffer_MotionVector->recreateRenderTexture(
+        rect().width(), rect().height(), *(getFunctionAndContext()));
 
     ANS_Buffer_RayTracing->recreateRenderImage2D(
+        rect().width(), rect().height(), *(getFunctionAndContext()));
+    FILTER_ANS_Buffer_RayTracing->recreateRenderImage2D(
+        rect().width(), rect().height(), *(getFunctionAndContext()));
+    LAST_ANS_Buffer_RayTracing->recreateRenderImage2D(
+        rect().width(), rect().height(), *(getFunctionAndContext()));
+    VARIANCE_Buffer_RayTracing->recreateRenderImage2D(
         rect().width(), rect().height(), *(getFunctionAndContext()));
 
     // 离屏渲染（交换链）所有内容准备
@@ -204,8 +330,8 @@ void Renderer::initializeGL() {
 
     // 场景主光源准备
     sunLight.setColor(QColor(255, 245, 245));
-    sunLight.setStrength(15);
-    sunLight.setDirection(QVector3D(1.5, 1.2, 0.7));
+    sunLight.setStrength(100);
+    sunLight.setDirection(QVector3D(1.5, 2.0, 0.9));
 
     qDebug() << "初始化错误验证 "
              << "摄像机内容准备，错误码：" << glGetError();
@@ -223,8 +349,17 @@ void Renderer::resizeGL(int w, int h) {
                                                 *(getFunctionAndContext()));
     G_Buffer_Albedo->recreateRenderTexture(rect().width(), rect().height(),
                                            *(getFunctionAndContext()));
+    G_Buffer_MotionVector->recreateRenderTexture(
+        rect().width(), rect().height(), *(getFunctionAndContext()));
+
     ANS_Buffer_RayTracing->recreateRenderImage2D(w, h + 50,
                                                  *(getFunctionAndContext()));
+    LAST_ANS_Buffer_RayTracing->recreateRenderImage2D(
+        w, h + 50, *(getFunctionAndContext()));
+    FILTER_ANS_Buffer_RayTracing->recreateRenderImage2D(
+        w, h + 50, *(getFunctionAndContext()));
+    VARIANCE_Buffer_RayTracing->recreateRenderImage2D(
+        w, h + 50, *(getFunctionAndContext()));
     // 参数X，Y指定了视见区域的左下角在窗口中的位置，一般情况下为（0，0），Width和Height指定了视见区域的宽度和高度。
     //    int ratio =
     //    QApplication::desktop()->devicePixelRatio();
@@ -238,12 +373,25 @@ void Renderer::resizeGL(int w, int h) {
 }
 
 void Renderer::paintGL() {
+    // 计算帧率
+    static QTime thisT;
+
+    float ms = thisT.msecsTo(QTime::currentTime());
+    qDebug() << "FPS:" << 1000.0 / ms;
+
+    thisT = QTime::currentTime();
+
     // 同步上下文
     globalgl::thisContext = getFunctionAndContext();
 
     // 准备离屏渲染
     //    PreRenderTerrainGround(swapFrameBuffer);
 
+    /**
+     *
+     *  GL准备
+     *
+     */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -252,38 +400,77 @@ void Renderer::paintGL() {
     glBindImageTexture(1, globalinfo::ColorMap0, 0, GL_FALSE, 0, GL_READ_WRITE,
                        GL_RGBA32F);
 
+    /**
+     *
+     *  预渲染
+     *
+     */
+
+    // 绘制海底
+    G_Buffer_WorldNormal->clear(*(getFunctionAndContext()));
+    G_Buffer_WorldNormal->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*rectShaderProgram_WorldNorm);
+    rectMesh->drawMesh(*(getFunctionAndContext()));
+
+    G_Buffer_WorldPos->clear(*(getFunctionAndContext()));
+    G_Buffer_WorldPos->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*rectShaderProgram_WorldPos);
+    rectMesh->drawMesh(*(getFunctionAndContext()));
+
+    G_Buffer_MotionVector->clear(*(getFunctionAndContext()));
+    G_Buffer_MotionVector->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*rectShaderProgram_MotionVector);
+    rectMesh->drawMesh(*(getFunctionAndContext()));
+
+    //  绘制地形
     G_Buffer_DirectLight->clear(*(getFunctionAndContext()));
     G_Buffer_DirectLight->bind(*(getFunctionAndContext()));
     bindShaderAndPassParam(*terrainShaderProgram_DirectLight);
     terrainMesh->drawMesh(*(getFunctionAndContext()));
 
-    G_Buffer_WorldNormal->clear(*(getFunctionAndContext()));
+    //    G_Buffer_WorldNormal->clear(*(getFunctionAndContext()));
     G_Buffer_WorldNormal->bind(*(getFunctionAndContext()));
     bindShaderAndPassParam(*terrainShaderProgram_WorldNorm);
     terrainMesh->drawMesh(*(getFunctionAndContext()));
 
-    G_Buffer_WorldPos->clear(*(getFunctionAndContext()));
+    //    G_Buffer_WorldPos->clear(*(getFunctionAndContext()));
     G_Buffer_WorldPos->bind(*(getFunctionAndContext()));
     bindShaderAndPassParam(*terrainShaderProgram_WorldPos);
     terrainMesh->drawMesh(*(getFunctionAndContext()));
-    //    terrainVAO->bind();
-    //    glDrawElements(GL_TRIANGLES, indicesCount(), GL_UNSIGNED_INT, 0);
 
+    //    G_Buffer_MotionVector->clear(*(getFunctionAndContext()));
+    G_Buffer_MotionVector->bind(*(getFunctionAndContext()));
+    bindShaderAndPassParam(*terrainShaderProgram_MotionVector);
+    terrainMesh->drawMesh(*(getFunctionAndContext()));
+
+    /**
+     *
+     *  光线追踪阶段
+     *
+     */
+
+    // 准备光追纹理空间
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, G_Buffer_DirectLight->colorTexture());
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, G_Buffer_WorldPos->colorTexture());
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, G_Buffer_WorldNormal->colorTexture());
-
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, G_Buffer_MotionVector->colorTexture());
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, G_Buffer_WorldNormal->depthTexture());
     glActiveTexture(GL_TEXTURE0);
 
-    // 光线追踪阶段
+    /**
+     *  tracing阶段
+     */
     terrainShaderProgram_RayTracing->bind();
 
     terrainShaderProgram_RayTracing->setUniformValue("RTColor", 0);
     terrainShaderProgram_RayTracing->setUniformValue("RTWorldPos", 1);
     terrainShaderProgram_RayTracing->setUniformValue("RTNormal", 2);
+    terrainShaderProgram_RayTracing->setUniformValue("RTMotionVector", 3);
 
     terrainShaderProgram_RayTracing->setUniformValue("model", model);
     terrainShaderProgram_RayTracing->setUniformValue(
@@ -305,6 +492,8 @@ void Renderer::paintGL() {
                                                      globalinfo::TerrainSize);
     terrainShaderProgram_RayTracing->setUniformValue("TerrainHeight",
                                                      globalinfo::TerrainHeight);
+    terrainShaderProgram_RayTracing->setUniformValue("SeaSize",
+                                                     rectMesh->rectSize);
 
     terrainShaderProgram_RayTracing->setUniformValue("mainLightColor",
                                                      sunLight.getColor());
@@ -329,20 +518,161 @@ void Renderer::paintGL() {
 
     glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
                       1);
+    // 开启显存屏障，需要在两次计算着色器之间调用之
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    // 帧缓冲复制阶段
+    /**
+     * 方差计算阶段
+     */
+    VarianceCalShaderProgram->bind();
+
+    VarianceCalShaderProgram->setUniformValue("screenWidth", rect().width());
+    VarianceCalShaderProgram->setUniformValue("screenHeight", rect().height());
+    // r=3 d=7的kernel范围
+    VarianceCalShaderProgram->setUniformValue("kernelRadius", 3);
+
+    ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+    VARIANCE_Buffer_RayTracing->bind(1, *(getFunctionAndContext()));
+
+    glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
+                      1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    /**
+     *  方差时间滤波阶段
+     */
+    VarianceTemporalFilterShaderProgram->bind();
+
+    VarianceTemporalFilterShaderProgram->setUniformValue("screenWidth",
+                                                         rect().width());
+    VarianceTemporalFilterShaderProgram->setUniformValue("screenHeight",
+                                                         rect().height());
+    VarianceTemporalFilterShaderProgram->setUniformValue("RTMotionVector", 3);
+
+    VARIANCE_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+
+    glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
+                      1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    /**
+     *  方差空间滤波和存储阶段
+     */
+    VarianceSpatioFilterShaderProgram->bind();
+    VarianceSpatioFilterShaderProgram->setUniformValue("screenWidth",
+                                                       rect().width());
+    VarianceSpatioFilterShaderProgram->setUniformValue("screenHeight",
+                                                       rect().height());
+    VARIANCE_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+
+    glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
+                      1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    /**
+     *  联合双边滤波阶段
+     */
+    FilterShaderProgram->bind();
+
+    FilterShaderProgram->setUniformValue("RTColor", 0);
+    FilterShaderProgram->setUniformValue("RTWorldPos", 1);
+    FilterShaderProgram->setUniformValue("RTNormal", 2);
+    FilterShaderProgram->setUniformValue("RTMotionVector", 3);
+    FilterShaderProgram->setUniformValue("RTDepth", 4);
+
+    FilterShaderProgram->setUniformValue("cameraPos", camera->cameraPos());
+    FilterShaderProgram->setUniformValue("near", camera->Near());
+    FilterShaderProgram->setUniformValue("far", camera->Far());
+
+    FilterShaderProgram->setUniformValue("screenWidth", rect().width());
+    FilterShaderProgram->setUniformValue("screenHeight", rect().height());
+    // 绑定源image
+    ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+    VARIANCE_Buffer_RayTracing->bind(2, *(getFunctionAndContext()));
+    // 绑定目标image
+    FILTER_ANS_Buffer_RayTracing->bind(1, *(getFunctionAndContext()));
+
+    // 联合双边滤波
+    for (int i = 0; i < 2; ++i) {
+        // 滤波参数
+        FilterShaderProgram->setUniformValue("filterStep", i);
+        FilterShaderProgram->setUniformValue("kernelRadius", 5);
+        // 开始滤波
+        glDispatchCompute(int(rect().width() / 32) + 1,
+                          int(rect().height() / 32), 1);
+        // 开启显存屏障，需要在两次计算着色器之间调用之
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    }
+
+    /**
+     * temporary合并阶段
+     */
+    CombinerShaderProgram->bind();
+    CombinerShaderProgram->setUniformValue("screenWidth", rect().width());
+    CombinerShaderProgram->setUniformValue("screenHeight", rect().height());
+
+    CombinerShaderProgram->setUniformValue("RTColor", 0);
+    CombinerShaderProgram->setUniformValue("RTWorldPos", 1);
+    CombinerShaderProgram->setUniformValue("RTNormal", 2);
+    CombinerShaderProgram->setUniformValue("RTMotionVector", 3);
+    // 绑定源image
+    FILTER_ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+    // 绑定目标image
+    LAST_ANS_Buffer_RayTracing->bind(1, *(getFunctionAndContext()));
+    // 绑定源image
+    ANS_Buffer_RayTracing->bind(2, *(getFunctionAndContext()));
+
+    glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
+                      1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    /**
+     *  复制缓存阶段
+     */
+    CopyShaderProgram->bind();
+    CopyShaderProgram->setUniformValue("screenWidth", rect().width());
+    CopyShaderProgram->setUniformValue("screenHeight", rect().height());
+    // 绑定源image
+    ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+    // 绑定目标image
+    LAST_ANS_Buffer_RayTracing->bind(1, *(getFunctionAndContext()));
+
+    glDispatchCompute(int(rect().width() / 32) + 1, int(rect().height() / 32),
+                      1);
+    // 开启显存屏障，需要在两次计算着色器之间调用之
+    // 接下来两个着色器对buffer都是只读，所以问题不大
+    //    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    /**
+     *
+     *  帧缓冲复制阶段
+     *
+     */
     PreSwapFrameBufferToScreen(G_Buffer_DirectLight->colorTexture(),
                                G_Buffer_DirectLight->depthTexture());
+
+    // 绑定源image
+    ANS_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
+
+    // 在此处绑定RI到0以测试任何RI
+    //    VARIANCE_Buffer_RayTracing->bind(0, *(getFunctionAndContext()));
 
     swapShaderProgram->bind();
     swapShaderProgram->setUniformValue("colorBuffer", 0);
     swapShaderProgram->setUniformValue("depthBuffer", 1);
     swapShaderProgram->setUniformValue("screenWidth", rect().width());
     swapShaderProgram->setUniformValue("screenHeight", rect().height());
+
+    swapShaderProgram->setUniformValue("RTDepth", 4);
+
     screenVAO->bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     swapShaderProgram->release();
+
+    // 更新last信息
+    camera->last_View = camera->matrixView();
+    camera->last_Proj = camera->matrixProjection();
 }
 
 void Renderer::setTerrainInfo() {
@@ -579,15 +909,16 @@ void Renderer::setRenderShaders() {
     terrainVert->compileSourceFile(":/TerrainShaders/TerrainVert.vert");
     terrainFrag_DirectLight->compileSourceFile(
         ":/TerrainShaders/TerrainFrag.frag");
-
-    terrainShaderProgram_DirectLight->addShader(terrainVert);
-    terrainShaderProgram_DirectLight->addShader(terrainFrag_DirectLight);
-    terrainShaderProgram_DirectLight->link();
-
     terrainFrag_WorldPos->compileSourceFile(
         ":/TerrainShaders/TerrainFrag_WorldPos.frag");
     terrainFrag_WorldNormal->compileSourceFile(
         ":/TerrainShaders/TerrainFrag_WorldNormal.frag");
+    terrainFrag_MotionVector->compileSourceFile(
+        ":/TerrainShaders/MotionVector.frag");
+
+    terrainShaderProgram_DirectLight->addShader(terrainVert);
+    terrainShaderProgram_DirectLight->addShader(terrainFrag_DirectLight);
+    terrainShaderProgram_DirectLight->link();
 
     terrainShaderProgram_WorldPos->addShader(terrainVert);
     terrainShaderProgram_WorldPos->addShader(terrainFrag_WorldPos);
@@ -596,6 +927,31 @@ void Renderer::setRenderShaders() {
     terrainShaderProgram_WorldNorm->addShader(terrainVert);
     terrainShaderProgram_WorldNorm->addShader(terrainFrag_WorldNormal);
     terrainShaderProgram_WorldNorm->link();
+
+    terrainShaderProgram_MotionVector->addShader(terrainVert);
+    terrainShaderProgram_MotionVector->addShader(terrainFrag_MotionVector);
+    terrainShaderProgram_MotionVector->link();
+
+    // 海底shader
+    rectVert->compileSourceFile(":/TerrainShaders/RectVert.vert");
+    rectFrag_WorldPos->compileSourceFile(
+        ":/TerrainShaders/RectFrag_WorldPos.frag");
+    rectFrag_WorldNormal->compileSourceFile(
+        ":/TerrainShaders/RectFrag_WorldNormal.frag");
+    rectFrag_MotionVector->compileSourceFile(
+        ":/TerrainShaders/MotionVector.frag");
+
+    rectShaderProgram_WorldPos->addShader(rectVert);
+    rectShaderProgram_WorldPos->addShader(rectFrag_WorldPos);
+    rectShaderProgram_WorldPos->link();
+
+    rectShaderProgram_WorldNorm->addShader(rectVert);
+    rectShaderProgram_WorldNorm->addShader(rectFrag_WorldNormal);
+    rectShaderProgram_WorldNorm->link();
+
+    rectShaderProgram_MotionVector->addShader(rectVert);
+    rectShaderProgram_MotionVector->addShader(rectFrag_MotionVector);
+    rectShaderProgram_MotionVector->link();
 }
 
 void Renderer::bindShaderAndPassParam(QOpenGLShaderProgram &shader) {
@@ -608,6 +964,11 @@ void Renderer::bindShaderAndPassParam(QOpenGLShaderProgram &shader) {
     shader.setUniformValue("view_inverse", camera->matrixView().inverted());
     shader.setUniformValue("proj_inverse",
                            camera->matrixProjection().inverted());
+    shader.setUniformValue("last_view", camera->last_View);
+    shader.setUniformValue("last_proj", camera->last_Proj);
+
+    shader.setUniformValue("screenWidth", rect().width());
+    shader.setUniformValue("screenHeight", rect().height());
 
     shader.setUniformValue("TerrainHeight", globalinfo::TerrainHeight);
     shader.setUniformValue("TerrainSize", globalinfo::TerrainSize);

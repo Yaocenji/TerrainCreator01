@@ -1,0 +1,56 @@
+#version 450 core
+
+// 求一个像素附近的kernel内的灰度（luminace）的variance
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 方差buffer
+/** 
+*   使用规则：
+*   r通道，存放当前帧计算得出的variance原始数据
+*   g通道，存放上一帧计算得到的variance
+*   b通道，存放当前帧最终混合后的variance
+*/
+layout (binding = 0, rgba32f) uniform image2D VarianceData;
+
+// 运动矢量
+uniform sampler2D RTMotionVector;
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+
+    ivec2 index = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 texCoord = vec2(float(gl_GlobalInvocationID.x) / screenWidth, 
+                         float(gl_GlobalInvocationID.y) / screenHeight);
+    vec2 motionVec = texture(RTMotionVector, texCoord).xy;
+
+    vec4 varianceData = imageLoad(VarianceData, index);
+    float thisData = varianceData.r;
+    float lastData = imageLoad(VarianceData, ivec2(motionVec)).g;
+
+    float ans = 0;
+    // if (motionVec.x <= 5 || motionVec.x >= screenWidth - 15 || motionVec.y <= 5 || motionVec.y >= screenHeight - 15){
+    //     ans = thisData * 0.4 + lastData * 0.6;
+    // }else {
+    //     ans = thisData;
+    // }
+
+    float dist = abs(thisData - lastData);
+    float weight = 0.8 * (-1.0 / (0.8 * dist + 1)) + 1.0;
+
+    ans = thisData * weight + lastData * (1.0 - weight);
+    // ans = thisData * 0.4 + lastData * 0.6;
+    varianceData.b = ans;
+    imageStore(VarianceData, ivec2(gl_GlobalInvocationID.xy), varianceData);
+}

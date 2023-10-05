@@ -1,0 +1,84 @@
+#version 450 core
+
+// 求一个像素附近的kernel内的灰度（luminace）的variance
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 需要求方差的kernel大小
+uniform int kernelRadius;
+
+// 渲染纹理图像源数据
+layout (binding = 0, rgba32f) readonly uniform image2D RTSrc;
+
+// 方差buffer
+/** 
+*   使用规则：
+*   r通道，存放当前帧计算得出的variance原始数据
+*   g通道，存放上一帧计算得到的variance
+*   b通道，存放当前帧最终混合后的variance
+*/
+layout (binding = 1, rgba32f) uniform image2D VarianceData;
+
+// 边缘clamp
+ivec2 edgeClamp(ivec2 ori){ 
+    return ivec2(clamp(ori.x, 0, screenWidth), clamp(ori.y, 0, screenHeight));
+}
+
+// 颜色的灰度
+float Luminace(vec3 color){
+    return color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
+}
+
+float equal_L2(ivec2 index, int r){
+    float sumL = 0;
+    for(int line = -r; line <= r ; line++){
+        for(int column = -r; column <= r; column++){
+            float value = Luminace(imageLoad(RTSrc, edgeClamp(index + ivec2(line, column))).xyz);
+            value *= value;
+            sumL += value;
+        }
+    }
+    int size = r * 2 + 1;
+    return sumL / float(size * size);
+}
+
+float equalL_2(ivec2 index, int r){
+    float sumL = 0;
+    for(int line = -r; line <= r ; line++){
+        for(int column = -r; column <= r; column++){
+            sumL += Luminace(imageLoad(RTSrc, edgeClamp(index + ivec2(line, column))).xyz);
+        }
+    }
+    int size = r * 2 + 1;
+    sumL /= float(size * size);
+    return sumL * sumL;
+}
+
+float variance(ivec2 index, int r){
+    return max(0, equal_L2(index, r) - equalL_2(index, r));
+}
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+    if (kernelRadius < 0)
+        return;
+
+    ivec2 index = ivec2(gl_GlobalInvocationID.xy);
+    vec4 varianceData = imageLoad(VarianceData, index);
+
+    // Variance Equation: D^2(x) = E(x^2) - E^2(x);
+    // calculate and reset
+    varianceData.r = variance(ivec2(gl_GlobalInvocationID.xy), kernelRadius);
+    // store
+    imageStore(VarianceData, ivec2(gl_GlobalInvocationID.xy), varianceData);
+}

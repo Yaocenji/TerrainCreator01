@@ -5,6 +5,17 @@
         <file>RayTracing01.comp</file>
         <file>TerrainFrag_WorldNormal.frag</file>
         <file>TerrainFrag_WorldPos.frag</file>
+        <file>MotionVector.frag</file>
+        <file>RectFrag_WorldNormal.frag</file>
+        <file>RectFrag_WorldPos.frag</file>
+        <file>RectVert.vert</file>
+        <file>RayTracingFilter01.comp</file>
+        <file>RayTracingCopy.comp</file>
+        <file>RayTracingTemporaryCombiner.comp</file>
+        <file>RayTracingFilterSVGF.comp</file>
+        <file>RayTracingLuminanceVariance.comp</file>
+        <file>RayTracingLuminanceVarianceSpatioFilterAndCopyToLastChannel.comp</file>
+        <file>RayTracingLuminanceVarianceTemporalFilter.comp</file>
     </qresource>
     <qresource prefix="/SwapScreenShaders">
         <file>ScreenFrag.frag</file>

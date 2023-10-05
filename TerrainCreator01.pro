@@ -39,6 +39,7 @@ SOURCES += \
     Kernel/kernel_wire.cpp \
     Render/Light/render_light.cpp \
     Render/Light/render_parallellight.cpp \
+    Render/render_rectmesh.cpp \
     Render/render_renderimage2d.cpp \
     Render/render_rendertexture.cpp \
     Render/render_terrainmesh.cpp \
@@ -88,6 +89,7 @@ HEADERS += \
     Kernel/kernel_wire.h \
     Render/Light/render_light.h \
     Render/Light/render_parallellight.h \
+    Render/render_rectmesh.h \
     Render/render_renderimage2d.h \
     Render/render_rendertexture.h \
     Render/render_terrainmesh.h \

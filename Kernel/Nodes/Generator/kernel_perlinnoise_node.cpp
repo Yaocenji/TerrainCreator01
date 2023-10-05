@@ -34,7 +34,7 @@ PerlinNoise_Node::PerlinNoise_Node(QObject *parent, NodeGraph *pNG)
     ParamPorts[4]->rangefloat_r = 2.0f;
 
     // 3添加参数：高度对比
-    AddParamPort(PortDataType::Float, "高度对比", true, 2.0f);
+    AddParamPort(PortDataType::Float, "高度对比", true, 5.5f);
     ParamPorts[5]->isRanged = true;
     ParamPorts[5]->rangefloat_l = 0.0f;
     ParamPorts[5]->rangefloat_r = 10.0f;

@@ -1,0 +1,26 @@
+#version 450 core
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 渲染源
+layout (binding = 0, rgba32f) uniform image2D RTSrc;
+
+// 渲染目标
+layout (binding = 1, rgba32f) uniform image2D RTTarget;
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+    vec4 srcColor = imageLoad(RTSrc, ivec2(gl_GlobalInvocationID.xy));
+
+    imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), srcColor);
+}

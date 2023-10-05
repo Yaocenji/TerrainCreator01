@@ -1,0 +1,172 @@
+#version 450 core
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+
+/**
+    uniform内容
+*/
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 渲染源数据
+// 为什么使用texture作为源数据而非image2D？
+// 因为预渲染的渲染结果是GBuffer Texture
+// 屏幕RT颜色通道
+uniform sampler2D RTColor;
+// 世界空间坐标通道
+uniform sampler2D RTWorldPos;
+// 法线通道
+uniform sampler2D RTNormal;
+// 运动矢量
+uniform sampler2D RTMotionVector;
+
+// a-trous wavelet滤波层数，影响采样间隔
+uniform int filterStep;
+// gaussain kernel半径，边长等于半径*2+1
+uniform int kernelRadius;
+
+// 渲染源
+// 为何使用image2D而非texture
+// -- 因为使用了计算着色器而非片元着色器，计算着色器无法写入数据到texture
+layout (binding = 0, rgba32f) uniform image2D RTSrc;
+
+// 渲染目标
+// 为何使用image2D而非texture
+// -- 因为使用了计算着色器而非片元着色器，计算着色器无法写入数据到texture
+layout (binding = 1, rgba32f) uniform image2D RTTarget;
+
+struct comparison1D{
+    float value0;
+    float value1;
+};
+
+struct comparison4D{
+    vec4 value0;
+    vec4 value1;
+};
+
+// image采样坐标过滤
+ivec2 mirrorRepeat(ivec2 ori){
+    ivec2 ans = ori;
+    ans.x += screenWidth;
+    ans.y += screenHeight;
+    ans.x %= 2 * screenWidth;
+    ans.y %= 2 * screenHeight;
+    ans.x -= screenWidth;
+    ans.y -= screenHeight;
+    if (ans.x >= 0 && ans.x < screenWidth && ans.y >= 0 && ans.y < screenHeight){
+        return ans;
+    }
+    else if (ans.x >= -screenWidth && ans.x < 0 && ans.y >= 0 && ans.y < screenHeight){
+        return ivec2(ans.x + screenWidth, ans.y);
+    }
+    else if (ans.x >= 0 && ans.x < screenWidth && ans.y >= screenHeight && ans.y < 0){
+        return ivec2(ans.x, ans.y + screenHeight);
+    }
+    else if (ans.x >= -screenWidth && ans.x < 0 && ans.y >= screenHeight && ans.y < 0){
+        return ivec2(ans.x + screenWidth, ans.y + screenHeight);
+    }
+    return ans;
+}
+
+ivec2 edgeClamp(ivec2 ori){
+    return ivec2(clamp(ori.x, 0, screenWidth), clamp(ori.y, 0, screenHeight));
+}
+
+// 高斯
+float gaussain(float x, float sigma){
+    return exp(-x*x/(2*sigma*sigma))/(sqrt(2*PI)*sigma);
+}
+
+// 双边滤波
+float bilateralFilterWeight(float x, float sigma, comparison4D color){
+    float colorWeight = 1 / (length(vec3(color.value0.xyz - color.value1.xyz)) + 1);
+    return gaussain(x, sigma) * colorWeight;
+}
+
+// 深度值的权重
+// float Wz(float value0, float value1, )
+
+// 联合双边滤波
+float jointBilateralFilterWeight(float x, float sigma, comparison4D color, comparison4D pos, comparison4D norm, comparison1D shadow){
+    float colorWeight = 1 / (length(vec3(color.value0.xyz - color.value1.xyz)) + 1);
+    float posWeight = 1 / pow(length(vec3(pos.value0.xyz - pos.value1.xyz)) + 1, 50);
+    float normalWeight = exp(-500 * length(vec3(norm.value0.xyz - norm.value1.xyz)));
+    float shadowWeight = exp(-3 * abs(shadow.value0 - shadow.value1));
+    return gaussain(x, sigma) * min(0.1 * colorWeight + 0.0 * posWeight + 0.9 * normalWeight, shadowWeight);
+}
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+    if (filterStep < 0){
+        return;
+    }
+    if (kernelRadius < 0){
+        return;
+    }
+    ivec2 index = ivec2(gl_GlobalInvocationID.xy);
+    vec4 srcColor = imageLoad(RTSrc, index);
+    vec2 sampleTexCoord = vec2(vec2(gl_GlobalInvocationID.xy) + vec2(0.5, 0.5)) / vec2(screenWidth, screenHeight);
+    vec4 srcWorldPos = texture(RTWorldPos, sampleTexCoord);
+    vec4 srcWorldNormal = texture(RTNormal, sampleTexCoord);
+    
+    // 优化算法：a-trous wavelet
+    // 由于同步问题，需要调用多次compute shader
+    float interval = pow(2, filterStep);
+    float WeightSum = 0;
+    float sum = 0;
+    vec4 valueColor = vec4(0);
+    vec4 valueWorldPos = vec4(0);
+    vec4 valueWorldNormal = vec4(0);
+    vec4 ans = vec4(0);
+    for(int line = -kernelRadius; line <= kernelRadius; line++){
+        for(int column = -kernelRadius; column <= kernelRadius; column++){
+            ivec2 thisIndex = edgeClamp(ivec2(index.x + interval * line, index.y + interval * column));
+            // 采样间隔为interval位置的点，然后平均
+            // 采样值
+            valueColor = imageLoad(RTSrc, ivec2(thisIndex));
+
+            vec2 thisSampleTexCoord = vec2(vec2(thisIndex.xy) + vec2(0.5, 0.5)) / vec2(screenWidth, screenHeight);
+            valueWorldPos = texture(RTWorldPos, thisSampleTexCoord);
+            valueWorldNormal = texture(RTNormal, thisSampleTexCoord);
+
+            // 准备联合双边滤波的对比值
+            comparison4D color;
+            color.value0 = srcColor;
+            color.value1 = valueColor;
+
+            comparison4D pos;
+            pos.value0 = srcWorldPos;
+            pos.value1 = valueWorldPos;
+
+            comparison4D norm;
+            norm.value0 = srcWorldNormal;
+            norm.value1 = valueWorldNormal;
+
+            comparison1D shadow;
+            shadow.value0 = srcColor.w;
+            shadow.value1 = valueColor.w;
+
+            // 权重
+            sum = jointBilateralFilterWeight(length(vec2(line, column)), float(kernelRadius + 0.5), color, pos, norm, shadow);
+            // sum = bilateralFilterWeight(length(vec2(line, column)), float(kernelRadius + 0.5), color);
+            // sum = gaussain(length(vec2(line, column)), float(kernelRadius + 0.5));
+            WeightSum += sum;
+
+            ans += valueColor * sum;
+        }
+    }
+    ans /= WeightSum;
+
+    // ans = vec4(srcColor.w);
+
+    imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), ans);
+}

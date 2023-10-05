@@ -1,0 +1,64 @@
+#version 450 core
+
+// 求一个像素附近的kernel内的灰度（luminace）的variance
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 方差buffer
+/** 
+*   使用规则：
+*   r通道，存放当前帧计算得出的variance原始数据
+*   g通道，存放上一帧计算得到的variance
+*   b通道，存放当前帧最终混合后的variance
+*/
+layout (binding = 0, rgba32f) uniform image2D VarianceData;
+
+// 边缘clamp
+ivec2 edgeClamp(ivec2 ori){ 
+    return ivec2(clamp(ori.x, 0, screenWidth), clamp(ori.y, 0, screenHeight));
+}
+
+// 高斯分布
+float gaussain(float x, float sigma){
+    return exp(-x*x/(2*sigma*sigma))/(sqrt(2*PI)*sigma);
+}
+// 高斯模糊
+float gaussainBlur(ivec2 index, int r){
+    float ans = 0;
+    float sumWeight = 0;
+    float sigma = float(r) + 0.5;
+    for(int line = -r; line <= r ; line++){
+        for(int column = -r; column <= r; column++){
+            float w = gaussain(length(vec2(line, column)), sigma);
+            ans += imageLoad(VarianceData, edgeClamp(index + ivec2(line, column))).b;// * w;
+            sumWeight += w;
+        }
+    }
+    ans /= float(r + 1) * float(r + 1);
+    return ans;
+}
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+
+    ivec2 index = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 texCoord = vec2(float(gl_GlobalInvocationID.x) / screenWidth, 
+                         float(gl_GlobalInvocationID.y) / screenHeight);
+    vec4 varianceData = imageLoad(VarianceData, index);
+
+    varianceData.g = varianceData.b;
+    varianceData.a = gaussainBlur(index, 3);
+    
+    imageStore(VarianceData, ivec2(gl_GlobalInvocationID.xy), varianceData);
+}

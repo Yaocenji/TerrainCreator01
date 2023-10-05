@@ -12,6 +12,8 @@ out vec4 clipPos;
 out vec3 normal;
 out float realHeight;
 
+out float isEdge;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -105,17 +107,26 @@ void main(){
     vec4 modelPos;
     if (useHeightFieldBuffer){
         float unit = TerrainSize / TerrainGrid;
-        if (pos.x >= -TerrainSize / 2.0  && texCoord.x <= TerrainSize / 2.0 
-            && texCoord.y >= -TerrainSize / 2.0 && texCoord.y <= TerrainSize / 2.0){
+        float testSize = TerrainSize - 0.5 * unit;
+        if (pos.x >= -testSize / 2.0  && pos.x <= testSize / 2.0 
+            && pos.y >= -testSize / 2.0 && pos.y <= testSize / 2.0){
             float HeightFieldData = imageLoad(HeightField, itexCoord).r;
             modelPos = vec4(pos.x, HeightFieldData, pos.y, 1.0);
 
             realHeight = HeightFieldData;
             normal = CalNorm(TerrainGrid, TerrainSize, texCoord.x, texCoord.y);
+            // if (HeightFieldData <= 1e-3)
+            //     isEdge = 1;
+            // else
+            //     isEdge = 0;
+            isEdge = 0;
         } else {
             modelPos = vec4(clamp(pos.x, -TerrainSize / 2.0, TerrainSize / 2.0), 0, clamp(pos.y, -TerrainSize / 2.0, TerrainSize / 2.0), 1.0);
-            realHeight = 0;
+
+            realHeight = imageLoad(HeightField, ivec2(clamp(itexCoord.x, 0, TerrainGrid), clamp(itexCoord.y, 0, TerrainGrid))).r;
+
             normal = vec3(0, 1, 0);
+            isEdge = 1;
         }
     }
     else{
@@ -126,6 +137,7 @@ void main(){
 
         realHeight = HeightData;
         normal = vec3(0, 1, 0);
+        isEdge = 0;
     }
     // 乘以mvp矩阵
     worldPos = model * modelPos;

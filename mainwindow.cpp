@@ -89,15 +89,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     splt->addWidget(splt_1);
 
-    splt->setStretchFactor(0, 50);
-    splt->setStretchFactor(1, 50);
+    splt->setStretchFactor(0, 65);
+    splt->setStretchFactor(1, 35);
 
     // 主分割器设置大小
     QList<int> splt_sizelist;
     splt_sizelist.push_back(
-        (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
+        (rect().height() - UserInterface::globalui::title_bar_height) * 0.65);
     splt_sizelist.push_back(
-        (rect().height() - UserInterface::globalui::title_bar_height) / 2.0);
+        (rect().height() - UserInterface::globalui::title_bar_height) * 0.35);
 
     splt->setSizes(splt_sizelist);
 

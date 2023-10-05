@@ -1,0 +1,64 @@
+#version 450 core
+
+// kernel对应屏幕空间的像素
+layout (local_size_x = 32, local_size_y = 32) in;
+
+#define PI 3.14159265358979323846
+#define sqrt3 1.73205080757
+
+// 屏幕(RT)大小
+uniform int screenWidth;
+uniform int screenHeight;
+
+// 渲染源
+layout (binding = 0, rgba32f) uniform image2D RTSrc;
+// 上一帧
+layout (binding = 1, rgba32f) uniform image2D RTLast;
+// 渲染目标
+layout (binding = 2, rgba32f) uniform image2D RTTarget;
+
+// 控制器
+// 屏幕RT颜色通道
+uniform sampler2D RTColor;
+// 世界空间坐标通道
+uniform sampler2D RTWorldPos;
+// 法线通道
+uniform sampler2D RTNormal;
+// 运动矢量
+uniform sampler2D RTMotionVector;
+
+void main(){
+    // 首先清理无用kernel
+    if (gl_GlobalInvocationID.x >= screenWidth || gl_GlobalInvocationID.y >= screenHeight){
+        return;
+    }
+
+    vec2 texCoord = vec2(float(gl_GlobalInvocationID.x) / screenWidth, 
+                         float(gl_GlobalInvocationID.y) / screenHeight);
+    // 采样输入内容
+    // vec4 color = texture(RTColor, texCoord);
+    // vec3 normal = texture(RTNormal, texCoord).xyz;
+    // vec3 worldPos = texture(RTWorldPos, texCoord).xyz;
+    vec2 motionVec = texture(RTMotionVector, texCoord).xy;
+
+    // ivec2 lastScrTexCoord = ivec2((motionVec.x) * screenWidth, motionVec.y * screenHeight);
+
+    vec4 srcColor = imageLoad(RTSrc, ivec2(gl_GlobalInvocationID.xy));
+    vec4 lastColor = imageLoad(RTLast, ivec2(motionVec));
+    vec4 ans;
+    if (motionVec.x <= 5 || motionVec.x >= screenWidth - 15 || motionVec.y <= 5 || motionVec.y >= screenHeight - 15){
+        ans = srcColor;
+    }
+    else{
+        float colDist = length(lastColor.xyz - srcColor.xyz);
+        float srcWeight = 0.93 * (-1.0 / (0.8 * colDist + 1)) + 1.0;
+        ans = srcColor * srcWeight + lastColor * (1.0 - srcWeight);
+        
+        // ans = srcColor * 0.8 + lastColor * 0.2;
+    }
+
+    // ans.x = float(motionVec.x) / float(screenWidth);
+    // ans.y = float(motionVec.y) / float(screenHeight);
+    // ans.z = 0;
+    imageStore(RTTarget, ivec2(gl_GlobalInvocationID.xy), ans);
+}

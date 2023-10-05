@@ -24,6 +24,7 @@
 #include "../Kernel/kernel_element_inc.h"
 #include "Light/render_parallellight.h"
 #include "render_camera.h"
+#include "render_rectmesh.h"
 #include "render_renderimage2d.h"
 #include "render_rendertexture.h"
 #include "render_terrainmesh.h"
@@ -44,6 +45,8 @@ public slots:
 protected:
     /// 地形网格
     TerrainMesh *terrainMesh;
+    /// 海底网格（正方形）
+    RectMesh *rectMesh;
     /// （弃用）地形网格VBO
     QOpenGLBuffer *terrainVBO;
     /// （弃用）地形网格EBO
@@ -72,6 +75,8 @@ protected:
     QOpenGLShader *terrainFrag_WorldPos;
     /// 地形片元着色器——法线
     QOpenGLShader *terrainFrag_WorldNormal;
+    /// 地形片元着色器——运动矢量
+    QOpenGLShader *terrainFrag_MotionVector;
 
     /// 地形渲染着色器程序
     QOpenGLShaderProgram *terrainShaderProgram_DirectLight;
@@ -81,11 +86,61 @@ protected:
     QOpenGLShaderProgram *terrainShaderProgram_WorldNorm;
     /// 地形渲染着色器程序——基础色
     QOpenGLShaderProgram *terrainShaderProgram_Albedo;
+    /// 地形渲染着色器程序——运动矢量
+    QOpenGLShaderProgram *terrainShaderProgram_MotionVector;
+
+    /// 海底顶点着色器
+    QOpenGLShader *rectVert;
+    /// 海底片元着色器——世界坐标
+    QOpenGLShader *rectFrag_WorldPos;
+    /// 海底片元着色器——法线
+    QOpenGLShader *rectFrag_WorldNormal;
+    /// 海底片元着色器——运动矢量
+    QOpenGLShader *rectFrag_MotionVector;
+
+    /// 海底渲染着色器程序——世界空间坐标
+    QOpenGLShaderProgram *rectShaderProgram_WorldPos;
+    /// 海底渲染着色器程序——世界空间法线
+    QOpenGLShaderProgram *rectShaderProgram_WorldNorm;
+    /// 海底渲染着色器程序——基础色
+    QOpenGLShaderProgram *rectShaderProgram_Albedo;
+    /// 海底渲染着色器程序——运动矢量
+    QOpenGLShaderProgram *rectShaderProgram_MotionVector;
 
     /// 光线追踪着色器
     QOpenGLShader *terrainShader_RayTracing;
     /// 光线追踪着色器程序
     QOpenGLShaderProgram *terrainShaderProgram_RayTracing;
+
+    /// 联合双边滤波着色器
+    QOpenGLShader *FilterShader;
+    /// 联合双边滤波着色器程序
+    QOpenGLShaderProgram *FilterShaderProgram;
+
+    /// 时域图像合并着色器
+    QOpenGLShader *CombinerShader;
+    /// 时域图像合并着色器程序
+    QOpenGLShaderProgram *CombinerShaderProgram;
+
+    /// 复制着色器
+    QOpenGLShader *CopyShader;
+    /// 复制着色器程序
+    QOpenGLShaderProgram *CopyShaderProgram;
+
+    /// 方差计算着色器
+    QOpenGLShader *VarianceCalShader;
+    /// 方差着色器程序
+    QOpenGLShaderProgram *VarianceCalShaderProgram;
+
+    /// 方差时间滤波计算着色器
+    QOpenGLShader *VarianceTemporalFilterShader;
+    /// 方差时间滤波着色器程序
+    QOpenGLShaderProgram *VarianceTemporalFilterShaderProgram;
+
+    /// 方差空间滤波计算着色器
+    QOpenGLShader *VarianceSpatioFilterShader;
+    /// 方差空间滤波着色器程序
+    QOpenGLShaderProgram *VarianceSpatioFilterShaderProgram;
 
     /// 离屏交换顶点着色器
     QOpenGLShader *swapVert;
@@ -103,9 +158,18 @@ protected:
     RenderTexture *G_Buffer_WorldNormal;
     /// 缓冲RT——基础色
     RenderTexture *G_Buffer_Albedo;
+    /// 缓冲RT——motion vector
+    RenderTexture *G_Buffer_MotionVector;
 
     /// 缓冲RI——光线追踪计算结果
     RenderImage2D *ANS_Buffer_RayTracing;
+    /// 缓冲RI——光线追踪计算结果
+    RenderImage2D *FILTER_ANS_Buffer_RayTracing;
+    /// 缓冲RI——上一帧的完全结果
+    RenderImage2D *LAST_ANS_Buffer_RayTracing;
+
+    /// 缓冲RT——r：当前帧方差；g：上一帧方差；b：当前帧混合后的方差结果
+    RenderImage2D *VARIANCE_Buffer_RayTracing;
 
     /// （弃用）离屏渲染缓冲区frame buffer
     GLuint swapFrameBuffer;

@@ -2,6 +2,9 @@
 
 // path tracing 关于高度场地形的特化版本
 
+
+#define PI 3.14159265358979323846
+
 // kernel对应屏幕空间的像素
 layout (local_size_x = 32, local_size_y = 32) in;
 
@@ -15,13 +18,15 @@ uniform int screenHeight;
 
 // 渲染源数据
 // 为什么使用texture作为源数据而非image2D？
-// 因为预渲染的渲染结果是
+// 因为预渲染的渲染结果是GBuffer Texture
 // 屏幕RT颜色通道
 uniform sampler2D RTColor;
 // 世界空间坐标通道
 uniform sampler2D RTWorldPos;
 // 法线通道
 uniform sampler2D RTNormal;
+// 运动矢量
+uniform sampler2D RTMotionVector;
 
 // 渲染目标
 // 为何使用image2D而非texture
@@ -46,6 +51,8 @@ layout (binding = 1, r32f) uniform image2D HeightField;
 uniform int TerrainGrid;
 uniform float TerrainSize;
 uniform float TerrainHeight;
+// 海底的边长
+uniform float SeaSize;
 
 // 光源信息
 uniform vec3 mainLightColor;
@@ -98,6 +105,13 @@ struct SurfPoint{
 
 };
 
+// 材质
+struct Material{
+    vec3 baseColor;
+    float roughness;
+    float metalness;
+};
+
 /**
     数学轮子
 */
@@ -115,6 +129,20 @@ float max3(float a, float b, float c){
 // 三数最小值
 float min3(float a, float b, float c){
     return min(min(a, b), c);
+}
+
+// 平方
+float Pow2(float x){
+    return x * x;
+}
+// 立方
+float Pow3(float x){
+    return x * x * x;
+}
+// 五次方
+float Pow5(float x){
+    float x2 = x * x;
+    return x2 * x2 * x;
 }
 
 // 将深度缓冲值转化为世界空间下距离
@@ -707,10 +735,11 @@ bool ray_intersection_terrainmesh(Ray3D myRay, out float t, out vec3 inter_point
 
 */
 bool ray_intersection_scene(Ray3D myRay, out float t, out vec3 inter_point, out vec3 normal, out int returnState){
+    float modeledSeaSize = (model * vec4(SeaSize, 0, 0, 1)).x;
     if (ray_intersection_terrainmesh(myRay, t, inter_point, normal, returnState)){
         return true;
     }
-    else if (ray_intersection_xz_rect(myRay, 0, vec2(-3, 3), vec2(-3, 3), t, inter_point)){
+    else if (ray_intersection_xz_rect(myRay, 0, vec2(-modeledSeaSize, modeledSeaSize) * 0.5, vec2(-modeledSeaSize, modeledSeaSize) * 0.5, t, inter_point)){
         normal = vec3(0, 1, 0);
         returnState = 0;
         return true;
@@ -718,6 +747,93 @@ bool ray_intersection_scene(Ray3D myRay, out float t, out vec3 inter_point, out 
     else{
         return false;
     }
+}
+
+// 随机光线方向
+vec3 random3D(vec3 centerDir, float centerStrength, vec3 beginPoint, int ejSeed, int seed1, int seed2, float boxsize){
+    // 方向为Normal半球上随机
+    // 先生成种子和u、v、r2
+    uint seed_0 = 0, seed_1 = 0; 
+    float u = 2, v = 2, r2 = 2;
+    while(r2 > 1){
+        seed_0 = uint((abs(beginPoint.x) * (ejSeed + 2) + abs(beginPoint.y) * (ejSeed + 1) + abs(beginPoint.z) * (ejSeed + 0)) * boxsize * seed1 * (ejSeed + 3) * (time.msec / 4.0 + time.second + 3));
+        seed_1 = uint((abs(beginPoint.x) * (ejSeed + 0) + abs(beginPoint.y) * (ejSeed + 2) + abs(beginPoint.z) * (ejSeed + 1)) * boxsize * seed2 * (ejSeed + 3) * (time.msec / 4.0 + time.second + 3));
+
+        u = XorShiftRand(seed_0);
+        v = XorShiftRand(seed_1);
+        r2 = u * u + v * v;
+    }
+    // 根据R2计算半球上的方向
+    vec3 ans;
+    ans.x = 2 * u * sqrt(1 - r2);
+    ans.y = 2 * v * sqrt(1 - r2);
+    ans.z = 1 - 2 * r2;
+
+    return normalize(centerDir * centerStrength + ans);
+}
+
+/**
+    BRDF与渲染方程相关函数
+*/
+
+vec3 Diffuse(vec3 baseColor, float Difference, float NormalDotLight, float NormalDotView, float roughness){
+    float FD90 = 0.5 + 2.0 * roughness * Pow2(Difference);
+    return (baseColor / PI) * (1.0 + (FD90 - 1.0) * Pow5(1 - NormalDotLight)) * (1.0 + (FD90 - 1.0) * Pow5(1 - NormalDotView));
+}
+
+float D_GGX(float NormalDotHalf, float roughness){
+    float a2 = Pow2(roughness);
+    float denom = PI * Pow2(Pow2(NormalDotHalf) * (a2 - 1) + 1);
+    return a2 / denom;
+}
+
+vec3 F_Schlick(vec3 F0, float ViewDotHalf){
+    float Fc = Pow5(1.0 - ViewDotHalf);
+    vec3 F90 = vec3(clamp(50.0 * F0.g, 0.0, 1.0));
+    return F90 * Fc + F0 * Fc;//(1 - Fc);    // 究竟是乘1-Fc还是Fc
+}
+
+float G_SchlickGGX(float NormalDotView, float roughness, bool isIBL){
+    float k;
+    if (isIBL){
+        k = Pow2(roughness) / 2.0;
+    }
+    else {
+        k = Pow2(roughness + 1.0) / 8.0;
+    }
+    // float NdotV = max(dot(n, v), 0) + 0.001;
+    return NormalDotView / (NormalDotView * (1 - k) + k);
+}
+
+float G_Smith(float NormalDotView, float NormalDotLight, float roughness, bool isIBL){
+    return G_SchlickGGX(NormalDotView, roughness, isIBL) * G_SchlickGGX(NormalDotLight, roughness, isIBL);
+}
+
+vec3 Disney_BRDF(vec3 lightDir, vec3 viewDir, vec3 normalDir, vec3 baseColor, float metalness, float roughness, bool isIBL){
+    vec3 L = normalize(lightDir);
+    vec3 V = normalize(viewDir);
+    vec3 N = normalize(normalDir);
+    vec3 H = normalize(L + V);
+
+    vec3 diffuse;
+    vec3 specular;
+    
+    float NoH = dot(N, H);
+    float NoV = dot(N, V);
+    float NoL = dot(N, L);
+    float Diff = dot(L, H);
+
+    diffuse = Diffuse(baseColor, Diff, NoL, NoV, roughness);
+
+    float D = D_GGX(NoH, roughness);
+    vec3 F0 = vec3(0.02);
+    F0 = metalness * baseColor + (1.0 - metalness) * F0;
+    vec3 F = F_Schlick(F0, Diff);
+    float G = G_Smith(NoV, NoL, roughness, isIBL);
+
+    specular = D * F * G / (4 * NoL * NoV);
+
+    return diffuse + specular;
 }
 
 void main(){
@@ -728,24 +844,26 @@ void main(){
     // 当前像素的位置
     vec2 texCoord = vec2(float(gl_GlobalInvocationID.x) / screenWidth, 
                          float(gl_GlobalInvocationID.y) / screenHeight);
-    // 直接光颜色
+    // 采样输入内容
     vec4 color = texture(RTColor, texCoord);
     vec3 normal = texture(RTNormal, texCoord).xyz;
     vec3 worldPos = texture(RTWorldPos, texCoord).xyz;
+    vec2 motionVec = texture(RTMotionVector, texCoord).xy;
     // 重建远平面点在世界空间的位置
     vec4 farPlaneNDCPos = vec4(texCoord.x * 2.0 - 1.0, texCoord.y * 2.0 - 1.0, 1.0, 1.0);
     vec4 farPlaneClipPos = farPlaneNDCPos * far;
     vec3 farPlaneWorldPos = (view_inverse * proj_inverse * farPlaneClipPos).xyz;
     // 根据重建的位置计算光线方向
     vec3 rayDir = normalize(farPlaneWorldPos - cameraPos);
+
+
     // ray tracing，启动！
     Ray3D myRay;
     myRay.point = cameraPos;
     myRay.direction = rayDir;
 
     // 测试：aabb相交函数
-    float unit = TerrainSize / TerrainGrid;
-    float len = TerrainSize;// + 2 * unit;
+    float len = TerrainSize;
     // 初始化地形aabb
     terrainAABB.pointMin = (model * vec4(-len / 2.0, 0, -len / 2.0, 1.0)).xyz;
     terrainAABB.pointMax = (model * vec4(len / 2.0, TerrainHeight, len / 2.0, 1.0)).xyz;
@@ -758,16 +876,46 @@ void main(){
     int returnState_0 = 0;
 
 
+    /**
+        光线追踪
+    */
+    
     // 进行n次光线弹射
     // 实验代码
     
-    vec3 lastCol = imageLoad(RTTarget, ivec2(gl_GlobalInvocationID.xy)).xyz;
+    // 根据motionVector采样上一帧对应的位置
+    ivec2 lastScrTexCoord = ivec2((motionVec.x) * screenWidth, motionVec.y * screenHeight);
+    vec3 lastCol; 
+    // if (motionVec.x >= 0 && motionVec.x <= 1 && motionVec.y >= 0 && motionVec.y <= 1)
+        lastCol = imageLoad(RTTarget, ivec2(motionVec)).xyz;
+    // else
+    //     lastCol = vec3(0);
+
+    
+    // lastCol = imageLoad(RTTarget, ivec2(gl_GlobalInvocationID.xy)).xyz;
+
+    // 是否是直接光阴影
+    bool isNotDirectShadow = true;
 
     /** 默认材质：
     颜色：深绿
     粗糙度：rough
     金属度：0
     */
+    // 初始化材质
+    Material grass;
+    grass.baseColor = vec3(93, 175, 113) / 255.0;
+    grass.roughness = 0.85;
+    grass.metalness = 0.15;
+
+    Material plane;
+    plane.baseColor = vec3(175, 59, 31) / 255.0;
+    plane.roughness = 0.3;
+    plane.metalness = 0.9;
+
+    // Material thisMat;
+    Material thisMat;
+
     vec3 green = vec3(45, 153, 83) / 255.0;
     vec3 red = vec3(216, 59, 31) / 255.0;
     vec3 sky = vec3(158, 231, 255) / 255.0;
@@ -801,49 +949,49 @@ void main(){
 
     Ray3D newRay;
     newRay.point = inter_point_0 + normal_0 * 0.01 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
+
     newRay.direction = normalize(mainLightDir);
     if (!ray_intersection_scene(newRay, t_1, inter_point_1, normal_1, returnState_1)){
-        light = mainLightStrength * mainLightColor * max(dot(normal_0, mainLightDir), 0);
+        light = mainLightStrength * mainLightColor;
     } else {
-        light = vec3(0.1);
+        isNotDirectShadow = false;
+        light = vec3(0.0);
+        // light = sky;
     }
-    // 计算该点颜色
-    vec3 thisCol;
+    // 计算该点材质
     if (inter_point_0.x <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.x >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x)){
-        thisCol = light * green;
+        thisMat = grass;
     }else {
-        thisCol = light * red;
+        thisMat = plane;
     }
-    ansCol_0 = thisCol * strength;
+    ansCol_0 = Disney_BRDF(mainLightDir, normalize(-myRay.direction), normal_0, thisMat.baseColor, thisMat.metalness, thisMat.roughness, false) * max(0, dot(normal_0, mainLightDir)) * thisMat.baseColor * light;
+    // ansCol_0 = max(0, dot(normal_0, mainLightDir)) * thisMat.baseColor * light;
 
     // 那么需要更新光线信息
     myRay.point = inter_point_0 + normal_0 * 0.01 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) / TerrainSize;
 
-    // 方向为Normal球上随机
-    // while(true){
-        // 先生成种子和u、v、r2
-        uint seed_0 = 0, seed_1 = 0; 
-        float u = 2, v = 2, r2 = 2;
-        while(r2 > 1){
-            seed_0 = uint((abs(inter_point_0.x) * (ej + 2) + abs(inter_point_0.y) * (ej + 1) + abs(inter_point_0.z) * (ej + 0)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 125685 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
-            seed_1 = uint((abs(inter_point_0.x) * (ej + 0) + abs(inter_point_0.y) * (ej + 2) + abs(inter_point_0.z) * (ej + 1)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 568512 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
+    // 方向为Normal半球上随机
+    // 先生成种子和u、v、r2
+    // uint seed_0 = 0, seed_1 = 0; 
+    // float u = 2, v = 2, r2 = 2;
+    // while(r2 > 1){
+    //     seed_0 = uint((abs(inter_point_0.x) * (ej + 2) + abs(inter_point_0.y) * (ej + 1) + abs(inter_point_0.z) * (ej + 0)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 125685 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
+    //     seed_1 = uint((abs(inter_point_0.x) * (ej + 0) + abs(inter_point_0.y) * (ej + 2) + abs(inter_point_0.z) * (ej + 1)) * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) * 568512 * (ej + 3) * (time.msec / 4.0 + time.second + 3));
 
-            u = XorShiftRand(seed_0);
-            v = XorShiftRand(seed_1);
-            r2 = u * u + v * v;
-        }
-        // 根据R2计算半球上的方向
-        myRay.direction.x = 2 * u * sqrt(1 - r2);
-        myRay.direction.y = 2 * v * sqrt(1 - r2);
-        myRay.direction.z = 1 - 2 * r2;
-        vec3 refDir = reflect(rayDir, normal_0);
-        myRay.direction = normalize(refDir * 0.75 + myRay.direction);
-        // 考察其是否可用
-        // if (dot(normalize(myRay.direction), normalize(normal_0)) > 0.9){
-        //     myRay.direction = normalize(myRay.direction);
-        //     break;
-        // }
+    //     u = XorShiftRand(seed_0);
+    //     v = XorShiftRand(seed_1);
+    //     r2 = u * u + v * v;
     // }
+    // // 根据R2计算半球上的方向
+    // myRay.direction.x = 2 * u * sqrt(1 - r2);
+    // myRay.direction.y = 2 * v * sqrt(1 - r2);
+    // myRay.direction.z = 1 - 2 * r2;
+    vec3 refDir = reflect(rayDir, normal_0);
+    // 将反射方向向norm方向偏置
+    refDir = normalize(refDir + normal_0);
+    // myRay.direction = normalize(refDir + myRay.direction);
+
+    myRay.direction = random3D(refDir, 1, inter_point_0, ej, 15325, 85965, abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x));
 
     // 第二次
     ej ++;
@@ -865,45 +1013,29 @@ void main(){
             light = mainLightStrength * mainLightColor * max(dot(normal_0, mainLightDir), 0);
         } else {
             light = vec3(0.1);
+            // light = sky;
         }
         // 计算该点颜色
         if (inter_point_0.x <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.x >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z <= 0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x) && inter_point_0.z >= -0.5001 * abs(terrainAABB.pointMax.x - terrainAABB.pointMin.x)){
-            thisCol = light * green;
+            thisMat = grass;
         }else {
-            thisCol = light * red;
+            thisMat = plane;
         }
         dist += length(last_point - inter_point_0);
         strength = strength / ((dist + 1) * (dist + 1));
-        ansCol_1 = thisCol * strength;
+
+        ansCol_1 = Disney_BRDF(mainLightDir, normalize(-myRay.direction), normal_0, thisMat.baseColor, thisMat.metalness, thisMat.roughness, false) * max(0, dot(normal_0, mainLightDir)) * thisMat.baseColor * light * strength;
+
+        // ansCol_1 = max(0, dot(normal_0, mainLightDir)) * thisMat.baseColor * light * strength;
     } else {
-        ansCol_1 = sky * 0.3;
+        ansCol_1 = sky;
     }
 
     vec3 ansCol = ansCol_0 + ansCol_1;
-    ans = vec4(ansCol * 0.1 + lastCol * 0.9, 1);
+    // ansCol = ansCol_1;
 
-    // Ray3D testRay;
-    // testRay.point = cameraPos;
-    // testRay.direction = rayDir;
-    // float test_t;
-    // vec3 test_p;
-    // if (ray_intersection_xz_rect(testRay, 0, vec2(-5, 5), vec2(-5, 5), test_t, test_p)){
-    //     vec2 col = test_p.xz * 0.2 + 0.5;
-    //     vec3 reflected = reflect(testRay.direction, vec3(0, 1, 0));
-    //     ans = vec4(reflected, 1);
-    // } else ans = vec4(0, 0, 0, 1);
-
-    // 进行一次直接光照+阴影
-    // normal_0 = vec3(0);
-    // if (ray_intersection_scene(myRay, t_0, inter_point_0, normal_0, returnState_0)){
-    //     ans = vec4(normal_0, 1);
-    // }else {
-    //     ans = vec4(89.0 / 255.0, 177.0 / 255.0, 215.0 / 255.0, 1);
-    // }
-
-
-
-    // ans = vec4(newDir * 0.5 + 0.5,1);
+    // 在w通道存入阴影
+    ans = vec4(ansCol, float(isNotDirectShadow));
 
     // TODO 将ans值框定到[0,+∞)
 
